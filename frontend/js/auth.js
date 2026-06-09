@@ -2,11 +2,12 @@ import { AuthService } from "./services.js";
 
 const form = document.querySelector("#loginForm");
 const error = document.querySelector("#loginError");
+const resolveRoute = (file) => new URL(`../pages/${file}`, import.meta.url).href;
 
 const routes = {
-  Administrador: "admin.html",
-  Cajero: "cajero.html",
-  Cocina: "cocina.html"
+  Administrador: resolveRoute("admin.html"),
+  Cajero: resolveRoute("cajero.html"),
+  Cocina: resolveRoute("cocina.html")
 };
 
 form.addEventListener("submit", (event) => {
@@ -21,5 +22,5 @@ form.addEventListener("submit", (event) => {
   }
 
   AuthService.setSession(user);
-  window.location.href = routes[user.rol] || "login.html";
+  window.location.href = routes[user.rol] || new URL("../login.html", import.meta.url).href;
 });

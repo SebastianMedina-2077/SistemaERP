@@ -1,6 +1,7 @@
 import { db } from "./data.js";
 
 const IGV = 0.18;
+const LOGIN_URL = new URL("../login.html", import.meta.url).href;
 
 const byId = (items, key, value) => items.find((item) => item[key] === value);
 const money = (value) => Number(value || 0).toFixed(2);
@@ -41,7 +42,7 @@ export const AuthService = {
   },
   logout() {
     sessionStorage.removeItem("erpUser");
-    window.location.href = "login.html";
+    window.location.href = LOGIN_URL;
   }
 };
 

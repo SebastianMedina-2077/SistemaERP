@@ -2,6 +2,8 @@ import { setupUserBox } from "./app.js";
 
 setupUserBox("Administrador");
 
+const resolvePageUrl = (page) => new URL(`../pages/${page}.html`, import.meta.url);
+
 const content = document.querySelector("#content");
 const title = document.querySelector("#viewTitle");
 const navItems = Array.from(document.querySelectorAll(".nav-item"));
@@ -58,7 +60,12 @@ function applyArea(area, { loadFirst = true } = {}) {
 }
 
 async function loadPage(page, section) {
-  const response = await fetch(`pages/${page}.html`);
+  const response = await fetch(resolvePageUrl(page));
+  if (!response.ok) {
+    content.innerHTML = `<section class="admin-section active"><div class="card panel">No se pudo cargar la pagina ${page}.html</div></section>`;
+    title.textContent = "Error de carga";
+    return;
+  }
   content.innerHTML = await response.text();
 
   content.querySelectorAll(".admin-section").forEach((node) => {
