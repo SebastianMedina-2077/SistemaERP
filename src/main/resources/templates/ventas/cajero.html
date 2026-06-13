@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Caja</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/components.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <link rel="stylesheet" th:href="@{/css/pos.css}">
+</head>
+<body>
+  <header class="pos-header role-header">
+    <div class="role-brand">
+      <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
+      <div>
+        <p class="eyebrow">Punto de venta</p>
+        <h1>Registro de pedidos</h1>
+      </div>
+    </div>
+    <div class="user-box">
+      <div class="user-avatar" th:text="${#strings.substring(#authentication.name, 0, 1)}">C</div>
+      <div class="user-meta">
+        <strong sec:authentication="name">Cajero</strong>
+        <span>Cajero</span>
+      </div>
+      <form th:action="@{/logout}" method="post" style="margin:0">
+        <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="pos-layout">
+    <section class="pos-column categories-panel">
+      <div class="section-heading">
+        <h2>Categorias</h2>
+        <span class="muted">Seleccione una categoria</span>
+      </div>
+      <div id="categoryButtons" class="stack-list">
+        <button th:each="cat, it : ${categorias}" type="button"
+                th:text="${cat.nombre}"
+                th:attr="data-category=${cat.idCategoria}"
+                th:classappend="${it.first} ? 'btn-secondary' : 'btn-ghost'"
+                class="btn category-btn">Categoria</button>
+      </div>
+    </section>
+
+    <section class="pos-column products-panel">
+      <div class="section-heading products-heading">
+        <h2>Modulo Pedidos</h2>
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input id="productSearch" type="search" placeholder="Buscar producto por nombre..." autocomplete="off">
+        </div>
+      </div>
+      <span id="stockAlert" class="inline-alert hidden">Stock insuficiente para registrar este producto.</span>
+      <div id="productGrid" class="product-grid"></div>
+      <div class="grid-pager">
+        <button id="pagePrev" class="pager-btn" type="button" aria-label="Anterior"><i class="bi bi-chevron-left"></i></button>
+        <span id="pageInfo" class="pager-info">0 de 0</span>
+        <button id="pageNext" class="pager-btn" type="button" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </section>
+
+    <aside class="pos-column order-panel">
+      <div class="section-heading">
+        <h2>Pedido actual</h2>
+        <button id="clearOrderBtn" class="btn btn-secondary" type="button">Cancelar</button>
+      </div>
+
+      <form id="customerForm" class="compact-form">
+        <label>Cliente
+          <input id="customerName" type="text" maxlength="15" placeholder="Nombre del cliente" required>
+        </label>
+        <label>Telefono
+          <input id="customerPhone" type="tel" maxlength="9" placeholder="Opcional">
+        </label>
+        <label>Metodo de pago
+          <select id="paymentMethod">
+            <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Efectivo</option>
+          </select>
+        </label>
+      </form>
+
+      <div id="orderItems" class="order-items empty-state">No hay productos agregados.</div>
+
+      <div class="totals-box">
+        <div><span>Subtotal</span><strong id="subtotal">S/ 0.00</strong></div>
+        <div><span>IGV 18%</span><strong id="igv">S/ 0.00</strong></div>
+        <div class="total-line"><span>Total</span><strong id="total">S/ 0.00</strong></div>
+      </div>
+
+      <button id="generateTicketBtn" class="btn btn-primary btn-full btn-large" type="button">
+        <i class="bi bi-receipt"></i> Generar boleta
+      </button>
+    </aside>
+  </main>
+
+  <div id="orderConfirm" class="confirm-overlay hidden">
+    <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <button type="button" class="confirm-dismiss" id="confirmDismiss" aria-label="Cerrar">&times;</button>
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <i class="bi bi-check-lg"></i>
+        </div>
+        <div class="confirm-content">
+          <span class="confirm-title" id="confirmTitle">Orden enviada a cocina</span>
+          <p class="confirm-message" id="confirmMessage">Tu pedido fue registrado correctamente y esta siendo preparado.</p>
+          <p class="confirm-eta" id="confirmEta"><i class="bi bi-clock"></i> Tiempo estimado: 15 min.</p>
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-primary" id="confirmNew">Nueva venta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" th:src="@{/js/cajero.js}"></script>
+</body>
+</html>

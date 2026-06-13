@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Pedidos</h2>
+      <p class="muted">Registro de pedidos generados por caja y sus estados operativos.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaPedidos" placeholder="Buscar por cliente..." autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card table-card" id="tablaPedidos" data-table-tools>
+    <table class="align-middle">
+      <thead>
+        <tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Telefono</th><th>Cajero</th><th>Estado</th><th>Subtotal</th><th>Total</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="p : ${pedidos}" th:with="b=${boletas.get(p.idPedido)},estado=${p.estado.name()}">
+          <td th:text="'#' + ${p.idPedido}">#1</td>
+          <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+          <td th:text="${p.cliente.nombre}">Cliente</td>
+          <td th:text="${p.cliente.telefono} ?: '-'">-</td>
+          <td th:text="${p.usuario.empleado != null ? p.usuario.empleado.nombre : p.usuario.username}">Cajero</td>
+          <td>
+            <span class="badge"
+                  th:classappend="${estado == 'ATENDIDO'} ? 'badge-success' : (${estado == 'ANULADO'} ? 'badge-danger' : (${estado == 'PREPARANDO'} ? 'badge-info' : 'badge-warning'))"
+                  th:text="${#strings.capitalize(#strings.toLowerCase(p.estado))}">Estado</span>
+          </td>
+          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.subtotal,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" th:href="@{/admin/pedidos/{id}(id=${p.idPedido})}">
+                    <i class="bi bi-receipt"></i> Ver detalle
+                  </a>
+                </li>
+                <li th:if="${estado == 'PENDIENTE'}">
+                  <form th:action="@{/admin/pedidos/{id}/estado(id=${p.idPedido})}" method="post">
+                    <input type="hidden" name="estado" value="PREPARANDO">
+                    <button class="dropdown-item" type="submit"><i class="bi bi-fire"></i> Marcar preparando</button>
+                  </form>
+                </li>
+                <li th:if="${estado == 'PENDIENTE' or estado == 'PREPARANDO'}">
+                  <form th:action="@{/admin/pedidos/{id}/estado(id=${p.idPedido})}" method="post">
+                    <input type="hidden" name="estado" value="ATENDIDO">
+                    <button class="dropdown-item" type="submit"><i class="bi bi-check2-circle"></i> Marcar atendido</button>
+                  </form>
+                </li>
+                <li th:if="${estado != 'ANULADO'}"><hr class="dropdown-divider"></li>
+                <li th:if="${estado != 'ANULADO'}">
+                  <button class="dropdown-item text-danger" type="button"
+                          data-bs-toggle="modal" data-bs-target="#anularPedido"
+                          th:attr="data-action=@{/admin/pedidos/{id}/anular(id=${p.idPedido})},data-nombre='#' + ${p.idPedido}">
+                    <i class="bi bi-x-circle"></i> Anular pedido
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(pedidos)}" data-empty>
+          <td colspan="9"><div class="empty-state">No hay pedidos registrados.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal fade" id="anularPedido" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="anularForm" method="post">
+          <div class="modal-header">
+            <h5 class="modal-title">Anular pedido <span id="anularNumero">#0</span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <p class="muted">El stock de insumos consumido se revertira automaticamente.</p>
+            <label class="field">Motivo de anulacion
+              <input type="text" name="motivo" maxlength="100" required
+                     placeholder="Ej. Cliente solicito cancelacion">
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button class="btn btn-danger" type="submit"><i class="bi bi-x-circle"></i> Anular pedido</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('anularPedido').addEventListener('show.bs.modal', (event) => {
+      const origen = event.relatedTarget;
+      document.getElementById('anularForm').action = origen.dataset.action;
+      document.getElementById('anularNumero').textContent = origen.dataset.nombre;
+    });
+  </script>
+</main>
+</body>
+</html>

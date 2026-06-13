@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Kardex de insumos</h2>
+      <p class="muted">Entradas y salidas de cada insumo con el stock resultante.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaKardex" placeholder="Buscar por insumo..." autocomplete="off">
+    </div>
+  </div>
+  <div class="card table-card" id="tablaKardex" data-table-tools>
+    <table>
+      <thead><tr><th>Fecha</th><th>Insumo</th><th>Documento</th><th>Tipo</th><th>Entrada</th><th>Salida</th><th>Stock resultante</th></tr></thead>
+      <tbody>
+        <tr th:each="k : ${kardex}" th:with="entrada=${k.movimiento.tipoMovimiento.operacion == 'Entrada'}">
+          <td th:text="${k.movimiento.fecha}">2026-01-01</td>
+          <td th:text="${k.insumo.nombre}">Insumo</td>
+          <td th:text="${k.movimiento.documento}">DOC</td>
+          <td th:text="${k.movimiento.tipoMovimiento.descripcion}">Tipo</td>
+          <td th:text="${entrada ? #numbers.formatDecimal(k.cantidad,1,3) : '-'}">-</td>
+          <td th:text="${entrada ? '-' : #numbers.formatDecimal(k.cantidad,1,3)}">-</td>
+          <td th:text="${k.stockResultante != null ? #numbers.formatDecimal(k.stockResultante,1,3) : '-'}">-</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(kardex)}" data-empty>
+          <td colspan="7"><div class="empty-state">No hay movimientos de inventario.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

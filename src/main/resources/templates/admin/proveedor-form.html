@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2 th:text="${editId == null} ? 'Nuevo proveedor' : 'Editar proveedor'">Nuevo proveedor</h2>
+      <p class="muted">Datos de contacto y facturacion del proveedor.</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/proveedores}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form class="card form-panel" th:object="${proveedorForm}" method="post"
+        th:action="${editId == null} ? @{/admin/proveedores} : @{/admin/proveedores/{id}(id=${editId})}">
+    <div class="form-grid">
+      <label class="field">RUC
+        <input type="text" th:field="*{ruc}" placeholder="20123456789" maxlength="11" inputmode="numeric"
+               th:classappend="${#fields.hasErrors('ruc')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('ruc')}" th:errors="*{ruc}"></span>
+      </label>
+
+      <label class="field">Nombre
+        <input type="text" th:field="*{nombre}" placeholder="Distribuidora Andina" maxlength="25"
+               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+      </label>
+
+      <label class="field">Telefono
+        <input type="text" th:field="*{telefono}" placeholder="999111333" maxlength="9" inputmode="numeric"
+               th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}"></span>
+      </label>
+
+      <label class="field">Direccion
+        <input type="text" th:field="*{direccion}" placeholder="Av. Central 456" maxlength="25"
+               th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('direccion')}" th:errors="*{direccion}"></span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/proveedores}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i>
+        <span th:text="${editId == null} ? 'Guardar proveedor' : 'Guardar cambios'">Guardar</span>
+      </button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

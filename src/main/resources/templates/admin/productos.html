@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Productos</h2>
+      <p class="muted">Catalogo vendible. Las pizzas se preparan (sin stock propio); las bebidas se sincronizan con insumos.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaProductos" placeholder="Buscar por nombre..." autocomplete="off">
+    </div>
+    <a class="btn btn-secondary" th:href="@{/admin/productos/nuevo}"><i class="bi bi-plus-lg"></i> Nuevo producto</a>
+  </div>
+
+  <div class="card table-card" id="tablaProductos" data-table-tools>
+    <table class="align-middle">
+      <thead>
+        <tr><th>Codigo</th><th>Nombre</th><th>Categoria</th><th>Tamano</th><th>Precio</th><th>Stock visible</th><th>Disponible</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="p : ${productos}">
+          <td th:text="${p.codigo}">PZ0001</td>
+          <td th:text="${p.nombre}">Producto</td>
+          <td th:text="${p.categoria.nombre}">Categoria</td>
+          <td th:text="${p.tamanio != null ? p.tamanio.name() : 'No aplica'}">-</td>
+          <td th:text="'S/ ' + ${#numbers.formatDecimal(p.precio,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+          <td th:text="${p.stock != null ? p.stock : 'Preparado'}">Preparado</td>
+          <td>
+            <span class="badge" th:classappend="${p.disponible} ? 'badge-success' : 'badge-danger'"
+                  th:text="${p.disponible} ? 'Disponible' : 'No disponible'">Disponible</span>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" th:href="@{/admin/productos/{id}/editar(id=${p.idProducto})}">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                </li>
+                <li>
+                  <form th:action="@{/admin/productos/{id}/disponibilidad(id=${p.idProducto})}" method="post">
+                    <button class="dropdown-item" type="submit">
+                      <i class="bi" th:classappend="${p.disponible} ? 'bi-eye-slash' : 'bi-eye'"></i>
+                      <span th:text="${p.disponible} ? 'Desactivar' : 'Activar'">Desactivar</span>
+                    </button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item text-danger" type="button"
+                          data-bs-toggle="modal" data-bs-target="#confirmarEliminar"
+                          th:attr="data-action=@{/admin/productos/{id}/eliminar(id=${p.idProducto})},data-nombre=${p.nombre}">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(productos)}" data-empty>
+          <td colspan="8"><div class="empty-state">No hay productos registrados.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:replace="~{layout/fragments :: modalEliminar('producto', 'Si tiene ventas o esta en un combo, la operacion sera rechazada.')}"></div>
+</main>
+</body>
+</html>

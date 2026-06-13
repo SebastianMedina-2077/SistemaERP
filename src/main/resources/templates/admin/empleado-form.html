@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2 th:text="${editId == null} ? 'Nuevo empleado' : 'Editar empleado'">Nuevo empleado</h2>
+      <p class="muted">Datos del personal interno. El DNI debe ser unico.</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/empleados}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form class="card form-panel" th:object="${empleadoForm}" method="post"
+        th:action="${editId == null} ? @{/admin/empleados} : @{/admin/empleados/{id}(id=${editId})}">
+    <div class="form-grid">
+      <label class="field">Nombre
+        <input type="text" th:field="*{nombre}" placeholder="Lucia" maxlength="20"
+               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+      </label>
+
+      <label class="field">Apellido
+        <input type="text" th:field="*{apellido}" placeholder="Ramos" maxlength="20"
+               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}"></span>
+      </label>
+
+      <label class="field">DNI
+        <input type="text" th:field="*{dni}" placeholder="45678912" maxlength="8" inputmode="numeric"
+               th:classappend="${#fields.hasErrors('dni')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}"></span>
+      </label>
+
+      <label class="field">Telefono
+        <input type="text" th:field="*{telefono}" placeholder="999888777" maxlength="9" inputmode="numeric"
+               th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}"></span>
+      </label>
+
+      <label class="field">Cargo
+        <select th:field="*{cargo}" th:classappend="${#fields.hasErrors('cargo')} ? 'is-invalid'">
+          <option value="">Seleccione...</option>
+          <option th:each="c : ${cargos}" th:value="${c}" th:text="${c}">Cargo</option>
+        </select>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('cargo')}" th:errors="*{cargo}"></span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/empleados}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i>
+        <span th:text="${editId == null} ? 'Guardar empleado' : 'Guardar cambios'">Guardar</span>
+      </button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

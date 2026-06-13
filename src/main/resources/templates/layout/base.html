@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle != null ? 'Mamma Tomato | ' + pageTitle : 'Mamma Tomato ERP'}">Mamma Tomato ERP</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/layout.css}">
+  <link rel="stylesheet" th:href="@{/css/components.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="erp-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
+      <div>
+        <strong>Mamma Tomato</strong>
+        <span>ERP comercial</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Modulos">
+      <div class="nav-group">
+        <a th:href="@{/admin/dashboard}" class="nav-item"
+           th:classappend="${active == 'dashboard'} ? 'active'"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-group-label">Ventas</p>
+        <a th:href="@{/admin/pedidos}" class="nav-item" th:classappend="${active == 'pedidos'} ? 'active'"><i class="bi bi-receipt"></i> Pedidos</a>
+        <a th:href="@{/admin/productos}" class="nav-item" th:classappend="${active == 'productos'} ? 'active'"><i class="bi bi-box-seam"></i> Productos</a>
+        <a th:href="@{/admin/promociones}" class="nav-item" th:classappend="${active == 'promociones'} ? 'active'"><i class="bi bi-tags"></i> Promociones</a>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-group-label">Inventario</p>
+        <a th:href="@{/admin/insumos}" class="nav-item" th:classappend="${active == 'insumos'} ? 'active'"><i class="bi bi-basket"></i> Insumos</a>
+        <a th:href="@{/admin/compras}" class="nav-item" th:classappend="${active == 'compras'} ? 'active'"><i class="bi bi-cart-plus"></i> Compras</a>
+        <a th:href="@{/admin/movimientos}" class="nav-item" th:classappend="${active == 'movimientos'} ? 'active'"><i class="bi bi-arrow-left-right"></i> Movimientos</a>
+        <a th:href="@{/admin/kardex}" class="nav-item" th:classappend="${active == 'kardex'} ? 'active'"><i class="bi bi-journal-text"></i> Kardex</a>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-group-label">Administracion</p>
+        <a th:href="@{/admin/empleados}" class="nav-item" th:classappend="${active == 'empleados'} ? 'active'"><i class="bi bi-people"></i> Empleados</a>
+        <a th:href="@{/admin/usuarios}" class="nav-item" th:classappend="${active == 'usuarios'} ? 'active'"><i class="bi bi-person-badge"></i> Usuarios</a>
+        <a th:href="@{/admin/proveedores}" class="nav-item" th:classappend="${active == 'proveedores'} ? 'active'"><i class="bi bi-truck"></i> Proveedores</a>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-group-label">Analisis</p>
+        <a th:href="@{/admin/reportes}" class="nav-item" th:classappend="${active == 'reportes'} ? 'active'"><i class="bi bi-bar-chart"></i> Reportes</a>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span th:text="${currentUser != null ? currentUser.nombre : ''}">usuario</span> &middot; sesion activa
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Panel administrador</p>
+        <h1 th:text="${pageTitle} ?: 'Dashboard'">Dashboard</h1>
+      </div>
+      <div class="user-box">
+        <div class="user-avatar"
+             th:text="${currentUser != null ? #strings.substring(currentUser.nombre, 0, 1) : '?'}">A</div>
+        <div class="user-meta">
+          <strong th:text="${currentUser != null ? currentUser.nombre : 'Usuario'}">Usuario</strong>
+          <span th:text="${currentUser != null ? currentUser.rol : ''}">Rol</span>
+        </div>
+        <form class="logout-form" th:action="@{/logout}" method="post">
+          <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
+        </form>
+      </div>
+    </header>
+
+    <main class="content-area" layout:fragment="content">
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/table-tools.js}"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Promociones</h2>
+      <p class="muted">Descuentos aplicados automaticamente a productos en el POS.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaPromociones" placeholder="Buscar por nombre..." autocomplete="off">
+    </div>
+    <a class="btn btn-secondary" th:href="@{/admin/promociones/nueva}"><i class="bi bi-plus-lg"></i> Nueva promocion</a>
+  </div>
+
+  <div class="card table-card" id="tablaPromociones" data-table-tools>
+    <table class="align-middle">
+      <thead><tr><th>Nombre</th><th>Descripcion</th><th>Tipo</th><th>Valor</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="p : ${promociones}">
+          <td th:text="${p.nombre}">Promo</td>
+          <td class="muted" th:text="${p.descripcion}">Descripcion</td>
+          <td th:text="${p.tipoDescuento}">Porcentaje</td>
+          <td th:text="${p.tipoDescuento == 'Porcentaje' ? #numbers.formatDecimal(p.valorDescuento,1,0) + ' %' : 'S/ ' + #numbers.formatDecimal(p.valorDescuento,1,'COMMA',2,'POINT')}">0</td>
+          <td>
+            <span class="badge" th:classappend="${p.activa} ? 'badge-success' : 'badge-danger'"
+                  th:text="${p.activa} ? 'Activa' : 'Inactiva'">Estado</span>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" th:href="@{/admin/promociones/{id}/editar(id=${p.idPromocion})}">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                </li>
+                <li>
+                  <form th:action="@{/admin/promociones/{id}/activa(id=${p.idPromocion})}" method="post">
+                    <button class="dropdown-item" type="submit">
+                      <i class="bi" th:classappend="${p.activa} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+                      <span th:text="${p.activa} ? 'Desactivar' : 'Activar'">Desactivar</span>
+                    </button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item text-danger" type="button"
+                          data-bs-toggle="modal" data-bs-target="#confirmarEliminar"
+                          th:attr="data-action=@{/admin/promociones/{id}/eliminar(id=${p.idPromocion})},data-nombre=${p.nombre}">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(promociones)}" data-empty>
+          <td colspan="6"><div class="empty-state">No hay promociones registradas.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:replace="~{layout/fragments :: modalEliminar('promocion', 'Tambien se quitara de los productos a los que aplica.')}"></div>
+</main>
+</body>
+</html>
