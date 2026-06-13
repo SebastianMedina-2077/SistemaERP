@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+  <div class="module-layout">
+
+    <div class="stat-grid">
+      <article class="card stat-card" th:each="s : ${stats}">
+        <span th:text="${s.label}">Indicador</span>
+        <strong th:text="${s.value}">0</strong>
+      </article>
+    </div>
+
+    <div class="content-grid">
+      <article class="card panel">
+        <div class="section-heading">
+          <h2>Productos mas vendidos</h2>
+          <span class="muted">Segun detalle de pedidos</span>
+        </div>
+        <div class="chart-bars">
+          <div class="bar-row" th:each="p : ${topProductos}">
+            <span th:text="${p.nombre}">Producto</span>
+            <div class="bar-track">
+              <div class="bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div>
+            </div>
+            <strong th:text="${p.cantidad}">0</strong>
+          </div>
+          <p class="empty-state" th:if="${#lists.isEmpty(topProductos)}">Sin ventas registradas.</p>
+        </div>
+      </article>
+
+      <article class="card panel">
+        <div class="section-heading">
+          <h2>Alertas de stock</h2>
+          <span class="badge badge-warning">stock minimo</span>
+        </div>
+        <div class="alert-list">
+          <div class="alert-item" th:each="i : ${lowStock}">
+            <div>
+              <strong th:text="${i.nombre}">Insumo</strong>
+              <p class="muted" th:text="${#numbers.formatDecimal(i.stock,1,2)} + ' ' + ${i.medida.sigla} + ' disponibles'">0</p>
+            </div>
+            <span class="badge badge-warning" th:text="'Min ' + ${#numbers.formatDecimal(i.cantidadMinima,1,2)}">Min</span>
+          </div>
+          <p class="empty-state" th:if="${#lists.isEmpty(lowStock)}">No hay insumos bajo stock.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="content-grid">
+      <article class="card table-card">
+        <div class="panel section-heading"><h2>Compras recientes</h2></div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Estado</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr th:each="c : ${compras}">
+              <td th:text="${c.fecha}">2026-01-01</td>
+              <td th:text="${c.proveedor.nombre}">Proveedor</td>
+              <td><span class="badge badge-success" th:text="${c.estado}">Registrada</span></td>
+              <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="card table-card">
+        <div class="panel section-heading"><h2>Movimientos recientes</h2></div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Usuario</th></tr></thead>
+          <tbody>
+            <tr th:each="m : ${movimientos}">
+              <td th:text="${m.fecha}">2026-01-01</td>
+              <td><span class="badge"
+                        th:classappend="${m.tipoMovimiento.operacion == 'Entrada'} ? 'badge-success' : 'badge-danger'"
+                        th:text="${m.tipoMovimiento.descripcion}">Tipo</span></td>
+              <td th:text="${m.documento}">DOC</td>
+              <td th:text="${m.usuario.empleado != null ? m.usuario.empleado.nombre : m.usuario.username}">Usuario</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Usuarios</h2>
+      <p class="muted">Cuentas de acceso al sistema. Las cuentas con actividad se desactivan, no se eliminan.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaUsuarios" placeholder="Buscar por usuario..." autocomplete="off">
+    </div>
+    <a class="btn btn-secondary" th:href="@{/admin/usuarios/nuevo}"><i class="bi bi-plus-lg"></i> Nuevo usuario</a>
+  </div>
+
+  <div class="card table-card" id="tablaUsuarios" data-table-tools>
+    <table class="align-middle">
+      <thead><tr><th>ID</th><th>Usuario</th><th>Empleado</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="u : ${usuarios}">
+          <td th:text="'#' + ${u.idUsuario}">#1</td>
+          <td th:text="${u.username}">usuario</td>
+          <td th:text="${u.empleado != null ? u.empleado.nombre + ' ' + u.empleado.apellido : '-'}">Empleado</td>
+          <td th:text="${u.rol.nombre}">Rol</td>
+          <td>
+            <form th:action="@{/admin/usuarios/{id}/estado(id=${u.idUsuario})}" method="post" class="estado-form">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <label class="estado-switch"
+                     th:title="${u.username == #authentication.name} ? 'No puedes desactivar tu propia cuenta' : (${u.estado} ? 'Activo' : 'Inactivo')">
+                <input type="checkbox" th:checked="${u.estado}"
+                       th:disabled="${u.username == #authentication.name}"
+                       onchange="this.form.submit()">
+                <span class="estado-slider"></span>
+              </label>
+            </form>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" th:href="@{/admin/usuarios/{id}/editar(id=${u.idUsuario})}">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item text-danger" type="button"
+                          data-bs-toggle="modal" data-bs-target="#confirmarEliminar"
+                          th:attr="data-action=@{/admin/usuarios/{id}/eliminar(id=${u.idUsuario})},data-nombre=${u.username}">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(usuarios)}" data-empty>
+          <td colspan="6"><div class="empty-state">No hay usuarios registrados.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:replace="~{layout/fragments :: modalEliminar('usuario', 'Si tiene pedidos, compras o movimientos registrados, la operacion sera rechazada.')}"></div>
+</main>
+</body>
+</html>

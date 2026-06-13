@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2 th:text="${editId == null} ? 'Nuevo producto' : 'Editar producto'">Nuevo producto</h2>
+      <p class="muted">Los campos marcados son obligatorios. La validacion se ejecuta en el servidor.</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/productos}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form class="card form-panel" th:object="${productoForm}" method="post"
+        th:action="${editId == null} ? @{/admin/productos} : @{/admin/productos/{id}(id=${editId})}">
+    <div class="form-grid">
+      <label class="field">Codigo
+        <input type="text" th:field="*{codigo}" placeholder="PZ0001" maxlength="6"
+               th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}"></span>
+      </label>
+
+      <label class="field">Nombre
+        <input type="text" th:field="*{nombre}" placeholder="Diavola Pepperoni" maxlength="60"
+               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+      </label>
+
+      <label class="field">Precio (S/)
+        <input type="number" step="0.01" min="0.01" th:field="*{precio}" placeholder="49.90"
+               th:classappend="${#fields.hasErrors('precio')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}"></span>
+      </label>
+
+      <label class="field">Stock visible
+        <input type="number" min="0" th:field="*{stock}" placeholder="Vacio para preparados"
+               th:classappend="${#fields.hasErrors('stock')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}"></span>
+      </label>
+
+      <label class="field">Tamano
+        <select th:field="*{tamanio}">
+          <option value="">No aplica</option>
+          <option value="personal">personal</option>
+          <option value="mediano">mediano</option>
+          <option value="familiar">familiar</option>
+        </select>
+      </label>
+
+      <label class="field">Categoria
+        <select th:field="*{idCategoria}" th:classappend="${#fields.hasErrors('idCategoria')} ? 'is-invalid'">
+          <option value="">Seleccione...</option>
+          <option th:each="c : ${categorias}" th:value="${c.idCategoria}" th:text="${c.nombre}">Categoria</option>
+        </select>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></span>
+      </label>
+
+      <label class="field field-wide" style="grid-template-columns:auto 1fr; align-items:center; gap:10px">
+        <input type="checkbox" th:field="*{disponible}" style="width:auto">
+        <span>Disponible para venta</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/productos}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i>
+        <span th:text="${editId == null} ? 'Guardar producto' : 'Guardar cambios'">Guardar</span>
+      </button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

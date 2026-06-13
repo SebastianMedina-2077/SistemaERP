@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Compras</h2>
+      <p class="muted">Cada compra registrada genera una entrada de inventario automatica.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaCompras" placeholder="Buscar por proveedor..." autocomplete="off">
+    </div>
+  </div>
+  <div class="card table-card" id="tablaCompras" data-table-tools>
+    <table>
+      <thead><tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Usuario</th><th>Estado</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr th:each="c : ${compras}">
+          <td th:text="'#' + ${c.idCompra}">#1</td>
+          <td th:text="${c.fecha}">2026-01-01</td>
+          <td th:text="${c.proveedor.nombre}">Proveedor</td>
+          <td th:text="${c.usuario.empleado != null ? c.usuario.empleado.nombre : c.usuario.username}">Usuario</td>
+          <td><span class="badge badge-success" th:text="${c.estado}">Registrada</span></td>
+          <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(compras)}" data-empty>
+          <td colspan="6"><div class="empty-state">No hay compras registradas.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

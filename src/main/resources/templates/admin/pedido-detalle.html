@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+  <div class="stack">
+
+    <div class="toolbar">
+      <div class="page-head">
+        <h2 th:text="'Pedido #' + ${pedido.idPedido}">Pedido</h2>
+        <p class="muted" th:text="${#temporals.format(pedido.fecha, 'yyyy-MM-dd HH:mm')} + ' · ' + ${pedido.cliente.nombre}">fecha</p>
+      </div>
+      <a class="btn btn-ghost" th:href="@{/admin/pedidos}">Volver</a>
+    </div>
+
+    <article class="card panel">
+      <div class="section-heading">
+        <h2>Detalle</h2>
+        <span class="badge"
+              th:classappend="${pedido.estado.name() == 'ATENDIDO'} ? 'badge-success' : (${pedido.estado.name() == 'ANULADO'} ? 'badge-danger' : (${pedido.estado.name() == 'PREPARANDO'} ? 'badge-info' : 'badge-warning'))"
+              th:text="${#strings.capitalize(#strings.toLowerCase(pedido.estado))}">Estado</span>
+      </div>
+      <table>
+        <thead><tr><th>Producto</th><th>Cantidad</th><th>P. unitario</th><th>Descuento</th><th>Subtotal</th><th>Observacion</th></tr></thead>
+        <tbody>
+          <tr th:each="d : ${detalles}">
+            <td th:text="${d.producto.nombre}">Producto</td>
+            <td th:text="${d.cantidad}">1</td>
+            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.precioUnitario,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.descuento != null ? d.descuento : 0,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.subtotal,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td class="muted" th:text="${d.observacion} ?: '-'">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <div class="content-grid">
+      <article class="card panel" th:if="${boleta != null}">
+        <div class="section-heading"><h2 th:text="'Boleta B001-' + ${#strings.replace(#numbers.formatInteger(boleta.idBoleta,6),',','')}">Boleta</h2></div>
+        <div class="stat-grid">
+          <article class="card stat-card"><span>Subtotal</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.subtotal,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
+          <article class="card stat-card"><span>IGV</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.igv,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
+          <article class="card stat-card"><span>Total</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.total,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
+          <article class="card stat-card"><span>Metodo</span><strong th:text="${boleta.metodoPago.descripcion}">Efectivo</strong></article>
+        </div>
+      </article>
+
+      <article class="card panel" th:if="${pedido.estado.name() != 'ANULADO'}">
+        <div class="section-heading"><h2>Anular pedido</h2></div>
+        <form th:action="@{/admin/pedidos/{id}/anular(id=${pedido.idPedido})}" method="post" class="stack">
+          <label class="field">Motivo de anulacion
+            <textarea name="motivo" rows="3" maxlength="100" placeholder="Indique el motivo"></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-danger" type="submit">Anular y revertir stock</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card panel" th:if="${pedido.estado.name() == 'ANULADO'}">
+        <div class="section-heading"><h2>Anulacion</h2></div>
+        <p class="muted" th:text="${pedido.motivoAnulacion} ?: 'Pedido anulado.'">Motivo</p>
+      </article>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

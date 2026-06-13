@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Acceso</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/login.css}">
+</head>
+<body class="login-body">
+
+  <div class="login-bg">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+    <!-- Porcion de pizza -->
+    <svg class="float-ico ico-1" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+      <path d="M32 6 L54 52 Q32 60 10 52 Z"></path>
+      <path d="M13 45 Q32 51 51 45"></path>
+      <circle cx="27" cy="30" r="3"></circle>
+      <circle cx="38" cy="39" r="3"></circle>
+      <circle cx="33" cy="20" r="2.5"></circle>
+    </svg>
+    <!-- Lasagna en fuente -->
+    <svg class="float-ico ico-2" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+      <path d="M10 28 h44 v16 a6 6 0 0 1 -6 6 H16 a6 6 0 0 1 -6 -6 Z"></path>
+      <path d="M4 28 h56"></path>
+      <path d="M2 28 h8 M54 28 h8"></path>
+      <path d="M12 28 q10 -10 20 -10 t20 10"></path>
+      <path d="M16 37 h32 M16 43 h32"></path>
+    </svg>
+    <!-- Caja de pizza -->
+    <svg class="float-ico ico-3" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+      <rect x="10" y="26" width="44" height="28" rx="3"></rect>
+      <path d="M10 26 L18 12 H46 L54 26"></path>
+      <path d="M23 40 l9 -7 l9 7"></path>
+    </svg>
+  </div>
+
+  <main class="login-shell">
+    <img class="login-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
+
+    <section class="login-card">
+      <div class="login-head">
+        <h1>Mamma Tomato</h1>
+        <p>Sistema de ventas, cocina e inventario</p>
+      </div>
+
+      <div th:if="${param.error}" class="alert-soft alert-soft-danger">
+        <i class="bi bi-exclamation-octagon"></i> Usuario o contrasena incorrectos.
+      </div>
+      <div th:if="${param.logout}" class="alert-soft alert-soft-ok">
+        <i class="bi bi-check-circle"></i> Sesion cerrada correctamente.
+      </div>
+
+      <form th:action="@{/login}" method="post" class="needs-validation" novalidate>
+        <div class="form-floating mb-3">
+          <input id="username" name="username" type="text" class="form-control"
+                 placeholder="Usuario" autocomplete="username" required autofocus>
+          <label for="username"><i class="bi bi-person"></i> Usuario</label>
+          <div class="invalid-feedback">Ingresa tu usuario.</div>
+        </div>
+
+        <div class="form-floating mb-2">
+          <input id="password" name="password" type="password" class="form-control"
+                 placeholder="Contrasena" autocomplete="current-password" required>
+          <label for="password"><i class="bi bi-lock"></i> Contrasena</label>
+          <div class="invalid-feedback">Ingresa tu contrasena.</div>
+        </div>
+
+        <button class="btn-login" type="submit">
+          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesion
+        </button>
+      </form>
+    </section>
+
+    <p class="login-foot">Mamma Tomato &middot; Pizza Italiana</p>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+      const form = document.querySelector('.needs-validation');
+      form.addEventListener('submit', (event) => {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      });
+    })();
+  </script>
+</body>
+</html>

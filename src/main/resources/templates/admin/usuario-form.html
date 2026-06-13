@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2 th:text="${editId == null} ? 'Nuevo usuario' : 'Editar usuario'">Nuevo usuario</h2>
+      <p class="muted" th:text="${editId == null}
+            ? 'Cuenta de acceso al sistema. Vincula un empleado para mostrar su nombre.'
+            : 'Deja la contrasena vacia para conservar la actual.'">Ayuda</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/usuarios}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form class="card form-panel" th:object="${usuarioForm}" method="post"
+        th:action="${editId == null} ? @{/admin/usuarios} : @{/admin/usuarios/{id}(id=${editId})}">
+    <div class="form-grid">
+      <label class="field">Nombre de usuario
+        <input type="text" th:field="*{username}" placeholder="lramos" maxlength="10" autocomplete="off"
+               th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+      </label>
+
+      <label class="field">Contrasena
+        <input type="password" th:field="*{password}" autocomplete="new-password"
+               th:placeholder="${editId == null} ? 'Minimo 6 caracteres' : 'Vacia = no cambia'"
+               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+      </label>
+
+      <label class="field">Rol
+        <select th:field="*{idRol}" th:classappend="${#fields.hasErrors('idRol')} ? 'is-invalid'">
+          <option value="">Seleccione...</option>
+          <option th:each="r : ${roles}" th:value="${r.idRol}" th:text="${r.nombre}">Rol</option>
+        </select>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('idRol')}" th:errors="*{idRol}"></span>
+      </label>
+
+      <label class="field">Empleado vinculado
+        <select th:field="*{idEmpleado}">
+          <option value="">Sin vincular</option>
+          <option th:each="e : ${empleados}" th:value="${e.idEmpleado}"
+                  th:text="${e.nombre} + ' ' + ${e.apellido} + ' (' + ${e.cargo} + ')'">Empleado</option>
+        </select>
+      </label>
+
+      <label class="field" style="grid-template-columns:auto 1fr; align-items:center; gap:10px">
+        <input type="checkbox" th:field="*{estado}" style="width:auto">
+        <span>Cuenta activa</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/usuarios}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i>
+        <span th:text="${editId == null} ? 'Guardar usuario' : 'Guardar cambios'">Guardar</span>
+      </button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

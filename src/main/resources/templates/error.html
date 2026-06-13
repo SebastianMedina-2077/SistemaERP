@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mama Tomato | Error</title>
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/components.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px">
+  <div class="card" style="max-width:460px; text-align:center; padding:32px">
+    <div class="brand-mark" style="margin:0 auto 16px">MT</div>
+    <h2 th:text="${errorTitulo} ?: 'Algo salio mal'">Algo salio mal</h2>
+    <p class="muted" th:text="${errorDetalle} ?: (${status != null ? 'Error ' + status : 'No pudimos completar la operacion.'} + (${error != null ? ' - ' + error : ''}))">
+      Detalle del error
+    </p>
+    <div style="margin-top:20px">
+      <a class="btn btn-primary" th:href="@{/}">Volver al inicio</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

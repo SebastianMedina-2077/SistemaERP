@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2 th:text="${editId == null} ? 'Nueva promocion' : 'Editar promocion'">Nueva promocion</h2>
+      <p class="muted">El descuento se aplica automaticamente en el POS a los productos marcados.</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/promociones}"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form class="card form-panel" th:object="${promocionForm}" method="post"
+        th:action="${editId == null} ? @{/admin/promociones} : @{/admin/promociones/{id}(id=${editId})}">
+    <div class="form-grid">
+      <label class="field">Nombre
+        <input type="text" th:field="*{nombre}" placeholder="Pizza lunes" maxlength="25"
+               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+      </label>
+
+      <label class="field">Descripcion
+        <input type="text" th:field="*{descripcion}" placeholder="S/ 5 de descuento" maxlength="25"
+               th:classappend="${#fields.hasErrors('descripcion')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}"></span>
+      </label>
+
+      <label class="field">Tipo de descuento
+        <select th:field="*{tipoDescuento}" th:classappend="${#fields.hasErrors('tipoDescuento')} ? 'is-invalid'">
+          <option value="">Seleccione...</option>
+          <option value="Porcentaje">Porcentaje (%)</option>
+          <option value="Monto">Monto fijo (S/ por unidad)</option>
+        </select>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('tipoDescuento')}" th:errors="*{tipoDescuento}"></span>
+      </label>
+
+      <label class="field">Valor del descuento
+        <input type="number" step="0.01" min="0.01" th:field="*{valorDescuento}" placeholder="10"
+               th:classappend="${#fields.hasErrors('valorDescuento')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('valorDescuento')}" th:errors="*{valorDescuento}"></span>
+      </label>
+
+      <label class="field" style="grid-template-columns:auto 1fr; align-items:center; gap:10px">
+        <input type="checkbox" th:field="*{activa}" style="width:auto">
+        <span>Promocion activa</span>
+      </label>
+
+      <div class="field field-wide">
+        <span>Productos a los que aplica</span>
+        <div class="check-grid">
+          <label class="check-item" th:each="prod : ${productos}">
+            <input type="checkbox" th:field="*{productoIds}" th:value="${prod.idProducto}">
+            <span th:text="${prod.nombre} + (${prod.tamanio != null} ? ' (' + ${prod.tamanio.name()} + ')' : '')">Producto</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/promociones}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i>
+        <span th:text="${editId == null} ? 'Guardar promocion' : 'Guardar cambios'">Guardar</span>
+      </button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

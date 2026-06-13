@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+  <div class="stack">
+
+    <section>
+      <div class="page-head"><h2>Reportes de ventas</h2>
+        <p class="muted">Resumen desde pedidos, boletas y detalle de pedido.</p></div>
+      <div class="stat-grid">
+        <article class="card stat-card" th:each="s : ${salesStats}">
+          <span th:text="${s.label}">Indicador</span>
+          <strong th:text="${s.value}">0</strong>
+        </article>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <article class="card panel">
+        <div class="section-heading"><h2>Productos mas vendidos</h2><span class="muted">desde detalle_pedido</span></div>
+        <div class="chart-bars">
+          <div class="bar-row" th:each="p : ${topProductos}">
+            <span th:text="${p.nombre}">Producto</span>
+            <div class="bar-track"><div class="bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div></div>
+            <strong th:text="${p.cantidad}">0</strong>
+          </div>
+          <p class="empty-state" th:if="${#lists.isEmpty(topProductos)}">Sin ventas registradas.</p>
+        </div>
+      </article>
+
+      <article class="card table-card">
+        <div class="panel section-heading"><h2>Inventario por tipo</h2></div>
+        <table>
+          <thead><tr><th>Tipo</th><th>Operacion</th><th>Registros</th></tr></thead>
+          <tbody>
+            <tr th:each="t : ${movimientosPorTipo}">
+              <td th:text="${t.tipo}">Tipo</td>
+              <td><span class="badge" th:classappend="${t.operacion == 'Entrada'} ? 'badge-success' : 'badge-danger'" th:text="${t.operacion}">Op</span></td>
+              <td th:text="${t.registros}">0</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(movimientosPorTipo)}"><td colspan="3"><div class="empty-state">Sin movimientos.</div></td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+
+    <article class="card table-card">
+      <div class="panel section-heading"><h2>Reporte de compras</h2></div>
+      <table>
+        <thead><tr><th>Proveedor</th><th>Compras</th><th>Total</th><th>Ultima compra</th></tr></thead>
+        <tbody>
+          <tr th:each="c : ${comprasPorProveedor}">
+            <td th:text="${c.proveedor}">Proveedor</td>
+            <td th:text="${c.compras}">0</td>
+            <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td th:text="${c.ultimaCompra}">-</td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(comprasPorProveedor)}"><td colspan="4"><div class="empty-state">Sin compras.</div></td></tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card table-card">
+      <div class="panel section-heading"><h2>Pedidos anulados</h2><span class="muted">se conservan para auditoria</span></div>
+      <table>
+        <thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Motivo</th></tr></thead>
+        <tbody>
+          <tr th:each="p : ${anulados}" th:with="b=${boletas.get(p.idPedido)}">
+            <td th:text="'#' + ${p.idPedido}">#1</td>
+            <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">fecha</td>
+            <td th:text="${p.cliente.nombre}">Cliente</td>
+            <td th:text="${p.usuario.empleado != null ? p.usuario.empleado.nombre : p.usuario.username}">Cajero</td>
+            <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
+            <td class="muted" th:text="${p.motivoAnulacion} ?: '-'">-</td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(anulados)}"><td colspan="6"><div class="empty-state">No hay pedidos anulados.</div></td></tr>
+        </tbody>
+      </table>
+    </article>
+
+  </div>
+</main>
+</body>
+</html>

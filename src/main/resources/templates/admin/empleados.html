@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <div class="toolbar">
+    <div class="page-head">
+      <h2>Empleados</h2>
+      <p class="muted">Datos del personal interno.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaEmpleados" placeholder="Buscar por nombre..." autocomplete="off">
+    </div>
+    <a class="btn btn-secondary" th:href="@{/admin/empleados/nuevo}"><i class="bi bi-plus-lg"></i> Nuevo empleado</a>
+  </div>
+
+  <div class="card table-card" id="tablaEmpleados" data-table-tools>
+    <table class="align-middle">
+      <thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Telefono</th><th>Cargo</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="e : ${empleados}">
+          <td th:text="'#' + ${e.idEmpleado}">#1</td>
+          <td th:text="${e.nombre} + ' ' + ${e.apellido}">Nombre</td>
+          <td th:text="${e.dni}">00000000</td>
+          <td th:text="${e.telefono}">999999999</td>
+          <td th:text="${e.cargo}">Cargo</td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" th:href="@{/admin/empleados/{id}/editar(id=${e.idEmpleado})}">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item text-danger" type="button"
+                          data-bs-toggle="modal" data-bs-target="#confirmarEliminar"
+                          th:attr="data-action=@{/admin/empleados/{id}/eliminar(id=${e.idEmpleado})},data-nombre=${e.nombre + ' ' + e.apellido}">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(empleados)}" data-empty>
+          <td colspan="6"><div class="empty-state">No hay empleados registrados.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:replace="~{layout/fragments :: modalEliminar('empleado', 'Si tiene un usuario de sistema vinculado, la operacion sera rechazada.')}"></div>
+</main>
+</body>
+</html>
