@@ -7,7 +7,7 @@
   <div class="stack">
 
     <section>
-      <div class="page-head"><h2>Reportes de ventas</h2>
+      <div class="page-head">
         <p class="muted">Resumen desde pedidos, boletas y detalle de pedido.</p></div>
       <div class="stat-grid">
         <article class="card stat-card" th:each="s : ${salesStats}">
@@ -65,10 +65,10 @@
     <article class="card table-card">
       <div class="panel section-heading"><h2>Pedidos anulados</h2><span class="muted">se conservan para auditoria</span></div>
       <table>
-        <thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Motivo</th></tr></thead>
+        <thead><tr><th>N&deg;</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Motivo</th></tr></thead>
         <tbody>
-          <tr th:each="p : ${anulados}" th:with="b=${boletas.get(p.idPedido)}">
-            <td th:text="'#' + ${p.idPedido}">#1</td>
+          <tr th:each="p, pStat : ${anulados}" th:with="b=${boletas.get(p.idPedido)}">
+            <td th:text="${pStat.count}">1</td>
             <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">fecha</td>
             <td th:text="${p.cliente.nombre}">Cliente</td>
             <td th:text="${p.usuario.empleado != null ? p.usuario.empleado.nombre : p.usuario.username}">Cajero</td>

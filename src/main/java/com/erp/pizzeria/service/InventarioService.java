@@ -15,6 +15,7 @@ import com.erp.pizzeria.model.ProductoInsumo;
 import com.erp.pizzeria.model.TipoMovimiento;
 import com.erp.pizzeria.model.Usuario;
 import com.erp.pizzeria.model.enums.EstadoInsumo;
+import com.erp.pizzeria.util.CodigoUtil;
 import com.erp.pizzeria.repository.DetalleCompraRepository;
 import com.erp.pizzeria.repository.DetalleMovimientoRepository;
 import com.erp.pizzeria.repository.InsumoRepository;
@@ -99,18 +100,30 @@ public class InventarioService {
                 : insumoRepository.existsByCodigoIgnoreCaseAndIdInsumoNot(codigo, idExcluir);
     }
 
+    /**
+     * Genera el siguiente codigo de insumo (prefijo IN) de forma secuencial.
+     * El codigo es asignado por el backend; el cliente nunca lo define.
+     */
+    public String generarCodigoInsumo() {
+        String ultimo = insumoRepository.findTopByCodigoStartingWithOrderByCodigoDesc("IN")
+                .map(Insumo::getCodigo).orElse(null);
+        return CodigoUtil.siguiente("IN", ultimo);
+    }
+
     @Transactional
     public Insumo crearInsumo(InsumoFormDTO form) {
-        return guardarInsumo(new Insumo(), form);
+        Insumo insumo = new Insumo();
+        insumo.setCodigo(generarCodigoInsumo());
+        return guardarInsumo(insumo, form);
     }
 
     @Transactional
     public Insumo actualizarInsumo(Integer idInsumo, InsumoFormDTO form) {
+        // El codigo es inmutable: se conserva el del insumo existente.
         return guardarInsumo(getInsumo(idInsumo), form);
     }
 
     private Insumo guardarInsumo(Insumo insumo, InsumoFormDTO form) {
-        insumo.setCodigo(form.getCodigo().toUpperCase());
         insumo.setNombre(form.getNombre().trim());
         insumo.setPrecio(form.getPrecio());
         insumo.setStock(form.getStock());
