@@ -37,9 +37,12 @@ public class CatalogoController {
 
     @GetMapping("/productos/nuevo")
     public String nuevoProducto(Model model) {
+
         prepararFormulario(model, null);
         if (!model.containsAttribute("productoForm")) {
-            model.addAttribute("productoForm", new ProductoFormDTO());
+            ProductoFormDTO form = new ProductoFormDTO();
+            form.setCodigo(catalogService.generarCodigoProducto());
+            model.addAttribute("productoForm", form);
         }
         return "admin/producto-form";
     }
@@ -49,7 +52,7 @@ public class CatalogoController {
                                 BindingResult result,
                                 Model model,
                                 RedirectAttributes ra) {
-        validarCodigoUnico(form, null, result);
+        // El codigo lo asigna el backend (CatalogService); no se valida unicidad del cliente.
         if (result.hasErrors()) {
             prepararFormulario(model, null);
             return "admin/producto-form";
@@ -75,7 +78,7 @@ public class CatalogoController {
                                      BindingResult result,
                                      Model model,
                                      RedirectAttributes ra) {
-        validarCodigoUnico(form, id, result);
+        // El codigo es inmutable en edicion; no se valida ni se cambia.
         if (result.hasErrors()) {
             prepararFormulario(model, id);
             return "admin/producto-form";
@@ -200,11 +203,5 @@ public class CatalogoController {
         model.addAttribute("pageTitle", editId == null ? "Nuevo producto" : "Editar producto");
         model.addAttribute("categorias", catalogService.listCategorias());
         model.addAttribute("editId", editId);
-    }
-
-    private void validarCodigoUnico(ProductoFormDTO form, Integer editId, BindingResult result) {
-        if (!result.hasFieldErrors("codigo") && catalogService.codigoEnUso(form.getCodigo(), editId)) {
-            result.rejectValue("codigo", "duplicado", "Ya existe un producto con este codigo");
-        }
     }
 }

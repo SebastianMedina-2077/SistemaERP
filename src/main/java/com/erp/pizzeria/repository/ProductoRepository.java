@@ -11,6 +11,7 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     List<Producto> findByCategoria_IdCategoria(Integer idCategoria);
     List<Producto> findByDisponibleTrueAndCategoria_IdCategoria(Integer idCategoria);
     Optional<Producto> findByCodigo(String codigo);
+    Optional<Producto> findTopByCodigoStartingWithOrderByCodigoDesc(String prefijo);
     boolean existsByCodigoIgnoreCase(String codigo);
     boolean existsByCodigoIgnoreCaseAndIdProductoNot(String codigo, Integer idProducto);
 }

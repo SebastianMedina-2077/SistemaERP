@@ -7,7 +7,6 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <h2 th:text="${editId == null} ? 'Nuevo producto' : 'Editar producto'">Nuevo producto</h2>
       <p class="muted">Los campos marcados son obligatorios. La validacion se ejecuta en el servidor.</p>
     </div>
     <a class="btn btn-ghost" th:href="@{/admin/productos}"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -17,9 +16,9 @@
         th:action="${editId == null} ? @{/admin/productos} : @{/admin/productos/{id}(id=${editId})}">
     <div class="form-grid">
       <label class="field">Codigo
-        <input type="text" th:field="*{codigo}" placeholder="PZ0001" maxlength="6"
-               th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
-        <span class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}"></span>
+        <input type="text" th:field="*{codigo}" maxlength="6" readonly
+               class="readonly-field" placeholder="Se asigna automaticamente">
+        <small class="muted">Generado automaticamente por el sistema (no editable).</small>
       </label>
 
       <label class="field">Nombre

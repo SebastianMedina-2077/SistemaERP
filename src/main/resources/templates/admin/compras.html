@@ -6,7 +6,6 @@
 <main layout:fragment="content">
   <div class="toolbar">
     <div class="page-head">
-      <h2>Compras</h2>
       <p class="muted">Cada compra registrada genera una entrada de inventario automatica.</p>
     </div>
     <div class="search-box">
@@ -16,10 +15,10 @@
   </div>
   <div class="card table-card" id="tablaCompras" data-table-tools>
     <table>
-      <thead><tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Usuario</th><th>Estado</th><th>Total</th></tr></thead>
+      <thead><tr><th>N&deg;</th><th>Fecha</th><th>Proveedor</th><th>Usuario</th><th>Estado</th><th>Total</th></tr></thead>
       <tbody>
-        <tr th:each="c : ${compras}">
-          <td th:text="'#' + ${c.idCompra}">#1</td>
+        <tr th:each="c, cStat : ${compras}">
+          <td th:text="${cStat.count}">1</td>
           <td th:text="${c.fecha}">2026-01-01</td>
           <td th:text="${c.proveedor.nombre}">Proveedor</td>
           <td th:text="${c.usuario.empleado != null ? c.usuario.empleado.nombre : c.usuario.username}">Usuario</td>

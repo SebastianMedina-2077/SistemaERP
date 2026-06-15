@@ -6,7 +6,6 @@
 <main layout:fragment="content">
   <div class="toolbar">
     <div class="page-head">
-      <h2>Movimientos</h2>
       <p class="muted">Compras y ventas generan movimientos automaticos; mermas y ajustes son manuales.</p>
     </div>
     <div class="search-box">
@@ -16,10 +15,10 @@
   </div>
   <div class="card table-card" id="tablaMovimientos" data-table-tools>
     <table>
-      <thead><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Operacion</th><th>Documento</th><th>Glosa</th><th>Usuario</th></tr></thead>
+      <thead><tr><th>N&deg;</th><th>Fecha</th><th>Tipo</th><th>Operacion</th><th>Documento</th><th>Glosa</th><th>Usuario</th></tr></thead>
       <tbody>
-        <tr th:each="m : ${movimientos}">
-          <td th:text="'#' + ${m.idMovimiento}">#1</td>
+        <tr th:each="m, mStat : ${movimientos}">
+          <td th:text="${mStat.count}">1</td>
           <td th:text="${m.fecha}">2026-01-01</td>
           <td th:text="${m.tipoMovimiento.descripcion}">Compra</td>
           <td>

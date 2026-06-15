@@ -10,7 +10,6 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <h2>Usuarios</h2>
       <p class="muted">Cuentas de acceso al sistema. Las cuentas con actividad se desactivan, no se eliminan.</p>
     </div>
     <div class="search-box">
@@ -22,10 +21,10 @@
 
   <div class="card table-card" id="tablaUsuarios" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>ID</th><th>Usuario</th><th>Empleado</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr><th>N&deg;</th><th>Usuario</th><th>Empleado</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
       <tbody>
-        <tr th:each="u : ${usuarios}">
-          <td th:text="'#' + ${u.idUsuario}">#1</td>
+        <tr th:each="u, uStat : ${usuarios}">
+          <td th:text="${uStat.count}">1</td>
           <td th:text="${u.username}">usuario</td>
           <td th:text="${u.empleado != null ? u.empleado.nombre + ' ' + u.empleado.apellido : '-'}">Empleado</td>
           <td th:text="${u.rol.nombre}">Rol</td>
