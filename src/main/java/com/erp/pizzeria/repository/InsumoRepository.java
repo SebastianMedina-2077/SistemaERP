@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface InsumoRepository extends JpaRepository<Insumo, Integer> {
     List<Insumo> findByEstado(EstadoInsumo estado);
     Optional<Insumo> findByCodigo(String codigo);
+    Optional<Insumo> findTopByCodigoStartingWithOrderByCodigoDesc(String prefijo);
     boolean existsByCodigoIgnoreCase(String codigo);
     boolean existsByCodigoIgnoreCaseAndIdInsumoNot(String codigo, Integer idInsumo);
 }

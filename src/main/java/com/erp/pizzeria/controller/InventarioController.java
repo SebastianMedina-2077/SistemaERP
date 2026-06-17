@@ -40,7 +40,9 @@ public class InventarioController {
     public String nuevoInsumo(Model model) {
         prepararFormularioInsumo(model, null);
         if (!model.containsAttribute("insumoForm")) {
-            model.addAttribute("insumoForm", new InsumoFormDTO());
+            InsumoFormDTO form = new InsumoFormDTO();
+            form.setCodigo(inventarioService.generarCodigoInsumo());
+            model.addAttribute("insumoForm", form);
         }
         return "admin/insumo-form";
     }
@@ -50,7 +52,7 @@ public class InventarioController {
                               BindingResult result,
                               Model model,
                               RedirectAttributes ra) {
-        validarCodigoUnico(form, null, result);
+        // El codigo lo asigna el backend (InventarioService); no se valida unicidad del cliente.
         if (result.hasErrors()) {
             prepararFormularioInsumo(model, null);
             return "admin/insumo-form";
@@ -76,7 +78,7 @@ public class InventarioController {
                                    BindingResult result,
                                    Model model,
                                    RedirectAttributes ra) {
-        validarCodigoUnico(form, id, result);
+        // El codigo es inmutable en edicion; no se valida ni se cambia.
         if (result.hasErrors()) {
             prepararFormularioInsumo(model, id);
             return "admin/insumo-form";
@@ -104,12 +106,6 @@ public class InventarioController {
         model.addAttribute("pageTitle", editId == null ? "Nuevo insumo" : "Editar insumo");
         model.addAttribute("medidas", inventarioService.listMedidas());
         model.addAttribute("editId", editId);
-    }
-
-    private void validarCodigoUnico(InsumoFormDTO form, Integer editId, BindingResult result) {
-        if (!result.hasFieldErrors("codigo") && inventarioService.codigoInsumoEnUso(form.getCodigo(), editId)) {
-            result.rejectValue("codigo", "duplicado", "Ya existe un insumo con este codigo");
-        }
     }
 
     @GetMapping("/compras")
