@@ -10,7 +10,6 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <h2>Empleados</h2>
       <p class="muted">Datos del personal interno.</p>
     </div>
     <div class="search-box">
@@ -22,10 +21,10 @@
 
   <div class="card table-card" id="tablaEmpleados" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Telefono</th><th>Cargo</th><th></th></tr></thead>
+      <thead><tr><th>N&deg;</th><th>Nombre</th><th>DNI</th><th>Telefono</th><th>Cargo</th><th></th></tr></thead>
       <tbody>
-        <tr th:each="e : ${empleados}">
-          <td th:text="'#' + ${e.idEmpleado}">#1</td>
+        <tr th:each="e, eStat : ${empleados}">
+          <td th:text="${eStat.count}">1</td>
           <td th:text="${e.nombre} + ' ' + ${e.apellido}">Nombre</td>
           <td th:text="${e.dni}">00000000</td>
           <td th:text="${e.telefono}">999999999</td>

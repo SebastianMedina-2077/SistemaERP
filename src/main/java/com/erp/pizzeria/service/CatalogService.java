@@ -19,6 +19,7 @@ import com.erp.pizzeria.repository.ProductoInsumoRepository;
 import com.erp.pizzeria.repository.ProductoRepository;
 import com.erp.pizzeria.repository.PromocionProductoRepository;
 import com.erp.pizzeria.repository.PromocionRepository;
+import com.erp.pizzeria.util.CodigoUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,18 +105,30 @@ public class CatalogService {
                 : productoRepository.existsByCodigoIgnoreCaseAndIdProductoNot(codigo, idExcluir);
     }
 
+    /**
+     * Genera el siguiente codigo de producto (prefijo PZ) de forma secuencial.
+     * El codigo es asignado por el backend; el cliente nunca lo define.
+     */
+    public String generarCodigoProducto() {
+        String ultimo = productoRepository.findTopByCodigoStartingWithOrderByCodigoDesc("PZ")
+                .map(Producto::getCodigo).orElse(null);
+        return CodigoUtil.siguiente("PZ", ultimo);
+    }
+
     @Transactional
     public Producto crearProducto(ProductoFormDTO form) {
-        return guardarProducto(new Producto(), form);
+        Producto producto = new Producto();
+        producto.setCodigo(generarCodigoProducto());
+        return guardarProducto(producto, form);
     }
 
     @Transactional
     public Producto actualizarProducto(Integer idProducto, ProductoFormDTO form) {
+        // El codigo es inmutable: se conserva el del producto existente.
         return guardarProducto(getProducto(idProducto), form);
     }
 
     private Producto guardarProducto(Producto producto, ProductoFormDTO form) {
-        producto.setCodigo(form.getCodigo().toUpperCase());
         producto.setNombre(form.getNombre().trim());
         producto.setPrecio(form.getPrecio());
         producto.setStock(form.getStock());

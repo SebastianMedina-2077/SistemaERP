@@ -7,7 +7,6 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <h2 th:text="${editId == null} ? 'Nuevo usuario' : 'Editar usuario'">Nuevo usuario</h2>
       <p class="muted" th:text="${editId == null}
             ? 'Cuenta de acceso al sistema. Vincula un empleado para mostrar su nombre.'
             : 'Deja la contrasena vacia para conservar la actual.'">Ayuda</p>
@@ -15,7 +14,8 @@
     <a class="btn btn-ghost" th:href="@{/admin/usuarios}"><i class="bi bi-arrow-left"></i> Volver</a>
   </div>
 
-  <form class="card form-panel" th:object="${usuarioForm}" method="post"
+  <form class="card form-panel" id="usuarioForm" th:object="${usuarioForm}" method="post"
+        th:data-nuevo="${editId == null}"
         th:action="${editId == null} ? @{/admin/usuarios} : @{/admin/usuarios/{id}(id=${editId})}">
     <div class="form-grid">
       <label class="field">Nombre de usuario
@@ -32,7 +32,7 @@
       </label>
 
       <label class="field">Rol
-        <select th:field="*{idRol}" th:classappend="${#fields.hasErrors('idRol')} ? 'is-invalid'">
+        <select id="rolSelect" th:field="*{idRol}" th:classappend="${#fields.hasErrors('idRol')} ? 'is-invalid'">
           <option value="">Seleccione...</option>
           <option th:each="r : ${roles}" th:value="${r.idRol}" th:text="${r.nombre}">Rol</option>
         </select>
@@ -61,6 +61,29 @@
       </button>
     </div>
   </form>
+
+  <!-- Cambio 6: confirmacion de identidad al crear un Administrador -->
+  <div id="confirmAdminModal" class="lock-overlay hidden" aria-hidden="true">
+    <div class="lock-modal">
+      <div class="lock-avatar" style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)">
+        <i class="bi bi-shield-lock"></i>
+      </div>
+      <h3 class="lock-title">Crear Administrador</h3>
+      <p class="lock-subtitle">Estas a punto de crear un usuario con permisos de
+        <strong>Administrador</strong>. Confirma tu identidad para continuar.</p>
+      <input type="password" id="adminConfirmPassword" class="lock-input"
+             placeholder="Tu contrasena actual" autocomplete="current-password">
+      <p id="adminConfirmError" class="lock-error hidden">Contrasena incorrecta.</p>
+      <div class="lock-actions">
+        <button type="button" class="lock-btn secondary" id="adminConfirmCancel">Cancelar</button>
+        <button type="button" class="lock-btn" id="adminConfirmBtn">Confirmar y crear</button>
+      </div>
+    </div>
+  </div>
 </main>
+
+<th:block layout:fragment="scripts">
+  <script th:src="@{/js/usuario-admin-guard.js}"></script>
+</th:block>
 </body>
 </html>

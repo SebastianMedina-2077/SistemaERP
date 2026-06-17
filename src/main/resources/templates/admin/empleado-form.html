@@ -7,7 +7,6 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <h2 th:text="${editId == null} ? 'Nuevo empleado' : 'Editar empleado'">Nuevo empleado</h2>
       <p class="muted">Datos del personal interno. El DNI debe ser unico.</p>
     </div>
     <a class="btn btn-ghost" th:href="@{/admin/empleados}"><i class="bi bi-arrow-left"></i> Volver</a>
