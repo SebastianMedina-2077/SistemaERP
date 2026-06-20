@@ -24,10 +24,10 @@ INSERT INTO `empleado` (`id_empleado`, `nombre`, `apellido`, `dni`, `telefono`, 
   (3, 'Rosa',  'Vega',  '70234511', '965214783', 'Cocina');
 
 -- ---- Usuarios (password BCrypt) ------------------------------------
-INSERT INTO `usuario` (`id_usuario`, `username`, `password`, `estado`, `id_rol`, `id_empleado`) VALUES
-  (1, 'admin',  '$2a$10$bvPfaGRFA8sLyulWsWQBf.4ZW4HFNekKTQICG/gzYw35HVcraEJPC', 1, 1, 1),
-  (2, 'cajero', '$2a$10$v2Gy1f/fkwyWtIzzPSeFEumyO1CjJveWNrkAgf83yfllPiuozKa4O', 1, 2, 2),
-  (3, 'cocina', '$2a$10$pm8rF5t7SJjE14mPoso6xO0GlhB4OmzILmnAlCi2lqL5D8B4wGqGe', 1, 3, 3);
+INSERT INTO `usuario` (`id_usuario`, `username`, `password`, `estado`, `es_admin_supremo`, `id_rol`, `id_empleado`) VALUES
+  (1, 'admin',  '$2a$10$bvPfaGRFA8sLyulWsWQBf.4ZW4HFNekKTQICG/gzYw35HVcraEJPC', 1, 1, 1, 1),
+  (2, 'cajero', '$2a$10$v2Gy1f/fkwyWtIzzPSeFEumyO1CjJveWNrkAgf83yfllPiuozKa4O', 1, 0, 2, 2),
+  (3, 'cocina', '$2a$10$pm8rF5t7SJjE14mPoso6xO0GlhB4OmzILmnAlCi2lqL5D8B4wGqGe', 1, 0, 3, 3);
 
 -- ---- Clientes -------------------------------------------------------
 INSERT INTO `cliente` (`id_cliente`, `nombre`, `telefono`) VALUES

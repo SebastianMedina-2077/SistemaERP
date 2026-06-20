@@ -13,6 +13,7 @@ import com.erp.pizzeria.repository.DetalleCompraRepository;
 import com.erp.pizzeria.repository.InsumoRepository;
 import com.erp.pizzeria.repository.ProveedorRepository;
 import com.erp.pizzeria.repository.UsuarioRepository;
+import com.erp.pizzeria.audit.Audit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +55,7 @@ public class CompraService {
         return compraRepository.findAll();
     }
 
+    @Audit(accion = "REGISTRAR", entidad = "Compra")
     @Transactional
     public Compra registrarCompra(CompraDTO dto, Integer idUsuario) {
         Proveedor proveedor = proveedorRepository.findById(dto.getIdProveedor())

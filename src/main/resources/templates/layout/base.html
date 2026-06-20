@@ -60,6 +60,7 @@
       <div class="nav-group">
         <p class="nav-group-label">Analisis</p>
         <a th:href="@{/admin/reportes}" class="nav-item" th:classappend="${active == 'reportes'} ? 'active'"><i class="bi bi-bar-chart"></i> Reportes</a>
+        <a th:href="@{/admin/auditoria}" class="nav-item" th:classappend="${active == 'auditoria'} ? 'active'"><i class="bi bi-shield-check"></i> Auditoria</a>
       </div>
     </nav>
 
@@ -81,6 +82,12 @@
         </label>
       </div>
     </div>
+
+    <form class="sidebar-salir" th:action="@{/logout}" method="post">
+      <button type="submit" class="btn-salir-sidebar">
+        <i class="bi bi-box-arrow-right"></i> Salir del sistema
+      </button>
+    </form>
   </aside>
 
   <div class="main-area">
@@ -96,9 +103,9 @@
           <strong th:text="${currentUser != null ? currentUser.nombre : 'Usuario'}">Usuario</strong>
           <span th:text="${currentUser != null ? currentUser.rol : ''}">Rol</span>
         </div>
-        <form class="logout-form" th:action="@{/logout}" method="post">
-          <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
-        </form>
+        <button type="button" class="comic-btn-cerrar-dia" id="btnCerrarDia">
+          <i class="bi bi-box-arrow-in-up"></i> Cerrar dia
+        </button>
       </div>
     </header>
 
@@ -123,9 +130,34 @@
   </div>
 </div>
 
+<!-- Cerrar Dia: confirmacion con resumen del dia -->
+<div class="modal fade" id="modalCierreDia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Cerrar dia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="muted">Estas a punto de cerrar el dia operativo. Esta accion consolidara las ventas
+          y movimientos de inventario de la fecha de hoy.</p>
+        <div id="resumenCierreDia" class="resumen-cierre"></div>
+        <p id="cierreMensaje" class="cierre-mensaje hidden"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarCierre">
+          <i class="bi bi-check-lg"></i> Confirmar cierre
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/table-tools.js}"></script>
 <script th:src="@{/js/admin-session.js}"></script>
+<script th:src="@{/js/cierre-dia.js}"></script>
 <th:block layout:fragment="scripts"></th:block>
 </body>
 </html>

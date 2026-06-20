@@ -42,10 +42,16 @@
         <span class="invalid-feedback" th:if="${#fields.hasErrors('valorDescuento')}" th:errors="*{valorDescuento}"></span>
       </label>
 
-      <label class="field" style="grid-template-columns:auto 1fr; align-items:center; gap:10px">
-        <input type="checkbox" th:field="*{activa}" style="width:auto">
-        <span>Promocion activa</span>
-      </label>
+      <div class="field">
+        <span>Estado</span>
+        <div class="switch-row">
+          <label class="estado-switch">
+            <input type="checkbox" th:field="*{activa}">
+            <span class="estado-slider"></span>
+          </label>
+          <span class="switch-text">Promocion activa</span>
+        </div>
+      </div>
 
       <div class="field field-wide">
         <span>Productos a los que aplica</span>

@@ -10,18 +10,72 @@
 
   <div class="toolbar">
     <div class="page-head">
-      <p class="muted">Registro de pedidos generados por caja y sus estados operativos.</p>
+      <p class="muted">Filtra cada columna directamente en su encabezado.</p>
     </div>
-    <div class="search-box">
-      <i class="bi bi-search"></i>
-      <input type="search" data-search-for="tablaPedidos" placeholder="Buscar por cliente..." autocomplete="off">
-    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/pedidos}" data-limpiar-filtros>
+      <i class="bi bi-trash"></i> Limpiar filtros
+    </a>
   </div>
 
-  <div class="card table-card" id="tablaPedidos" data-table-tools>
-    <table class="align-middle">
+  <div class="card table-card">
+    <table class="align-middle" data-filtros-pedidos data-base-url="/admin/pedidos">
       <thead>
-        <tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Telefono</th><th>Cajero</th><th>Estado</th><th>Subtotal</th><th>Total</th><th></th></tr>
+        <tr>
+          <th>ID</th>
+          <th class="th-filtrable">
+            <span class="th-label">Fecha</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por fecha"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <input type="date" class="form-control form-control-sm" data-filtro="fecha"
+                     th:value="${filtroFecha}" aria-label="Fecha">
+            </div>
+          </th>
+          <th class="th-filtrable">
+            <span class="th-label">Cliente</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por cliente"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <input type="search" class="form-control form-control-sm" data-filtro="cliente"
+                     th:value="${filtroCliente}" placeholder="Cliente" autocomplete="off">
+            </div>
+          </th>
+          <th>Telefono</th>
+          <th class="th-filtrable">
+            <span class="th-label">Cajero</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por cajero"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <select class="form-select form-select-sm" data-filtro="cajero">
+                <option value="">Todos</option>
+                <option th:each="c : ${cajeros}" th:value="${c.id}" th:text="${c.nombre}"
+                        th:selected="${filtroCajero != null and c.id == filtroCajero}">Cajero</option>
+              </select>
+            </div>
+          </th>
+          <th class="th-filtrable">
+            <span class="th-label">Estado</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por estado"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <select class="form-select form-select-sm" data-filtro="estado">
+                <option value="">Todos</option>
+                <option th:each="e : ${estados}" th:value="${e.name()}"
+                        th:text="${#strings.capitalize(#strings.toLowerCase(e.name()))}"
+                        th:selected="${e.name() == filtroEstado}">Estado</option>
+              </select>
+            </div>
+          </th>
+          <th>Subtotal</th>
+          <th class="th-filtrable">
+            <span class="th-label">Total</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por total"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <select class="form-select form-select-sm" data-filtro="total">
+                <option value="">Todos</option>
+                <option th:each="r : ${rangosTotal}" th:value="${r.key}" th:text="${r.value}"
+                        th:selected="${r.key == filtroTotal}">Rango</option>
+              </select>
+            </div>
+          </th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         <tr th:each="p : ${pedidos}" th:with="b=${boletas.get(p.idPedido)},estado=${p.estado.name()}">
@@ -73,11 +127,13 @@
           </td>
         </tr>
         <tr th:if="${#lists.isEmpty(pedidos)}" data-empty>
-          <td colspan="9"><div class="empty-state">No hay pedidos registrados.</div></td>
+          <td colspan="9"><div class="empty-state">No hay pedidos que coincidan con el filtro.</div></td>
         </tr>
       </tbody>
     </table>
   </div>
+
+  <div th:replace="~{layout/fragments :: pager(${page}, ${baseUrl}, ${query})}"></div>
 
   <div class="modal fade" id="anularPedido" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -112,5 +168,8 @@
     });
   </script>
 </main>
+<th:block layout:fragment="scripts">
+  <script th:src="@{/js/pedidos-filtros.js}"></script>
+</th:block>
 </body>
 </html>
