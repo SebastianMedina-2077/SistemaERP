@@ -16,6 +16,7 @@ import com.erp.pizzeria.model.TipoMovimiento;
 import com.erp.pizzeria.model.Usuario;
 import com.erp.pizzeria.model.enums.EstadoInsumo;
 import com.erp.pizzeria.util.CodigoUtil;
+import com.erp.pizzeria.audit.Audit;
 import com.erp.pizzeria.repository.DetalleCompraRepository;
 import com.erp.pizzeria.repository.DetalleMovimientoRepository;
 import com.erp.pizzeria.repository.InsumoRepository;
@@ -23,6 +24,8 @@ import com.erp.pizzeria.repository.MedidaRepository;
 import com.erp.pizzeria.repository.MovimientoRepository;
 import com.erp.pizzeria.repository.ProductoInsumoRepository;
 import com.erp.pizzeria.repository.TipoMovimientoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,6 +95,18 @@ public class InventarioService {
         return movimientoRepository.findAll();
     }
 
+    public List<TipoMovimiento> listTiposMovimiento() {
+        return tipoMovimientoRepository.findAll();
+    }
+
+    public Page<Movimiento> buscarMovimientos(Integer idTipo, String q, Pageable pageable) {
+        return movimientoRepository.buscar(idTipo, q, pageable);
+    }
+
+    public Page<DetalleMovimiento> buscarKardex(String q, Pageable pageable) {
+        return detalleMovimientoRepository.buscar(q, pageable);
+    }
+
     // ---- CRUD de insumos --------------------------------------------
 
     public boolean codigoInsumoEnUso(String codigo, Integer idExcluir) {
@@ -110,6 +125,7 @@ public class InventarioService {
         return CodigoUtil.siguiente("IN", ultimo);
     }
 
+    @Audit(accion = "CREAR", entidad = "Insumo")
     @Transactional
     public Insumo crearInsumo(InsumoFormDTO form) {
         Insumo insumo = new Insumo();
@@ -117,6 +133,7 @@ public class InventarioService {
         return guardarInsumo(insumo, form);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Insumo")
     @Transactional
     public Insumo actualizarInsumo(Integer idInsumo, InsumoFormDTO form) {
         // El codigo es inmutable: se conserva el del insumo existente.
@@ -135,6 +152,7 @@ public class InventarioService {
         return insumoRepository.save(insumo);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Insumo")
     @Transactional
     public void eliminarInsumo(Integer idInsumo) {
         Insumo insumo = getInsumo(idInsumo);

@@ -21,7 +21,7 @@
 
   <div class="card table-card" id="tablaPromociones" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>Nombre</th><th>Descripcion</th><th>Tipo</th><th>Valor</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr><th data-filter="input">Nombre</th><th>Descripcion</th><th data-filter="select">Tipo</th><th>Valor</th><th data-filter="select">Estado</th><th></th></tr></thead>
       <tbody>
         <tr th:each="p : ${promociones}">
           <td th:text="${p.nombre}">Promo</td>

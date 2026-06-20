@@ -8,17 +8,27 @@
     <div class="page-head">
       <p class="muted">Compras y ventas generan movimientos automaticos; mermas y ajustes son manuales.</p>
     </div>
-    <div class="search-box">
-      <i class="bi bi-search"></i>
-      <input type="search" data-search-for="tablaMovimientos" placeholder="Buscar..." autocomplete="off">
-    </div>
+    <form class="d-flex gap-2 flex-wrap align-items-center" method="get" th:action="@{/admin/movimientos}">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" th:value="${filtroQ}" placeholder="Buscar por documento o glosa..." autocomplete="off">
+      </div>
+      <select class="form-select" name="tipo" style="max-width: 12rem;">
+        <option value="">Todos los tipos</option>
+        <option th:each="t : ${tipos}" th:value="${t.idTipoMovimiento}"
+                th:text="${t.descripcion}"
+                th:selected="${filtroTipo != null and t.idTipoMovimiento == filtroTipo}">Tipo</option>
+      </select>
+      <button class="btn btn-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+      <a class="btn btn-ghost" th:href="@{/admin/movimientos}">Limpiar</a>
+    </form>
   </div>
-  <div class="card table-card" id="tablaMovimientos" data-table-tools>
+  <div class="card table-card">
     <table>
       <thead><tr><th>N&deg;</th><th>Fecha</th><th>Tipo</th><th>Operacion</th><th>Documento</th><th>Glosa</th><th>Usuario</th></tr></thead>
       <tbody>
         <tr th:each="m, mStat : ${movimientos}">
-          <td th:text="${mStat.count}">1</td>
+          <td th:text="${page.number * page.size + mStat.count}">1</td>
           <td th:text="${m.fecha}">2026-01-01</td>
           <td th:text="${m.tipoMovimiento.descripcion}">Compra</td>
           <td>
@@ -30,11 +40,13 @@
           <td th:text="${m.usuario.empleado != null ? m.usuario.empleado.nombre : m.usuario.username}">Usuario</td>
         </tr>
         <tr th:if="${#lists.isEmpty(movimientos)}" data-empty>
-          <td colspan="7"><div class="empty-state">No hay movimientos registrados.</div></td>
+          <td colspan="7"><div class="empty-state">No hay movimientos que coincidan con el filtro.</div></td>
         </tr>
       </tbody>
     </table>
   </div>
+
+  <div th:replace="~{layout/fragments :: pager(${page}, ${baseUrl}, ${query})}"></div>
 </main>
 </body>
 </html>

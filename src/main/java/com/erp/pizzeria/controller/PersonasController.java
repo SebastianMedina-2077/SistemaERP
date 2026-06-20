@@ -142,8 +142,12 @@ public class PersonasController {
     }
 
     @GetMapping("/usuarios/{id}/editar")
-    public String editarUsuario(@PathVariable Integer id, Model model) {
+    public String editarUsuario(@PathVariable Integer id, Model model, RedirectAttributes ra) {
         Usuario usuario = personaService.getUsuario(id);
+        if (Boolean.TRUE.equals(usuario.getEsAdminSupremo())) {
+            ra.addFlashAttribute("flashError", "El administrador supremo no puede ser modificado.");
+            return "redirect:/admin/usuarios";
+        }
         prepararFormularioUsuario(model, id);
         if (!model.containsAttribute("usuarioForm")) {
             model.addAttribute("usuarioForm", UsuarioFormDTO.from(usuario));
@@ -157,6 +161,10 @@ public class PersonasController {
                                     BindingResult result,
                                     Model model,
                                     RedirectAttributes ra) {
+        if (Boolean.TRUE.equals(personaService.getUsuario(id).getEsAdminSupremo())) {
+            ra.addFlashAttribute("flashError", "El administrador supremo no puede ser modificado.");
+            return "redirect:/admin/usuarios";
+        }
         validarUsername(form, id, result);
         validarPassword(form, false, result);
         if (result.hasErrors()) {
@@ -173,6 +181,10 @@ public class PersonasController {
                                        Authentication authentication,
                                        RedirectAttributes ra) {
         Usuario usuario = personaService.getUsuario(id);
+        if (Boolean.TRUE.equals(usuario.getEsAdminSupremo())) {
+            ra.addFlashAttribute("flashError", "El administrador supremo no puede ser modificado.");
+            return "redirect:/admin/usuarios";
+        }
         if (usuario.getUsername().equals(authentication.getName())) {
             ra.addFlashAttribute("flashError", "No puedes desactivar tu propia cuenta.");
             return "redirect:/admin/usuarios";

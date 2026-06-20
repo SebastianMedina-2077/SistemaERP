@@ -22,7 +22,7 @@
   <div class="card table-card" id="tablaProductos" data-table-tools>
     <table class="align-middle">
       <thead>
-        <tr><th>Codigo</th><th>Nombre</th><th>Categoria</th><th>Tamano</th><th>Precio</th><th>Stock visible</th><th>Disponible</th><th></th></tr>
+        <tr><th data-filter="input">Codigo</th><th data-filter="input">Nombre</th><th data-filter="select">Categoria</th><th data-filter="select">Tamano</th><th data-filter="range">Precio</th><th>Stock visible</th><th data-filter="select">Disponible</th><th></th></tr>
       </thead>
       <tbody>
         <tr th:each="p : ${productos}">

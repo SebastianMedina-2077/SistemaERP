@@ -17,6 +17,7 @@ import com.erp.pizzeria.repository.MovimientoRepository;
 import com.erp.pizzeria.repository.PedidoRepository;
 import com.erp.pizzeria.repository.RolRepository;
 import com.erp.pizzeria.repository.UsuarioRepository;
+import com.erp.pizzeria.audit.Audit;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +91,7 @@ public class PersonaService {
                 : proveedorRepository.existsByRucAndIdProveedorNot(ruc, idExcluir);
     }
 
+    @Audit(accion = "CREAR", entidad = "Proveedor")
     @Transactional
     public Proveedor crearProveedor(ProveedorFormDTO form) {
         Proveedor proveedor = new Proveedor();
@@ -97,6 +99,7 @@ public class PersonaService {
         return proveedorRepository.save(proveedor);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Proveedor")
     @Transactional
     public Proveedor actualizarProveedor(Integer idProveedor, ProveedorFormDTO form) {
         Proveedor proveedor = getProveedor(idProveedor);
@@ -117,6 +120,7 @@ public class PersonaService {
                 : empleadoRepository.existsByDniAndIdEmpleadoNot(dni, idExcluir);
     }
 
+    @Audit(accion = "CREAR", entidad = "Empleado")
     @Transactional
     public Empleado crearEmpleado(EmpleadoFormDTO form) {
         Empleado empleado = new Empleado();
@@ -124,6 +128,7 @@ public class PersonaService {
         return empleadoRepository.save(empleado);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Empleado")
     @Transactional
     public Empleado actualizarEmpleado(Integer idEmpleado, EmpleadoFormDTO form) {
         Empleado empleado = getEmpleado(idEmpleado);
@@ -131,6 +136,7 @@ public class PersonaService {
         return empleadoRepository.save(empleado);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Empleado")
     @Transactional
     public void eliminarEmpleado(Integer idEmpleado) {
         Empleado empleado = getEmpleado(idEmpleado);
@@ -154,6 +160,7 @@ public class PersonaService {
                 : usuarioRepository.existsByUsernameIgnoreCaseAndIdUsuarioNot(username, idExcluir);
     }
 
+    @Audit(accion = "CREAR", entidad = "Usuario")
     @Transactional
     public Usuario crearUsuario(UsuarioFormDTO form) {
         Usuario usuario = new Usuario();
@@ -161,9 +168,13 @@ public class PersonaService {
         return guardarUsuario(usuario, form);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Usuario")
     @Transactional
     public Usuario actualizarUsuario(Integer idUsuario, UsuarioFormDTO form) {
         Usuario usuario = getUsuario(idUsuario);
+        if (Boolean.TRUE.equals(usuario.getEsAdminSupremo())) {
+            throw new IllegalStateException("El administrador supremo no puede ser modificado.");
+        }
         if (form.getPassword() != null && !form.getPassword().isBlank()) {
             usuario.setPassword(passwordEncoder.encode(form.getPassword()));
         }
@@ -179,16 +190,24 @@ public class PersonaService {
         return usuarioRepository.save(usuario);
     }
 
+    @Audit(accion = "ESTADO", entidad = "Usuario")
     @Transactional
     public Usuario cambiarEstadoUsuario(Integer idUsuario, boolean estado) {
         Usuario usuario = getUsuario(idUsuario);
+        if (Boolean.TRUE.equals(usuario.getEsAdminSupremo())) {
+            throw new IllegalStateException("El administrador supremo no puede ser modificado.");
+        }
         usuario.setEstado(estado);
         return usuarioRepository.save(usuario);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Usuario")
     @Transactional
     public void eliminarUsuario(Integer idUsuario) {
         Usuario usuario = getUsuario(idUsuario);
+        if (Boolean.TRUE.equals(usuario.getEsAdminSupremo())) {
+            throw new IllegalStateException("El administrador supremo no puede ser eliminado.");
+        }
         if (pedidoRepository.existsByUsuario_IdUsuario(idUsuario)
                 || compraRepository.existsByUsuario_IdUsuario(idUsuario)
                 || movimientoRepository.existsByUsuario_IdUsuario(idUsuario)) {
@@ -198,6 +217,7 @@ public class PersonaService {
         usuarioRepository.delete(usuario);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Proveedor")
     @Transactional
     public void eliminarProveedor(Integer idProveedor) {
         Proveedor proveedor = getProveedor(idProveedor);

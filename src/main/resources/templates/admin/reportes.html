@@ -4,83 +4,124 @@
       layout:decorate="~{layout/base}">
 <body>
 <main layout:fragment="content">
-  <div class="stack">
+  <div class="dash">
 
-    <section>
-      <div class="page-head">
-        <p class="muted">Resumen desde pedidos, boletas y detalle de pedido.</p></div>
-      <div class="stat-grid">
-        <article class="card stat-card" th:each="s : ${salesStats}">
-          <span th:text="${s.label}">Indicador</span>
-          <strong th:text="${s.value}">0</strong>
-        </article>
+    <div class="rep-export-bar">
+      <span class="dash-eyebrow">Datos del periodo completo</span>
+      <div class="rep-export-actions">
+        <a class="btn-exportar" th:href="@{/admin/reportes/export/pdf}">
+          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF</a>
+        <a class="btn-exportar" th:href="@{/admin/reportes/export/excel}">
+          <i class="bi bi-file-earmark-excel"></i> Exportar Excel</a>
       </div>
+    </div>
+
+    <section class="dash-kpi-grid">
+      <article class="dash-kpi" th:each="s, st : ${salesStats}"
+               th:classappend="${st.index == 0} ? ' dash-kpi--primary'">
+        <span class="dash-kpi__label">
+          <span class="dash-kpi__dot"></span>
+          <span th:text="${s.label}">Indicador</span>
+        </span>
+        <strong class="dash-kpi__value" th:text="${s.value}">0</strong>
+      </article>
     </section>
 
-    <div class="content-grid">
-      <article class="card panel">
-        <div class="section-heading"><h2>Productos mas vendidos</h2><span class="muted">desde detalle_pedido</span></div>
-        <div class="chart-bars">
-          <div class="bar-row" th:each="p : ${topProductos}">
-            <span th:text="${p.nombre}">Producto</span>
-            <div class="bar-track"><div class="bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div></div>
-            <strong th:text="${p.cantidad}">0</strong>
+    <div class="rep-tabs" role="tablist">
+      <button class="rep-tab activo" data-tab="ventas"><i class="bi bi-graph-up-arrow"></i> Ventas</button>
+      <button class="rep-tab" data-tab="inventario"><i class="bi bi-box-seam"></i> Inventario</button>
+      <button class="rep-tab" data-tab="compras"><i class="bi bi-cart3"></i> Compras</button>
+      <button class="rep-tab" data-tab="anulados"><i class="bi bi-x-circle"></i> Anulados</button>
+    </div>
+
+    <section class="rep-panel" data-panel="ventas">
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div>
+            <span class="dash-eyebrow">Desde detalle de pedidos</span>
+            <h2 class="dash-title">Productos mas vendidos</h2>
+          </div>
+        </header>
+        <div class="dash-bars">
+          <div class="dash-bar-row" th:each="p : ${topProductos}">
+            <span class="dash-bar-name" th:text="${p.nombre}">Producto</span>
+            <div class="dash-bar-track">
+              <div class="dash-bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div>
+            </div>
+            <strong class="dash-bar-val" th:text="${p.cantidad}">0</strong>
           </div>
           <p class="empty-state" th:if="${#lists.isEmpty(topProductos)}">Sin ventas registradas.</p>
         </div>
       </article>
+    </section>
 
-      <article class="card table-card">
-        <div class="panel section-heading"><h2>Inventario por tipo</h2></div>
-        <table>
+    <section class="rep-panel hidden" data-panel="inventario">
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div><span class="dash-eyebrow">Movimientos</span><h2 class="dash-title">Inventario por tipo</h2></div>
+        </header>
+        <table class="dash-table">
           <thead><tr><th>Tipo</th><th>Operacion</th><th>Registros</th></tr></thead>
           <tbody>
             <tr th:each="t : ${movimientosPorTipo}">
               <td th:text="${t.tipo}">Tipo</td>
-              <td><span class="badge" th:classappend="${t.operacion == 'Entrada'} ? 'badge-success' : 'badge-danger'" th:text="${t.operacion}">Op</span></td>
+              <td><span class="dash-chip"
+                        th:classappend="${t.operacion == 'Entrada'} ? ' dash-chip--green' : ' dash-chip--red'"
+                        th:text="${t.operacion}">Op</span></td>
               <td th:text="${t.registros}">0</td>
             </tr>
-            <tr th:if="${#lists.isEmpty(movimientosPorTipo)}"><td colspan="3"><div class="empty-state">Sin movimientos.</div></td></tr>
+            <tr th:if="${#lists.isEmpty(movimientosPorTipo)}"><td colspan="3" class="dash-empty">Sin movimientos.</td></tr>
           </tbody>
         </table>
       </article>
-    </div>
+    </section>
 
-    <article class="card table-card">
-      <div class="panel section-heading"><h2>Reporte de compras</h2></div>
-      <table>
-        <thead><tr><th>Proveedor</th><th>Compras</th><th>Total</th><th>Ultima compra</th></tr></thead>
-        <tbody>
-          <tr th:each="c : ${comprasPorProveedor}">
-            <td th:text="${c.proveedor}">Proveedor</td>
-            <td th:text="${c.compras}">0</td>
-            <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
-            <td th:text="${c.ultimaCompra}">-</td>
-          </tr>
-          <tr th:if="${#lists.isEmpty(comprasPorProveedor)}"><td colspan="4"><div class="empty-state">Sin compras.</div></td></tr>
-        </tbody>
-      </table>
-    </article>
+    <section class="rep-panel hidden" data-panel="compras">
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div><span class="dash-eyebrow">Por proveedor</span><h2 class="dash-title">Reporte de compras</h2></div>
+        </header>
+        <table class="dash-table">
+          <thead><tr><th>Proveedor</th><th>Compras</th><th>Total</th><th>Ultima compra</th></tr></thead>
+          <tbody>
+            <tr th:each="c : ${comprasPorProveedor}">
+              <td th:text="${c.proveedor}">Proveedor</td>
+              <td th:text="${c.compras}">0</td>
+              <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+              <td th:text="${c.ultimaCompra}">-</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(comprasPorProveedor)}"><td colspan="4" class="dash-empty">Sin compras.</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
 
-    <article class="card table-card">
-      <div class="panel section-heading"><h2>Pedidos anulados</h2><span class="muted">se conservan para auditoria</span></div>
-      <table>
-        <thead><tr><th>N&deg;</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Motivo</th></tr></thead>
-        <tbody>
-          <tr th:each="p, pStat : ${anulados}" th:with="b=${boletas.get(p.idPedido)}">
-            <td th:text="${pStat.count}">1</td>
-            <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">fecha</td>
-            <td th:text="${p.cliente.nombre}">Cliente</td>
-            <td th:text="${p.usuario.empleado != null ? p.usuario.empleado.nombre : p.usuario.username}">Cajero</td>
-            <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
-            <td class="muted" th:text="${p.motivoAnulacion} ?: '-'">-</td>
-          </tr>
-          <tr th:if="${#lists.isEmpty(anulados)}"><td colspan="6"><div class="empty-state">No hay pedidos anulados.</div></td></tr>
-        </tbody>
-      </table>
-    </article>
+    <section class="rep-panel hidden" data-panel="anulados">
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div><span class="dash-eyebrow">Se conservan para auditoria</span><h2 class="dash-title">Pedidos anulados</h2></div>
+        </header>
+        <table class="dash-table">
+          <thead><tr><th>N&deg;</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Motivo</th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${anulados}">
+              <td th:text="${a.numero}">1</td>
+              <td th:text="${a.fecha}">fecha</td>
+              <td th:text="${a.cliente}">Cliente</td>
+              <td th:text="${a.cajero}">Cajero</td>
+              <td th:text="${a.total != null ? 'S/ ' + #numbers.formatDecimal(a.total,1,'COMMA',2,'POINT') : '-'}">-</td>
+              <td class="muted" th:text="${a.motivo}">-</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(anulados)}"><td colspan="6" class="dash-empty">No hay pedidos anulados.</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
 
   </div>
 </main>
+<th:block layout:fragment="scripts">
+  <script th:src="@{/js/reportes-tabs.js}"></script>
+</th:block>
 </body>
 </html>

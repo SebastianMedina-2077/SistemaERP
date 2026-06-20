@@ -21,7 +21,7 @@
 
   <div class="card table-card" id="tablaEmpleados" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>N&deg;</th><th>Nombre</th><th>DNI</th><th>Telefono</th><th>Cargo</th><th></th></tr></thead>
+      <thead><tr><th>N&deg;</th><th data-filter="input">Nombre</th><th data-filter="input">DNI</th><th>Telefono</th><th data-filter="select">Cargo</th><th></th></tr></thead>
       <tbody>
         <tr th:each="e, eStat : ${empleados}">
           <td th:text="${eStat.count}">1</td>
