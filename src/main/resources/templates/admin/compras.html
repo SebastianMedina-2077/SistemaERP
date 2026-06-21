@@ -15,7 +15,7 @@
   </div>
   <div class="card table-card" id="tablaCompras" data-table-tools>
     <table>
-      <thead><tr><th>N&deg;</th><th>Fecha</th><th>Proveedor</th><th>Usuario</th><th>Estado</th><th>Total</th></tr></thead>
+      <thead><tr><th>N&deg;</th><th data-filter="input">Fecha</th><th data-filter="input">Proveedor</th><th data-filter="select">Usuario</th><th data-filter="select">Estado</th><th data-filter="range">Total</th></tr></thead>
       <tbody>
         <tr th:each="c, cStat : ${compras}">
           <td th:text="${cStat.count}">1</td>

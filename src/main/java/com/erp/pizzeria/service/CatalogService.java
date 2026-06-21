@@ -20,6 +20,7 @@ import com.erp.pizzeria.repository.ProductoRepository;
 import com.erp.pizzeria.repository.PromocionProductoRepository;
 import com.erp.pizzeria.repository.PromocionRepository;
 import com.erp.pizzeria.util.CodigoUtil;
+import com.erp.pizzeria.audit.Audit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,6 +116,7 @@ public class CatalogService {
         return CodigoUtil.siguiente("PZ", ultimo);
     }
 
+    @Audit(accion = "CREAR", entidad = "Producto")
     @Transactional
     public Producto crearProducto(ProductoFormDTO form) {
         Producto producto = new Producto();
@@ -122,6 +124,7 @@ public class CatalogService {
         return guardarProducto(producto, form);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Producto")
     @Transactional
     public Producto actualizarProducto(Integer idProducto, ProductoFormDTO form) {
         // El codigo es inmutable: se conserva el del producto existente.
@@ -138,6 +141,7 @@ public class CatalogService {
         return productoRepository.save(producto);
     }
 
+    @Audit(accion = "ESTADO", entidad = "Producto")
     @Transactional
     public Producto cambiarDisponibilidad(Integer idProducto, boolean disponible) {
         Producto producto = getProducto(idProducto);
@@ -145,6 +149,7 @@ public class CatalogService {
         return productoRepository.save(producto);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Producto")
     @Transactional
     public void eliminarProducto(Integer idProducto) {
         Producto producto = getProducto(idProducto);
@@ -186,11 +191,13 @@ public class CatalogService {
                 .toList();
     }
 
+    @Audit(accion = "CREAR", entidad = "Promocion")
     @Transactional
     public Promocion crearPromocion(PromocionFormDTO form) {
         return guardarPromocion(new Promocion(), form);
     }
 
+    @Audit(accion = "EDITAR", entidad = "Promocion")
     @Transactional
     public Promocion actualizarPromocion(Integer idPromocion, PromocionFormDTO form) {
         return guardarPromocion(getPromocion(idPromocion), form);
@@ -219,6 +226,7 @@ public class CatalogService {
         return promocion;
     }
 
+    @Audit(accion = "ESTADO", entidad = "Promocion")
     @Transactional
     public Promocion cambiarPromocionActiva(Integer idPromocion, boolean activa) {
         Promocion promocion = getPromocion(idPromocion);
@@ -226,6 +234,7 @@ public class CatalogService {
         return promocionRepository.save(promocion);
     }
 
+    @Audit(accion = "ELIMINAR", entidad = "Promocion")
     @Transactional
     public void eliminarPromocion(Integer idPromocion) {
         Promocion promocion = getPromocion(idPromocion);

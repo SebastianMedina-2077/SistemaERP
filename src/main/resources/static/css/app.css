@@ -28,15 +28,6 @@ a.nav-item {
   font-size: 12px;
 }
 
-/* ---- Topbar: usuario + logout --------------------------------- */
-.logout-form {
-  margin: 0;
-}
-
-.logout-form button {
-  min-height: 38px;
-}
-
 .user-meta {
   text-align: right;
 }

@@ -28,6 +28,9 @@ public class Usuario {
     @Column(name = "estado", nullable = false)
     private Boolean estado;
 
+    @Column(name = "es_admin_supremo", nullable = false)
+    private Boolean esAdminSupremo = false;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_rol", nullable = false)
     private Rol rol;

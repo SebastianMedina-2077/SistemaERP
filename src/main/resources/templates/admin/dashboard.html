@@ -4,84 +4,108 @@
       layout:decorate="~{layout/base}">
 <body>
 <main layout:fragment="content">
-  <div class="module-layout">
+  <div class="dash">
 
-    <div class="stat-grid">
-      <article class="card stat-card" th:each="s : ${stats}">
-        <span th:text="${s.label}">Indicador</span>
-        <strong th:text="${s.value}">0</strong>
+    <section class="dash-kpi-grid">
+      <article class="dash-kpi" th:each="s, st : ${stats}"
+               th:classappend="${st.index == 0} ? ' dash-kpi--primary' : (${st.index == 2} ? ' dash-kpi--alert' : '')">
+        <span class="dash-kpi__label">
+          <span class="dash-kpi__dot" th:classappend="${st.index == 2} ? ' dash-kpi__dot--alert'"></span>
+          <span th:text="${s.label}">Indicador</span>
+        </span>
+        <strong class="dash-kpi__value" th:text="${s.value}">0</strong>
       </article>
-    </div>
+    </section>
 
-    <div class="content-grid">
-      <article class="card panel">
-        <div class="section-heading">
-          <h2>Productos mas vendidos</h2>
-          <span class="muted">Segun detalle de pedidos</span>
-        </div>
-        <div class="chart-bars">
-          <div class="bar-row" th:each="p : ${topProductos}">
-            <span th:text="${p.nombre}">Producto</span>
-            <div class="bar-track">
-              <div class="bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div>
+    <section class="dash-cols">
+      <article class="dash-card dash-card--wide">
+        <header class="dash-card__head">
+          <div>
+            <span class="dash-eyebrow">Segun detalle de pedidos</span>
+            <h2 class="dash-title">Productos mas vendidos</h2>
+          </div>
+          <a class="dash-link" th:href="@{/admin/reportes}">Ver reportes</a>
+        </header>
+        <div class="dash-bars">
+          <div class="dash-bar-row" th:each="p, st : ${topProductos}" th:if="${st.index < 6}">
+            <span class="dash-bar-name" th:text="${p.nombre}">Producto</span>
+            <div class="dash-bar-track">
+              <div class="dash-bar-fill" th:style="'width:' + ${topMax > 0 ? p.cantidad * 100 / topMax : 0} + '%'"></div>
             </div>
-            <strong th:text="${p.cantidad}">0</strong>
+            <strong class="dash-bar-val" th:text="${p.cantidad}">0</strong>
           </div>
           <p class="empty-state" th:if="${#lists.isEmpty(topProductos)}">Sin ventas registradas.</p>
         </div>
       </article>
 
-      <article class="card panel">
-        <div class="section-heading">
-          <h2>Alertas de stock</h2>
-          <span class="badge badge-warning">stock minimo</span>
-        </div>
-        <div class="alert-list">
-          <div class="alert-item" th:each="i : ${lowStock}">
-            <div>
-              <strong th:text="${i.nombre}">Insumo</strong>
-              <p class="muted" th:text="${#numbers.formatDecimal(i.stock,1,2)} + ' ' + ${i.medida.sigla} + ' disponibles'">0</p>
-            </div>
-            <span class="badge badge-warning" th:text="'Min ' + ${#numbers.formatDecimal(i.cantidadMinima,1,2)}">Min</span>
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div>
+            <span class="dash-eyebrow">Bajo el minimo</span>
+            <h2 class="dash-title">Alertas de stock</h2>
           </div>
-          <p class="empty-state" th:if="${#lists.isEmpty(lowStock)}">No hay insumos bajo stock.</p>
-        </div>
+          <a class="dash-link" th:href="@{/admin/insumos}">Ver insumos</a>
+        </header>
+        <ul class="dash-alert-list">
+          <li class="dash-alert" th:each="i : ${lowStock}">
+            <span class="dash-alert__icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+            <div class="dash-alert__meta">
+              <strong th:text="${i.nombre}">Insumo</strong>
+              <span th:text="${#numbers.formatDecimal(i.stock,1,2)} + ' ' + ${i.medida.sigla} + ' disponibles'">0</span>
+            </div>
+            <span class="dash-chip dash-chip--amber"
+                  th:text="'Min ' + ${#numbers.formatDecimal(i.cantidadMinima,1,2)}">Min</span>
+          </li>
+          <li class="dash-empty" th:if="${#lists.isEmpty(lowStock)}">No hay insumos bajo stock.</li>
+        </ul>
       </article>
-    </div>
+    </section>
 
-    <div class="content-grid">
-      <article class="card table-card">
-        <div class="panel section-heading"><h2>Compras recientes</h2></div>
-        <table>
+    <section class="dash-cols">
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div>
+            <span class="dash-eyebrow">Inventario</span>
+            <h2 class="dash-title">Compras recientes</h2>
+          </div>
+        </header>
+        <table class="dash-table">
           <thead><tr><th>Fecha</th><th>Proveedor</th><th>Estado</th><th>Total</th></tr></thead>
           <tbody>
-            <tr th:each="c : ${compras}">
+            <tr th:each="c, st : ${compras}" th:if="${st.index < 5}">
               <td th:text="${c.fecha}">2026-01-01</td>
               <td th:text="${c.proveedor.nombre}">Proveedor</td>
-              <td><span class="badge badge-success" th:text="${c.estado}">Registrada</span></td>
+              <td><span class="dash-chip dash-chip--green" th:text="${c.estado}">Registrada</span></td>
               <td th:text="'S/ ' + ${#numbers.formatDecimal(c.total,1,'COMMA',2,'POINT')}">S/ 0.00</td>
             </tr>
+            <tr th:if="${#lists.isEmpty(compras)}"><td colspan="4" class="dash-empty">Sin compras.</td></tr>
           </tbody>
         </table>
       </article>
 
-      <article class="card table-card">
-        <div class="panel section-heading"><h2>Movimientos recientes</h2></div>
-        <table>
+      <article class="dash-card">
+        <header class="dash-card__head">
+          <div>
+            <span class="dash-eyebrow">Inventario</span>
+            <h2 class="dash-title">Movimientos recientes</h2>
+          </div>
+        </header>
+        <table class="dash-table">
           <thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Usuario</th></tr></thead>
           <tbody>
-            <tr th:each="m : ${movimientos}">
+            <tr th:each="m, st : ${movimientos}" th:if="${st.index < 5}">
               <td th:text="${m.fecha}">2026-01-01</td>
-              <td><span class="badge"
-                        th:classappend="${m.tipoMovimiento.operacion == 'Entrada'} ? 'badge-success' : 'badge-danger'"
+              <td><span class="dash-chip"
+                        th:classappend="${m.tipoMovimiento.operacion == 'Entrada'} ? ' dash-chip--green' : ' dash-chip--red'"
                         th:text="${m.tipoMovimiento.descripcion}">Tipo</span></td>
               <td th:text="${m.documento}">DOC</td>
               <td th:text="${m.usuario.empleado != null ? m.usuario.empleado.nombre : m.usuario.username}">Usuario</td>
             </tr>
+            <tr th:if="${#lists.isEmpty(movimientos)}"><td colspan="4" class="dash-empty">Sin movimientos.</td></tr>
           </tbody>
         </table>
       </article>
-    </div>
+    </section>
 
   </div>
 </main>
