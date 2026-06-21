@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <p class="muted">Rastro de acciones de escritura del personal: quien, que accion, sobre que entidad y cuando.</p>
+    </div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="search" data-search-for="tablaAuditoria" placeholder="Buscar por usuario, accion o entidad..." autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card table-card" id="tablaAuditoria" data-table-tools>
+    <table class="align-middle">
+      <thead>
+        <tr><th>Fecha</th><th>Usuario</th><th>Accion</th><th>Entidad</th><th>Referencia</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="r : ${registros}">
+          <td th:text="${#temporals.format(r.fecha, 'yyyy-MM-dd HH:mm:ss')}">fecha</td>
+          <td th:text="${r.usuario}">usuario</td>
+          <td>
+            <span class="badge"
+                  th:classappend="${r.accion == 'CREAR' or r.accion == 'REGISTRAR'} ? 'badge-success'
+                                : (${r.accion == 'ELIMINAR' or r.accion == 'ANULAR'} ? 'badge-danger' : 'badge-warning')"
+                  th:text="${r.accion}">ACCION</span>
+          </td>
+          <td th:text="${r.entidad}">Entidad</td>
+          <td class="muted" th:text="${r.referencia} ?: '-'">-</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(registros)}">
+          <td colspan="5"><div class="empty-state">Sin registros de auditoria.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</body>
+</html>

@@ -31,5 +31,24 @@
   </script>
 </div>
 
+<!-- Paginador server-side reutilizable. query = sufijo "&k=v" con los filtros activos. -->
+<nav th:fragment="pager(page, baseUrl, query)"
+     th:if="${page != null and page.totalPages > 1}"
+     class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"
+     aria-label="Paginacion">
+  <span class="muted"
+        th:text="'Pagina ' + (${page.number} + 1) + ' de ' + ${page.totalPages} + ' (' + ${page.totalElements} + ' registros)'">Pagina 1 de 1</span>
+  <div class="d-flex gap-1">
+    <a class="btn btn-ghost btn-sm" th:classappend="${page.first} ? 'disabled'"
+       th:href="@{${baseUrl}(page=0)} + ${query}" aria-label="Primera"><i class="bi bi-chevron-double-left"></i></a>
+    <a class="btn btn-ghost btn-sm" th:classappend="${page.first} ? 'disabled'"
+       th:href="@{${baseUrl}(page=${page.number - 1})} + ${query}" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+    <a class="btn btn-ghost btn-sm" th:classappend="${page.last} ? 'disabled'"
+       th:href="@{${baseUrl}(page=${page.number + 1})} + ${query}" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a>
+    <a class="btn btn-ghost btn-sm" th:classappend="${page.last} ? 'disabled'"
+       th:href="@{${baseUrl}(page=${page.totalPages - 1})} + ${query}" aria-label="Ultima"><i class="bi bi-chevron-double-right"></i></a>
+  </div>
+</nav>
+
 </body>
 </html>

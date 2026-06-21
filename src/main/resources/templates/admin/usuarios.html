@@ -21,7 +21,7 @@
 
   <div class="card table-card" id="tablaUsuarios" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>N&deg;</th><th>Usuario</th><th>Empleado</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr><th>N&deg;</th><th data-filter="input">Usuario</th><th data-filter="input">Empleado</th><th data-filter="select">Rol</th><th>Estado</th><th></th></tr></thead>
       <tbody>
         <tr th:each="u, uStat : ${usuarios}">
           <td th:text="${uStat.count}">1</td>
@@ -29,7 +29,8 @@
           <td th:text="${u.empleado != null ? u.empleado.nombre + ' ' + u.empleado.apellido : '-'}">Empleado</td>
           <td th:text="${u.rol.nombre}">Rol</td>
           <td>
-            <form th:action="@{/admin/usuarios/{id}/estado(id=${u.idUsuario})}" method="post" class="estado-form">
+            <span th:if="${u.esAdminSupremo}" class="estado-badge estado-on">Activo</span>
+            <form th:unless="${u.esAdminSupremo}" th:action="@{/admin/usuarios/{id}/estado(id=${u.idUsuario})}" method="post" class="estado-form">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
               <label class="estado-switch"
                      th:title="${u.username == #authentication.name} ? 'No puedes desactivar tu propia cuenta' : (${u.estado} ? 'Activo' : 'Inactivo')">
@@ -41,7 +42,10 @@
             </form>
           </td>
           <td>
-            <div class="dropdown">
+            <span th:if="${u.esAdminSupremo}" class="badge-supremo" title="Administrador supremo - cuenta protegida">
+              <i class="bi bi-shield-lock-fill"></i> Supremo
+            </span>
+            <div th:unless="${u.esAdminSupremo}" class="dropdown">
               <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
                 <i class="bi bi-three-dots-vertical"></i>
               </button>

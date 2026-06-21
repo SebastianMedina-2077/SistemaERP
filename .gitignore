@@ -37,3 +37,8 @@ Thumbs.db
 
 # Secrets locales (no commitear credenciales reales)
 application-local.properties
+
+# Tooling local del editor (no compartir con el equipo)
+.claude/
+.agents/
+skills-lock.json

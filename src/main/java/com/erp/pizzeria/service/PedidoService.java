@@ -1,6 +1,7 @@
 package com.erp.pizzeria.service;
 
 import com.erp.pizzeria.dto.BoletaDTO;
+import com.erp.pizzeria.dto.CajeroOpcion;
 import com.erp.pizzeria.dto.DetallePedidoDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
 import com.erp.pizzeria.dto.PedidoDTO;
@@ -20,6 +21,9 @@ import com.erp.pizzeria.repository.DetallePedidoRepository;
 import com.erp.pizzeria.repository.MetodoPagoRepository;
 import com.erp.pizzeria.repository.PedidoRepository;
 import com.erp.pizzeria.repository.UsuarioRepository;
+import com.erp.pizzeria.audit.Audit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,6 +75,39 @@ public class PedidoService {
         return pedidoRepository.findAll();
     }
 
+    public Page<Pedido> buscarPedidos(EstadoPedido estado, String cliente, Integer cajero,
+                                      LocalDateTime fechaDesde, LocalDateTime fechaHasta,
+                                      BigDecimal totalMin, BigDecimal totalMax, Pageable pageable) {
+        return pedidoRepository.buscar(estado, cliente, cajero, fechaDesde, fechaHasta, totalMin, totalMax, pageable);
+    }
+
+    public List<CajeroOpcion> listarCajeros() {
+        return pedidoRepository.findCajeros().stream()
+                .map(u -> new CajeroOpcion(u.getIdUsuario(), nombreCajero(u)))
+                .toList();
+    }
+
+    private String nombreCajero(Usuario u) {
+        return u.getEmpleado() != null
+                ? u.getEmpleado().getNombre() + " " + u.getEmpleado().getApellido()
+                : u.getUsername();
+    }
+
+    /** Mapa idPedido -> Boleta solo para los pedidos dados (evita cargar todas las boletas). */
+    public Map<Integer, Boleta> getBoletasDe(List<Pedido> pedidos) {
+        if (pedidos.isEmpty()) {
+            return Map.of();
+        }
+        List<Integer> ids = pedidos.stream().map(Pedido::getIdPedido).toList();
+        Map<Integer, Boleta> mapa = new LinkedHashMap<>();
+        for (Boleta b : boletaRepository.findByPedido_IdPedidoIn(ids)) {
+            if (b.getPedido() != null) {
+                mapa.put(b.getPedido().getIdPedido(), b);
+            }
+        }
+        return mapa;
+    }
+
     public Pedido getPedido(Integer idPedido) {
         return pedidoRepository.findById(idPedido)
                 .orElseThrow(() -> ResourceNotFoundException.of("Pedido", idPedido));
@@ -106,6 +143,7 @@ public class PedidoService {
 
     // ---- Operaciones transaccionales -------------------------------
 
+    @Audit(accion = "CREAR", entidad = "Pedido")
     @Transactional
     public BoletaDTO crearPedido(PedidoDTO dto, Integer idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
@@ -170,6 +208,7 @@ public class PedidoService {
         return BoletaDTO.from(boleta);
     }
 
+    @Audit(accion = "ESTADO", entidad = "Pedido")
     @Transactional
     public Pedido actualizarEstado(Integer idPedido, EstadoPedido estado) {
         Pedido pedido = getPedido(idPedido);
@@ -180,6 +219,7 @@ public class PedidoService {
         return pedidoRepository.save(pedido);
     }
 
+    @Audit(accion = "ANULAR", entidad = "Pedido")
     @Transactional
     public Pedido anularPedido(Integer idPedido, String motivo) {
         Pedido pedido = getPedido(idPedido);

@@ -1,11 +1,18 @@
 package com.erp.pizzeria.controller;
 
 import com.erp.pizzeria.dto.InsumoFormDTO;
+import com.erp.pizzeria.model.DetalleMovimiento;
 import com.erp.pizzeria.model.Insumo;
+import com.erp.pizzeria.model.Movimiento;
 import com.erp.pizzeria.service.CompraService;
 import com.erp.pizzeria.service.InventarioService;
+import com.erp.pizzeria.util.PageQuery;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,7 +21,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -117,18 +128,46 @@ public class InventarioController {
     }
 
     @GetMapping("/movimientos")
-    public String movimientos(Model model) {
+    public String movimientos(@RequestParam(required = false) Integer tipo,
+                              @RequestParam(required = false) String q,
+                              @PageableDefault(size = 10, sort = "idMovimiento", direction = Sort.Direction.DESC) Pageable pageable,
+                              Model model) {
+        String qFiltro = (q == null || q.isBlank()) ? null : q.trim();
+        Page<Movimiento> page = inventarioService.buscarMovimientos(tipo, qFiltro, pageable);
+
+        Map<String, Object> filtros = new LinkedHashMap<>();
+        filtros.put("tipo", tipo);
+        filtros.put("q", qFiltro);
+
         model.addAttribute("active", "movimientos");
         model.addAttribute("pageTitle", "Movimientos");
-        model.addAttribute("movimientos", inventarioService.listMovimientos());
+        model.addAttribute("movimientos", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("tipos", inventarioService.listTiposMovimiento());
+        model.addAttribute("filtroTipo", tipo);
+        model.addAttribute("filtroQ", qFiltro != null ? qFiltro : "");
+        model.addAttribute("baseUrl", "/admin/movimientos");
+        model.addAttribute("query", PageQuery.of(filtros));
         return "admin/movimientos";
     }
 
     @GetMapping("/kardex")
-    public String kardex(Model model) {
+    public String kardex(@RequestParam(required = false) String q,
+                         @PageableDefault(size = 10, sort = "idDetalleMovimiento", direction = Sort.Direction.DESC) Pageable pageable,
+                         Model model) {
+        String qFiltro = (q == null || q.isBlank()) ? null : q.trim();
+        Page<DetalleMovimiento> page = inventarioService.buscarKardex(qFiltro, pageable);
+
+        Map<String, Object> filtros = new LinkedHashMap<>();
+        filtros.put("q", qFiltro);
+
         model.addAttribute("active", "kardex");
         model.addAttribute("pageTitle", "Kardex de insumos");
-        model.addAttribute("kardex", inventarioService.getKardex());
+        model.addAttribute("kardex", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("filtroQ", qFiltro != null ? qFiltro : "");
+        model.addAttribute("baseUrl", "/admin/kardex");
+        model.addAttribute("query", PageQuery.of(filtros));
         return "admin/kardex";
     }
 }

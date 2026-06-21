@@ -16,6 +16,7 @@
 --   * producto.nombre          -> ampliado varchar(25) -> varchar(60) (nombres reales del catalogo Mamma Tomato)
 --   * FOREIGN KEYs              -> agregadas al final del archivo (el dump original no definia ninguna)
 --   * PKs AUTO_INCREMENT        -> 'int unsigned' -> 'int' (compatibilidad con Integer/ddl-auto=validate)
+--   * auditoria                 -> nueva tabla de log de acciones (Fase 6: quien/accion/entidad/fecha)
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -591,6 +592,7 @@ CREATE TABLE `usuario` (
   `username` varchar(10) NOT NULL,
   `password` varchar(60) NOT NULL,
   `estado` tinyint(1) NOT NULL,
+  `es_admin_supremo` tinyint(1) NOT NULL DEFAULT 0,
   `id_rol` int NOT NULL,
   `id_empleado` int DEFAULT NULL,
   PRIMARY KEY (`id_usuario`)
@@ -662,6 +664,22 @@ ALTER TABLE `promocion_producto`
 ALTER TABLE `usuario`
   ADD CONSTRAINT `fk_usuario_rol` FOREIGN KEY (`id_rol`) REFERENCES `rol` (`id_rol`),
   ADD CONSTRAINT `fk_usuario_empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleado` (`id_empleado`);
+
+--
+-- Tabla de auditoria (Fase 6): registra las acciones de escritura del personal.
+-- No lleva FK a usuario: guarda el username como texto para conservar el rastro
+-- aunque el usuario llegara a eliminarse.
+--
+DROP TABLE IF EXISTS `auditoria`;
+CREATE TABLE `auditoria` (
+  `id_auditoria` int NOT NULL AUTO_INCREMENT,
+  `fecha` datetime NOT NULL,
+  `usuario` varchar(50) NOT NULL,
+  `accion` varchar(20) NOT NULL,
+  `entidad` varchar(40) NOT NULL,
+  `referencia` varchar(60) DEFAULT NULL,
+  PRIMARY KEY (`id_auditoria`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
