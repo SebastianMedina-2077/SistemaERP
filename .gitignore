@@ -37,6 +37,3 @@ Thumbs.db
 
 # Secrets locales (no commitear credenciales reales)
 application-local.properties
-
-# Documentacion interna de contexto (no parte del sistema)
-RESUMEN_PROYECTO.md
