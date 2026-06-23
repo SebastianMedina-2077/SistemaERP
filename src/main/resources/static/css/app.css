@@ -127,6 +127,64 @@ a.nav-item {
   font-size: 0.85rem;
 }
 
+/* ---- Registro de movimientos ---------------------------------- */
+.movimiento-form {
+  max-width: 1120px;
+}
+
+.mov-lines {
+  margin-top: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.mov-lines-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mov-lines-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.mov-line-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.6fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.mov-line-grid--header {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mov-line-grid .field {
+  gap: 4px;
+}
+
+.mov-line-grid [data-remove-line] {
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .mov-line-grid,
+  .mov-line-grid--header {
+    grid-template-columns: 1fr;
+  }
+
+  .mov-line-grid--header {
+    display: none;
+  }
+}
+
 /* ---- Paleta de marca (verde Mamma Tomato) ---------------------- */
 :root {
   --grad-brand: linear-gradient(135deg, #2e8b4f 0%, #1f6e3a 100%);

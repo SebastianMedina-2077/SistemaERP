@@ -8,6 +8,8 @@
     <div class="page-head">
       <p class="muted">Compras y ventas generan movimientos automaticos; mermas y ajustes son manuales.</p>
     </div>
+    <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+    <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
     <form class="d-flex gap-2 flex-wrap align-items-center" method="get" th:action="@{/admin/movimientos}">
       <div class="search-box">
         <i class="bi bi-search"></i>
@@ -21,6 +23,9 @@
       </select>
       <button class="btn btn-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
       <a class="btn btn-ghost" th:href="@{/admin/movimientos}">Limpiar</a>
+      <a class="btn btn-primary" th:href="@{/admin/movimientos/nuevo}">
+        <i class="bi bi-plus-lg"></i> Nuevo movimiento
+      </a>
     </form>
   </div>
   <div class="card table-card">

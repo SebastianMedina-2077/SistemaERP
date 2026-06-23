@@ -31,10 +31,6 @@ public class InsumoFormDTO {
     @DecimalMax(value = "9999.99", message = "El precio excede el maximo permitido")
     private BigDecimal precio;
 
-    @NotNull(message = "El stock es obligatorio")
-    @DecimalMin(value = "0.0", message = "El stock no puede ser negativo")
-    private BigDecimal stock;
-
     @NotNull(message = "La cantidad minima es obligatoria")
     @DecimalMin(value = "0.0", message = "La cantidad minima no puede ser negativa")
     private BigDecimal cantidadMinima;
@@ -47,7 +43,6 @@ public class InsumoFormDTO {
         f.codigo = i.getCodigo();
         f.nombre = i.getNombre();
         f.precio = i.getPrecio();
-        f.stock = i.getStock();
         f.cantidadMinima = i.getCantidadMinima();
         f.idMedida = i.getMedida() != null ? i.getMedida().getIdMedida() : null;
         return f;

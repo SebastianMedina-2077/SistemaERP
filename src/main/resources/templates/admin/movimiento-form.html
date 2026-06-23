@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <p class="muted">Registra mermas y ajustes. Compras y ventas se generan desde sus modulos.</p>
+    </div>
+    <a class="btn btn-ghost" th:href="@{/admin/movimientos}">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+  </div>
+
+  <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
+
+  <form class="card form-panel movimiento-form" th:object="${movimientoForm}" method="post"
+        th:action="@{/admin/movimientos}">
+    <div class="form-grid">
+      <label class="field">Tipo de movimiento
+        <select th:field="*{idTipoMovimiento}" th:classappend="${#fields.hasErrors('idTipoMovimiento')} ? 'is-invalid'">
+          <option value="">Seleccione...</option>
+          <option th:each="t : ${tipos}" th:value="${t.idTipoMovimiento}"
+                  th:text="${t.descripcion + ' (' + t.operacion + ')'}">Merma (Salida)</option>
+        </select>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('idTipoMovimiento')}" th:errors="*{idTipoMovimiento}"></span>
+      </label>
+
+      <label class="field">Documento
+        <input type="text" th:field="*{documento}" maxlength="15" placeholder="M-0004"
+               th:classappend="${#fields.hasErrors('documento')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('documento')}" th:errors="*{documento}"></span>
+      </label>
+
+      <label class="field">Glosa
+        <input type="text" th:field="*{glosa}" maxlength="25" placeholder="Merma de inventario"
+               th:classappend="${#fields.hasErrors('glosa')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('glosa')}" th:errors="*{glosa}"></span>
+      </label>
+    </div>
+
+    <section class="mov-lines" data-movimiento-lines>
+      <div class="mov-lines-head">
+        <h2>Detalle</h2>
+        <button class="btn btn-secondary btn-sm" type="button" data-add-line>
+          <i class="bi bi-plus-lg"></i> Agregar insumo
+        </button>
+      </div>
+
+      <datalist id="insumosList">
+        <option th:each="i : ${insumos}"
+                th:value="${i.codigo}"
+                th:attr="data-id=${i.idInsumo},data-nombre=${i.nombre},data-stock=${#numbers.formatDecimal(i.stock,1,3)},data-medida=${i.medida.sigla}"
+                th:text="${i.nombre}">IN0001</option>
+      </datalist>
+
+      <div class="mov-line-grid mov-line-grid--header">
+        <span>Codigo</span>
+        <span>Nombre</span>
+        <span>Stock actual</span>
+        <span>Cantidad</span>
+        <span></span>
+      </div>
+
+      <div class="mov-line-grid" th:each="linea, stat : *{lineas}" data-line>
+        <label class="field">
+          <input type="text" class="mov-code" list="insumosList" placeholder="IN0001" autocomplete="off">
+          <input type="hidden" class="mov-id"
+                 th:field="*{lineas[__${stat.index}__].idInsumo}"
+                 th:classappend="${#fields.hasErrors('lineas[' + stat.index + '].idInsumo')} ? 'is-invalid'">
+          <span class="invalid-feedback"
+                th:if="${#fields.hasErrors('lineas[' + stat.index + '].idInsumo')}"
+                th:errors="*{lineas[__${stat.index}__].idInsumo}"></span>
+        </label>
+        <label class="field">
+          <input type="text" class="mov-name readonly-field" readonly placeholder="Seleccione un codigo">
+        </label>
+        <label class="field">
+          <input type="text" class="mov-stock readonly-field" readonly placeholder="-">
+        </label>
+        <label class="field">
+          <input type="number" step="0.001" min="0.001"
+                 th:field="*{lineas[__${stat.index}__].cantidad}"
+                 th:classappend="${#fields.hasErrors('lineas[' + stat.index + '].cantidad')} ? 'is-invalid'"
+                 placeholder="0.000">
+          <span class="invalid-feedback"
+                th:if="${#fields.hasErrors('lineas[' + stat.index + '].cantidad')}"
+                th:errors="*{lineas[__${stat.index}__].cantidad}"></span>
+        </label>
+        <button class="btn btn-ghost btn-sm" type="button" data-remove-line aria-label="Quitar linea">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+
+      <p class="invalid-feedback" data-line-error th:if="${#fields.hasErrors('lineas')}" th:errors="*{lineas}"></p>
+    </section>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" th:href="@{/admin/movimientos}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        <i class="bi bi-check-lg"></i> Registrar movimiento
+      </button>
+    </div>
+  </form>
+</main>
+
+<th:block layout:fragment="scripts">
+  <script th:src="@{/js/movimiento-form.js}"></script>
+</th:block>
+</body>
+</html>
