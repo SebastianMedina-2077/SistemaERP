@@ -42,11 +42,7 @@
         <span class="invalid-feedback" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}"></span>
       </label>
 
-      <label class="field">Stock actual
-        <input type="number" step="0.001" min="0" th:field="*{stock}" placeholder="4.500"
-               th:classappend="${#fields.hasErrors('stock')} ? 'is-invalid'">
-        <span class="invalid-feedback" th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}"></span>
-      </label>
+
 
       <label class="field">Cantidad minima
         <input type="number" step="0.001" min="0" th:field="*{cantidadMinima}" placeholder="3.000"

@@ -1,9 +1,13 @@
 package com.erp.pizzeria.controller;
 
 import com.erp.pizzeria.dto.InsumoFormDTO;
+import com.erp.pizzeria.dto.MovimientoFormDTO;
+import com.erp.pizzeria.dto.MovimientoLineaDTO;
 import com.erp.pizzeria.model.DetalleMovimiento;
 import com.erp.pizzeria.model.Insumo;
 import com.erp.pizzeria.model.Movimiento;
+import com.erp.pizzeria.model.Usuario;
+import com.erp.pizzeria.repository.UsuarioRepository;
 import com.erp.pizzeria.service.CompraService;
 import com.erp.pizzeria.service.InventarioService;
 import com.erp.pizzeria.util.PageQuery;
@@ -13,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -33,10 +39,14 @@ public class InventarioController {
 
     private final InventarioService inventarioService;
     private final CompraService compraService;
+    private final UsuarioRepository usuarioRepository;
 
-    public InventarioController(InventarioService inventarioService, CompraService compraService) {
+    public InventarioController(InventarioService inventarioService,
+                                CompraService compraService,
+                                UsuarioRepository usuarioRepository) {
         this.inventarioService = inventarioService;
         this.compraService = compraService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @GetMapping("/insumos")
@@ -149,6 +159,59 @@ public class InventarioController {
         model.addAttribute("baseUrl", "/admin/movimientos");
         model.addAttribute("query", PageQuery.of(filtros));
         return "admin/movimientos";
+    }
+
+    @GetMapping("/movimientos/nuevo")
+    public String nuevoMovimiento(Model model) {
+        prepararFormularioMovimiento(model);
+        if (!model.containsAttribute("movimientoForm")) {
+            MovimientoFormDTO form = new MovimientoFormDTO();
+            form.getLineas().add(new MovimientoLineaDTO());
+            model.addAttribute("movimientoForm", form);
+        }
+        return "admin/movimiento-form";
+    }
+
+    @PostMapping("/movimientos")
+    public String registrarMovimiento(@Valid @ModelAttribute("movimientoForm") MovimientoFormDTO form,
+                                      BindingResult result,
+                                      Authentication authentication,
+                                      Model model,
+                                      RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            asegurarLineaMovimiento(form);
+            prepararFormularioMovimiento(model);
+            return "admin/movimiento-form";
+        }
+        try {
+            if (authentication == null) {
+                throw new IllegalStateException("No hay usuario autenticado.");
+            }
+            Usuario usuario = usuarioRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado."));
+            Movimiento movimiento = inventarioService.registrarMovimientoManual(form, usuario);
+            ra.addFlashAttribute("flash", "Movimiento #" + movimiento.getIdMovimiento() + " registrado.");
+            return "redirect:/admin/movimientos";
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            asegurarLineaMovimiento(form);
+            prepararFormularioMovimiento(model);
+            model.addAttribute("flashError", ex.getMessage());
+            return "admin/movimiento-form";
+        }
+    }
+
+    private void prepararFormularioMovimiento(Model model) {
+        model.addAttribute("active", "movimientos");
+        model.addAttribute("pageTitle", "Nuevo movimiento");
+        model.addAttribute("tipos", inventarioService.listTiposMovimientoManual());
+        model.addAttribute("insumos", inventarioService.listInsumos());
+    }
+
+    private void asegurarLineaMovimiento(MovimientoFormDTO form) {
+        if (form.getLineas() == null || form.getLineas().isEmpty()) {
+            form.setLineas(new ArrayList<>());
+            form.getLineas().add(new MovimientoLineaDTO());
+        }
     }
 
     @GetMapping("/kardex")
