@@ -65,15 +65,21 @@
       </div>
 
       <div class="mov-line-grid" th:each="linea, stat : *{lineas}" data-line>
-        <label class="field">
-          <input type="text" class="mov-code" list="insumosList" placeholder="IN0001" autocomplete="off">
+        <div class="field">
+          <div class="mov-code-actions">
+            <button class="btn btn-secondary btn-sm mov-search-btn" type="button" data-search-insumo
+                    aria-label="Buscar insumo" title="Buscar insumo">
+              <i class="bi bi-search"></i>
+            </button>
+            <input type="text" class="mov-code" list="insumosList" placeholder="IN0001" autocomplete="off">
+          </div>
           <input type="hidden" class="mov-id"
                  th:field="*{lineas[__${stat.index}__].idInsumo}"
                  th:classappend="${#fields.hasErrors('lineas[' + stat.index + '].idInsumo')} ? 'is-invalid'">
           <span class="invalid-feedback"
                 th:if="${#fields.hasErrors('lineas[' + stat.index + '].idInsumo')}"
                 th:errors="*{lineas[__${stat.index}__].idInsumo}"></span>
-        </label>
+        </div>
         <label class="field">
           <input type="text" class="mov-name readonly-field" readonly placeholder="Seleccione un codigo">
         </label>
@@ -104,6 +110,39 @@
       </button>
     </div>
   </form>
+
+  <div class="modal fade" id="insumoSearchModal" tabindex="-1" aria-labelledby="insumoSearchTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="insumoSearchTitle">Buscar insumo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label class="field">
+            Codigo o descripcion
+            <input type="search" id="insumoSearchInput" placeholder="Ej: IN0001, harina, queso..." autocomplete="off">
+          </label>
+
+          <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle insumo-search-table">
+              <thead>
+              <tr>
+                <th>Codigo</th>
+                <th>Descripcion</th>
+                <th>Stock</th>
+                <th class="text-right">Accion</th>
+              </tr>
+              </thead>
+              <tbody data-insumo-results>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted-sm mb-0">Puedes hacer clic en una fila o usar el boton Seleccionar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <th:block layout:fragment="scripts">
