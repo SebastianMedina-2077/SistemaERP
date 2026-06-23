@@ -170,8 +170,32 @@ a.nav-item {
   gap: 4px;
 }
 
+.mov-code-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mov-code-actions .mov-code {
+  min-width: 0;
+}
+
+.mov-search-btn {
+  width: 38px;
+  padding-inline: 0;
+  flex: 0 0 38px;
+}
+
 .mov-line-grid [data-remove-line] {
   margin-top: 2px;
+}
+
+.insumo-search-table tbody tr {
+  cursor: pointer;
+}
+
+.insumo-search-table td,
+.insumo-search-table th {
+  vertical-align: middle;
 }
 
 @media (max-width: 900px) {
