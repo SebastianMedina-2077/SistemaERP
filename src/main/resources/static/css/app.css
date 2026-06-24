@@ -198,6 +198,113 @@ a.nav-item {
   vertical-align: middle;
 }
 
+.movimiento-print {
+  display: grid;
+  gap: 18px;
+}
+
+.movimiento-print-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.movimiento-print-head h2 {
+  margin: 0;
+  color: var(--text);
+}
+
+.movimiento-print-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.movimiento-print-meta div {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.movimiento-print-meta dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.movimiento-print-meta dd {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.movimiento-print-meta-wide {
+  grid-column: 1 / -1;
+}
+
+.movimiento-print-table {
+  margin-bottom: 0;
+}
+
+/* ---- Registro de compras -------------------------------------- */
+.compra-proveedor {
+  max-width: 420px;
+  margin-bottom: 18px;
+}
+
+.compra-lines {
+  display: grid;
+  gap: 10px;
+}
+
+.compra-line-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.6fr) minmax(120px, 0.75fr) minmax(140px, 0.75fr) minmax(130px, 0.7fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.compra-line-grid--header {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compra-line-grid [data-remove-compra-line] {
+  margin-top: 24px;
+}
+
+.compra-total {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.compra-total span {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compra-total strong {
+  color: var(--brand-700);
+  font-size: 22px;
+}
+
 @media (max-width: 900px) {
   .mov-line-grid,
   .mov-line-grid--header {
@@ -206,6 +313,57 @@ a.nav-item {
 
   .mov-line-grid--header {
     display: none;
+  }
+
+  .movimiento-print-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .compra-line-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compra-line-grid--header {
+    display: none;
+  }
+
+  .compra-line-grid [data-remove-compra-line] {
+    margin-top: 0;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #movimientoCreadoPrint,
+  #movimientoCreadoPrint * {
+    visibility: visible !important;
+  }
+
+  #movimientoCreadoPrint {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 24px;
+    background: #fff;
+  }
+
+  .modal,
+  .modal-dialog,
+  .modal-content,
+  .modal-body {
+    position: static !important;
+    overflow: visible !important;
+    transform: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .modal-backdrop,
+  .no-print {
+    display: none !important;
   }
 }
 

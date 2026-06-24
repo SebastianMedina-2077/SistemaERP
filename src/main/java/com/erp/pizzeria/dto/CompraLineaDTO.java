@@ -15,14 +15,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class CompraLineaDTO {
 
-    @NotNull
+    @NotNull(message = "Seleccione un insumo")
     private Integer idInsumo;
 
-    @NotNull
-    @DecimalMin("0.001")
+    @NotNull(message = "Ingrese la cantidad")
+    @DecimalMin(value = "0.001", message = "La cantidad debe ser mayor a cero")
     private BigDecimal cantidad;
 
-    @NotNull
-    @DecimalMin("0.01")
+    @NotNull(message = "Ingrese el precio unitario")
+    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a cero")
     private BigDecimal precioUnitario;
 }

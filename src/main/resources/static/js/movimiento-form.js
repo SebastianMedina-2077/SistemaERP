@@ -41,17 +41,6 @@
     stock.value = `${option.dataset.stock} ${option.dataset.medida}`;
   }
 
-  function isLineComplete(line) {
-    const id = line.querySelector(".mov-id");
-    const cantidad = line.querySelector("input[type='number']");
-    return Boolean(id.value) && cantidad.value !== "" && cantidad.checkValidity();
-  }
-
-  function isLastLine(line) {
-    const lines = Array.from(root.querySelectorAll("[data-line]"));
-    return lines[lines.length - 1] === line;
-  }
-
   function focusQuantity(line) {
     const cantidad = line.querySelector("input[type='number']");
     if (cantidad) cantidad.focus();
@@ -156,19 +145,12 @@
     refreshLine(activeLine);
     modal.hide();
     focusQuantity(activeLine);
-    addLineAfterIfComplete(activeLine);
   }
 
-  root.addEventListener("input", (event) => {
-    const line = event.target.closest("[data-line]");
-    if (event.target.classList.contains("mov-code") && line) {
+  root.addEventListener('input',(event)=>{
+    const line= event.target.closest("[data-line]");
+    if(event.target.classList.contains(("mov-code")&&linea)){
       refreshLine(line);
-      addLineAfterIfComplete(line);
-      return;
-    }
-
-    if (event.target.matches("input[type='number']") && line) {
-      addLineAfterIfComplete(line);
     }
   });
 

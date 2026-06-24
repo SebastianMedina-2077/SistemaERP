@@ -1,6 +1,7 @@
 package com.erp.pizzeria.service;
 
 import com.erp.pizzeria.dto.InsumoFormDTO;
+import com.erp.pizzeria.dto.MovimientoComprobanteDTO;
 import com.erp.pizzeria.dto.StockAlertDTO;
 import com.erp.pizzeria.dto.StockFaltanteDTO;
 import com.erp.pizzeria.exception.ResourceNotFoundException;
@@ -111,6 +112,13 @@ public class InventarioService {
 
     public Page<Movimiento> buscarMovimientos(Integer idTipo, String q, Pageable pageable) {
         return movimientoRepository.buscar(idTipo, q, pageable);
+    }
+
+    public MovimientoComprobanteDTO getComprobanteMovimiento(Integer idMovimiento) {
+        Movimiento movimiento = movimientoRepository.findComprobanteById(idMovimiento)
+                .orElseThrow(() -> ResourceNotFoundException.of("Movimiento", idMovimiento));
+        List<DetalleMovimiento> detalles = detalleMovimientoRepository.findComprobanteLineas(idMovimiento);
+        return MovimientoComprobanteDTO.from(movimiento, detalles);
     }
 
     public Page<DetalleMovimiento> buscarKardex(String q, Pageable pageable) {
