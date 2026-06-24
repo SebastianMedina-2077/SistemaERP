@@ -15,7 +15,7 @@
   <form class="card form-panel" th:object="${insumoForm}" method="post"
         th:action="${editId == null} ? @{/admin/insumos} : @{/admin/insumos/{id}(id=${editId})}">
     <div class="form-grid">
-      <label class="field">Codigo
+      <label class="field">Código
         <input type="text" th:field="*{codigo}" maxlength="6" readonly
                class="readonly-field" placeholder="Se asigna automaticamente">
       </label>

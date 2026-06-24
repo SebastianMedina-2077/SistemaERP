@@ -77,10 +77,10 @@
         <label>Cliente
           <input id="customerName" type="text" maxlength="15" placeholder="Nombre del cliente" required>
         </label>
-        <label>Telefono
+        <label>Teléfono
           <input id="customerPhone" type="tel" maxlength="9" placeholder="Opcional">
         </label>
-        <label>Metodo de pago
+        <label>Método de pago
           <select id="paymentMethod">
             <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Efectivo</option>
           </select>
