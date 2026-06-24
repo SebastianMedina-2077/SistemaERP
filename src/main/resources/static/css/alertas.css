@@ -1,0 +1,160 @@
+#mt-alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.mt-alert-card {
+    width: 330px;
+    min-height: 80px;
+    border-radius: 8px;
+    padding: 10px 15px;
+    background: #ffffff;
+    box-shadow: rgba(149, 157, 165, 0.25) 0 8px 24px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    pointer-events: all;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.mt-alert-card.mt-alert-entrando {
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+.mt-alert-card.mt-alert-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mt-alert-card.mt-alert-saliendo {
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+.mt-alert-wave {
+    position: absolute;
+    transform: rotate(90deg);
+    left: -31px;
+    top: 32px;
+    width: 80px;
+    pointer-events: none;
+}
+
+.mt-alert-icon-wrap {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-left: 8px;
+}
+
+.mt-alert-icon {
+    width: 17px;
+    height: 17px;
+}
+
+.mt-alert-texto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mt-alert-titulo {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mt-alert-subtitulo {
+    margin: 0;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.3;
+}
+
+.mt-alert-cerrar {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.mt-alert-cerrar:hover { color: #333; }
+
+@media (max-width: 480px) {
+    #mt-alert-container {
+        top: auto;
+        bottom: 80px;
+        right: 12px;
+        left: 12px;
+    }
+    .mt-alert-card { width: 100%; }
+}
+
+/* ===== Modal de confirmacion reutilizable ===== */
+.mt-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 40, 25, 0.45);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.mt-confirm-overlay.mt-confirm-visible { opacity: 1; }
+
+.mt-confirm-card {
+    width: min(360px, calc(100% - 32px));
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
+    padding: 22px 20px 18px;
+    transform: translateY(14px) scale(0.97);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mt-confirm-overlay.mt-confirm-visible .mt-confirm-card { transform: translateY(0) scale(1); }
+
+.mt-confirm-titulo { margin: 0 0 8px; font-size: 17px; font-weight: 800; color: #1b5e20; }
+.mt-confirm-mensaje { margin: 0 0 18px; font-size: 14px; color: #555; line-height: 1.4; }
+
+.mt-confirm-acciones { display: flex; gap: 10px; justify-content: flex-end; }
+
+.mt-confirm-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+}
+
+.mt-confirm-cancelar { background: #fff; border-color: #e0e0e0; color: #555; }
+.mt-confirm-cancelar:hover { border-color: #bdbdbd; }
+.mt-confirm-confirmar { background: #2e7d32; color: #fff; }
+.mt-confirm-confirmar:hover { background: #1b5e20; }
+.mt-confirm-peligro { background: #d10d0d; color: #fff; }
+.mt-confirm-peligro:hover { background: #a50a0a; }

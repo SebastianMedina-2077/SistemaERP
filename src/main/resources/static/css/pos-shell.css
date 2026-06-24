@@ -1,0 +1,267 @@
+/* ===== Shell del POS (cajero): sidebar + topbar + barra de estado =====
+   Replica el layout del sistema de referencia. Solo se usa en las vistas del cajero. */
+
+body.pos-shell {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: #f4f6f5;
+}
+
+/* ----- Sidebar delgado (integrado: al colapsar, el contenido se expande) ----- */
+.pos-sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  z-index: 200;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform var(--nav-anim) ease;
+}
+body.nav-collapsed .pos-sidebar { transform: translateX(-100%); }
+
+.pos-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.pos-brand img { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+.pos-brand-text { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; }
+.pos-brand-text strong { font-size: 15px; font-weight: 800; color: var(--text); }
+.pos-brand-text span { font-size: 11px; color: var(--muted); }
+
+.pos-nav {
+  flex: 1;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+.pos-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pos-nav-item i { font-size: 16px; flex-shrink: 0; }
+.pos-nav-item:hover { background: var(--brand-50); color: var(--brand-700); }
+.pos-nav-item.active { background: var(--brand-50); color: var(--brand-700); font-weight: 700; }
+.pos-nav-badge {
+  margin-left: auto;
+  min-width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 6px; border-radius: 10px;
+  background: var(--brand); color: #fff; font-size: 11px; font-weight: 800;
+}
+
+.pos-sidebar-foot {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pos-sidebar-foot form { margin: 0; }
+.pos-logout {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 4px;
+  border: none; background: none;
+  color: var(--muted); font-size: 13px; font-weight: 600;
+  cursor: pointer; border-radius: 7px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.pos-logout:hover { color: var(--red); background: var(--red-50); }
+
+/* ----- Cuerpo: topbar + contenido + barra de estado ----- */
+.pos-body {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin-left var(--nav-anim) ease;
+}
+/* Con el sidebar colapsado, el contenido se expande a todo el ancho. */
+body.nav-collapsed .pos-body { margin-left: 0; }
+
+.pos-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 22px;
+  margin: 14px 16px 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.pos-hamburger {
+  width: 38px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 9px;
+  background: #f3f4f6; color: var(--text);
+  font-size: 18px; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pos-hamburger:hover { background: var(--brand-50); color: var(--brand-700); }
+.pos-topbar-titles { flex: 1; min-width: 0; }
+.pos-topbar-titles h1 { margin: 0; font-size: 22px; font-weight: 800; color: var(--text); }
+.pos-topbar-titles p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.pos-topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.pos-cerrar-caja {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 15px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  background: var(--white); color: var(--text);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.pos-cerrar-caja:hover { border-color: var(--brand); color: var(--brand-700); background: var(--brand-50); }
+
+.pos-content {
+  flex: 1;
+  min-height: 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pos-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 22px;
+  background: #1d2433;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+.pos-statusbar strong { color: #fff; font-weight: 700; }
+.pos-status-online { display: inline-flex; align-items: center; gap: 7px; }
+.pos-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #34d36b;
+  box-shadow: 0 0 0 3px rgba(52, 211, 107, 0.2);
+}
+
+/* ----- Switch de bloqueo de sesion (footer del sidebar) -----
+   Al apagarlo (o tras 10 min de inactividad) bloquea el POS hasta reingresar la contrasena. */
+.pos-session { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pos-session .session-label { font-size: 12px; white-space: nowrap; }
+.session-label.session-on { color: var(--brand); font-weight: 700; }
+.session-label.session-off { color: var(--red); font-weight: 700; }
+
+.toggler { width: 56px; flex-shrink: 0; }
+.toggler input { display: none; }
+.toggler label {
+  display: block; position: relative;
+  width: 56px; height: 28px;
+  border: 1px solid #d6d6d6; border-radius: 28px;
+  background: #e4e8e8; cursor: pointer;
+}
+.toggler label::after {
+  display: block; border-radius: 100%;
+  background-color: #d7062a; content: '';
+}
+.toggler label::after,
+.toggler label .toggler-on,
+.toggler label .toggler-off {
+  position: absolute; top: 50%; left: 25%;
+  width: 21px; height: 21px;
+  transform: translateY(-50%) translateX(-50%);
+  transition: left 0.15s ease-in-out, background-color 0.2s ease-out,
+              width 0.15s ease-in-out, height 0.15s ease-in-out, opacity 0.15s ease-in-out;
+}
+.toggler input:checked + label::after,
+.toggler input:checked + label .toggler-on,
+.toggler input:checked + label .toggler-off { left: 75%; }
+.toggler input:checked + label::after { background-color: #50ac5d; }
+.toggler .toggler-on, .toggler .toggler-off { opacity: 1; z-index: 2; }
+.toggler input:checked + label .toggler-off,
+.toggler input:not(:checked) + label .toggler-on { width: 0; height: 0; opacity: 0; }
+.toggler .path {
+  fill: none; stroke: #fefefe; stroke-width: 7px;
+  stroke-linecap: round; stroke-miterlimit: 10;
+}
+
+/* ----- Overlay de sesion bloqueada ----- */
+.lock-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.lock-overlay.hidden { display: none; }
+
+.lock-modal {
+  background: #fff; border-radius: 16px;
+  padding: 36px 32px; width: 360px; max-width: 90vw;
+  text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: lock-slide-in 0.25s ease;
+}
+
+@keyframes lock-slide-in {
+  from { transform: translateY(-18px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.lock-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--grad-brand); color: #fff;
+  font-size: 24px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; text-transform: uppercase;
+}
+
+.lock-title { font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 4px; }
+.lock-subtitle { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
+.lock-user { font-size: 13px; color: var(--text); font-weight: 700; margin: 0 0 20px; }
+
+.lock-input {
+  width: 100%; padding: 12px 14px;
+  border: 2px solid var(--border); border-radius: 8px;
+  font-size: 15px; outline: none; box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.lock-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(46, 139, 79, 0.15); }
+.lock-error { color: var(--red); font-size: 13px; font-weight: 700; margin: 8px 0 0; }
+.lock-error.hidden { display: none; }
+
+.lock-actions { display: flex; gap: 12px; margin-top: 16px; }
+.lock-btn {
+  flex: 1; padding: 12px; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  background: var(--brand); color: #fff;
+  transition: background 0.2s;
+}
+.lock-btn:hover { background: var(--brand-600); }
+
+@keyframes lock-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.lock-input.shake { animation: lock-shake 0.4s ease; border-color: var(--red); }
+
+/* En pantallas chicas el contenido ocupa todo el ancho; el sidebar se superpone. */
+@media (max-width: 860px) {
+  .pos-body { margin-left: 0; }
+}

@@ -21,7 +21,7 @@
     <table class="align-middle" data-filtros-pedidos data-base-url="/admin/pedidos">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Codigo</th>
           <th class="th-filtrable">
             <span class="th-label">Fecha</span>
             <button type="button" class="filtro-toggle" aria-label="Filtrar por fecha"><i class="bi bi-funnel"></i></button>
@@ -79,7 +79,7 @@
       </thead>
       <tbody>
         <tr th:each="p : ${pedidos}" th:with="b=${boletas.get(p.idPedido)},estado=${p.estado.name()}">
-          <td th:text="'#' + ${p.idPedido}">#1</td>
+          <td th:text="'PED-' + ${#numbers.formatInteger(p.idPedido, 3, 'NONE')}">PED-001</td>
           <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
           <td th:text="${p.cliente.nombre}">Cliente</td>
           <td th:text="${p.cliente.telefono} ?: '-'">-</td>
@@ -118,7 +118,7 @@
                 <li th:if="${estado != 'ANULADO'}">
                   <button class="dropdown-item text-danger" type="button"
                           data-bs-toggle="modal" data-bs-target="#anularPedido"
-                          th:attr="data-action=@{/admin/pedidos/{id}/anular(id=${p.idPedido})},data-nombre='#' + ${p.idPedido}">
+                          th:attr="data-action=@{/admin/pedidos/{id}/anular(id=${p.idPedido})},data-nombre='PED-' + ${#numbers.formatInteger(p.idPedido, 3, 'NONE')}">
                     <i class="bi bi-x-circle"></i> Anular pedido
                   </button>
                 </li>

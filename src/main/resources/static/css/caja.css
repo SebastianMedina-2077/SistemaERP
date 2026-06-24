@@ -1,0 +1,203 @@
+/* ===== Modales de caja (apertura / cierre) ===== */
+.caja-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 40, 25, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+.caja-overlay.hidden { display: none; }
+
+.caja-card {
+  position: relative;
+  width: min(420px, calc(100% - 32px));
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.28);
+  padding: 24px 22px 22px;
+}
+
+.caja-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.caja-close:hover { border-color: var(--red); color: var(--red); }
+
+.caja-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--brand-700);
+}
+
+.caja-subtitle { margin: 0 0 18px; font-size: 13px; color: var(--muted); }
+
+.caja-field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+.caja-field input {
+  height: 48px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.caja-field input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-50); }
+
+/* Reporte del turno */
+.caja-reporte {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.caja-rep-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.caja-rep-row + .caja-rep-row { border-top: 1px solid var(--border); }
+.caja-rep-row span { color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
+.caja-rep-row strong { font-weight: 700; }
+.caja-rep-row.total { background: #f7faf8; }
+.caja-rep-row.esperado { background: var(--brand-50); }
+.caja-rep-row.esperado strong { color: var(--brand-700); font-size: 15px; }
+
+.caja-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot-efectivo { background: var(--brand); }
+.dot-tarjeta { background: var(--blue); }
+.dot-yape { background: #6d28d9; }
+.dot-plin { background: #0891b2; }
+
+/* Banner de resultado del cuadre */
+.caja-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.caja-resultado.hidden { display: none; }
+.caja-resultado strong { font-size: 15px; }
+.caja-resultado span { font-size: 12px; }
+.caja-resultado--ok { background: var(--brand-50); color: var(--brand-700); border: 1px solid var(--brand-100); }
+.caja-resultado--sobra { background: var(--yellow-50); color: #b45309; border: 1px solid #f6cf8f; }
+.caja-resultado--falta { background: var(--red-50); color: var(--red); border: 1px solid #efa8a8; }
+
+/* ===== Pantalla de bloqueo ===== */
+.caja-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 10, 10, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.caja-lock.hidden { display: none; }
+
+.caja-lock-card {
+  width: min(380px, calc(100% - 32px));
+  background: var(--white);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.caja-lock-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--red-50);
+  color: var(--red);
+  font-size: 30px;
+}
+
+.caja-lock-card h3 { margin: 0 0 6px; font-size: 19px; font-weight: 800; color: var(--text); }
+.caja-lock-card p { margin: 0 0 18px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+.caja-lock-card input {
+  width: 100%;
+  height: 50px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.caja-lock-card input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-50); }
+
+.caja-lock-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.caja-lock-error.hidden { display: none; }
+
+/* ===== Boton "Cambiar de usuario" en el modal de apertura ===== */
+.caja-cambiar-usuario { margin: 10px 0 0; }
+/* ===== Pantalla de carga (transicion cierre de turno -> apertura) ===== */
+.caja-carga {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(247, 250, 248, 0.92);
+  backdrop-filter: blur(3px);
+}
+
+.caja-carga.hidden { display: none; }
+
+.caja-carga-spinner {
+  width: 52px;
+  height: 52px;
+  border: 4px solid var(--brand-100);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: caja-spin 0.8s linear infinite;
+}
+
+@keyframes caja-spin { to { transform: rotate(360deg); } }
+
+.caja-carga-text { font-size: 15px; font-weight: 700; color: var(--brand-700); }
+.caja-carga-sub { font-size: 13px; color: var(--muted); margin-top: -8px; }

@@ -45,6 +45,8 @@ const paymentMethod = document.querySelector("#paymentMethod");
 const subtotalNode = document.querySelector("#subtotal");
 const igvNode = document.querySelector("#igv");
 const totalNode = document.querySelector("#total");
+const saveOrderBtn = document.querySelector("#saveOrderBtn");
+const badgeGuardados = document.querySelector("#badgeGuardados");
 
 const PAGE_SIZE = 30;
 let activeCategory = null;
@@ -129,9 +131,20 @@ function renderProductButton(product) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "product-btn";
-  button.innerHTML = `<strong></strong><span></span>`;
-  button.querySelector("strong").textContent = product.nombre;
-  button.querySelector("span").textContent = `${money(product.precio)} · ${stockText}`;
+
+  const nombre = document.createElement("strong");
+  nombre.className = "product-btn__name";
+  nombre.textContent = product.nombre;
+
+  const precio = document.createElement("span");
+  precio.className = "product-btn__price";
+  precio.textContent = money(product.precio);
+
+  const stock = document.createElement("span");
+  stock.className = "product-btn__stock";
+  stock.textContent = stockText;
+
+  button.append(nombre, precio, stock);
   button.addEventListener("click", () => addProduct(product));
   return button;
 }
@@ -251,15 +264,45 @@ function renderTotals() {
 }
 
 // --- Generar boleta -------------------------------------------------
-async function generateTicket() {
-  if (!customerName.value.trim()) { customerName.focus(); return; }
-  if (!order.length) return;
+function marcarError(el) {
+  if (!el) return;
+  el.classList.add("campo-error");
+  el.focus();
+  setTimeout(() => el.classList.remove("campo-error"), 2500);
+}
 
+async function generateTicket() {
+  if (!order.length) {
+    MammaTomatoAlert.warning("Pedido vacio", "Agrega al menos un producto al pedido");
+    return;
+  }
+  if (!customerName.value.trim()) {
+    MammaTomatoAlert.warning("Datos incompletos", "El nombre del cliente es obligatorio");
+    marcarError(customerName);
+    return;
+  }
+  if (!paymentMethod.value) {
+    MammaTomatoAlert.warning("Datos incompletos", "Selecciona el metodo de pago");
+    marcarError(paymentMethod);
+    return;
+  }
+
+  if (esEfectivo()) abrirCobro();
+  else enviarVenta(null, null);
+}
+
+function esEfectivo() {
+  const opcion = paymentMethod.options[paymentMethod.selectedIndex];
+  return opcion ? /efectivo/i.test(opcion.textContent) : false;
+}
+
+async function enviarVenta(vuelto, pagos) {
   const payload = {
     clienteNombre: customerName.value.trim(),
     clienteTelefono: customerPhone.value.trim() || null,
     idMetodoPago: Number(paymentMethod.value),
     items: order.map((item) => ({ idProducto: item.idProducto, cantidad: item.cantidad, observacion: item.observacion || null })),
+    pagos: pagos && pagos.length ? pagos : null,
   };
 
   const totalItems = order.reduce((sum, item) => sum + item.cantidad, 0);
@@ -268,14 +311,14 @@ async function generateTicket() {
   generateTicketBtn.disabled = true;
   try {
     const boleta = await sendJson("POST", "/api/pedidos", payload);
-    showOrderConfirm(boleta, eta);
+    showOrderConfirm(boleta, eta, vuelto);
     clearOrder();
   } catch (err) {
     const faltantes = err.payload?.detalle;
     if (Array.isArray(faltantes) && faltantes.length && faltantes[0].insumo) {
       showStockAlert(faltantes);
     } else {
-      alert(`No se pudo generar la boleta: ${err.message}`);
+      MammaTomatoAlert.error("No se pudo generar la boleta", err.message);
     }
   } finally {
     generateTicketBtn.disabled = false;
@@ -290,6 +333,88 @@ function clearOrder() {
   renderOrder();
 }
 
+// --- Guardar pedido en espera (almacen en memoria del servidor) -----
+function guardarPedido() {
+  if (!order.length) {
+    MammaTomatoAlert.warning("Pedido vacio", "Agrega al menos un producto antes de guardar");
+    return;
+  }
+  const nombre = customerName.value.trim() || "Sin nombre";
+  mostrarModalConfirmacion({
+    titulo: "Guardar pedido en espera",
+    mensaje: `Guardar el pedido de "${nombre}" para retomarlo despues?`,
+    labelConfirmar: "Guardar",
+    labelCancelar: "Cancelar",
+    onConfirmar: ejecutarGuardarPedido,
+  });
+}
+
+async function ejecutarGuardarPedido() {
+  const totals = getTotals();
+  const payload = {
+    cliente: customerName.value.trim() || "Sin nombre",
+    telefono: customerPhone.value.trim() || null,
+    idMetodoPago: paymentMethod.value ? Number(paymentMethod.value) : null,
+    items: order.map((item) => ({
+      idProducto: item.idProducto,
+      nombre: item.nombre,
+      precio: item.precio,
+      cantidad: item.cantidad,
+      observacion: item.observacion || null,
+    })),
+    subtotal: totals.subtotal,
+    total: totals.total,
+  };
+
+  saveOrderBtn.disabled = true;
+  try {
+    const guardado = await sendJson("POST", "/cajero/pedidos/guardar", payload);
+    MammaTomatoAlert.success("Pedido guardado", `Guardado como "${guardado.referencia}"`);
+    clearOrder();
+    actualizarBadgeGuardados();
+  } catch (err) {
+    MammaTomatoAlert.error("Error al guardar", err.message);
+  } finally {
+    saveOrderBtn.disabled = false;
+  }
+}
+
+async function actualizarBadgeGuardados() {
+  if (!badgeGuardados) return;
+  try {
+    const data = await getJson("/cajero/pedidos/guardados/count");
+    const n = data.count || 0;
+    badgeGuardados.textContent = n;
+    badgeGuardados.hidden = n === 0;
+  } catch {
+    /* silencioso: el badge es informativo */
+  }
+}
+
+// --- Recuperar un pedido guardado (llega desde /cajero/guardados) ----
+function cargarPedidoRecuperado() {
+  const raw = sessionStorage.getItem("mt-pedido-recuperado");
+  if (!raw) return;
+  sessionStorage.removeItem("mt-pedido-recuperado");
+  try {
+    const pedido = JSON.parse(raw);
+    order = (pedido.items || []).map((i) => ({
+      idProducto: i.idProducto,
+      nombre: i.nombre,
+      precio: Number(i.precio),
+      cantidad: i.cantidad,
+      observacion: i.observacion || "",
+    }));
+    customerName.value = pedido.cliente && pedido.cliente !== "Sin nombre" ? pedido.cliente : "";
+    customerPhone.value = pedido.telefono || "";
+    if (pedido.idMetodoPago != null) paymentMethod.value = String(pedido.idMetodoPago);
+    renderOrder();
+    MammaTomatoAlert.info("Pedido recuperado", "El pedido fue cargado al carrito");
+  } catch {
+    /* ignora json invalido */
+  }
+}
+
 // --- Confirmacion de orden -----------------------------------------
 const orderConfirm = document.querySelector("#orderConfirm");
 const confirmTitle = document.querySelector("#confirmTitle");
@@ -297,10 +422,28 @@ const confirmEta = document.querySelector("#confirmEta");
 const confirmDismiss = document.querySelector("#confirmDismiss");
 const confirmNew = document.querySelector("#confirmNew");
 
-function showOrderConfirm(boleta, eta) {
+const cobroModal = document.querySelector("#cobroModal");
+const cobroTotalNode = document.querySelector("#cobroTotal");
+const cobroRecibido = document.querySelector("#cobroRecibido");
+const cobroVueltoNode = document.querySelector("#cobroVuelto");
+const cobroVueltoBox = document.querySelector("#cobroVueltoBox");
+const cobroConfirm = document.querySelector("#cobroConfirm");
+const cobroExacto = document.querySelector("#cobroExacto");
+const cobroClose = document.querySelector("#cobroClose");
+const cobroReset = document.querySelector("#cobroReset");
+const cobroMixto = document.querySelector("#cobroMixto");
+const cobroMixtoBlock = document.querySelector("#cobroMixtoBlock");
+const cobroMetodo2 = document.querySelector("#cobroMetodo2");
+const cobroMonto2 = document.querySelector("#cobroMonto2");
+
+function showOrderConfirm(boleta, eta, vuelto) {
   const numero = boleta.idPedido != null ? boleta.idPedido : boleta.numeroBoleta;
   confirmTitle.textContent = `Orden #${numero} enviada a cocina`;
-  confirmEta.innerHTML = `<i class="bi bi-clock"></i> Tiempo estimado: ${eta} min.`;
+  let info = `<i class="bi bi-clock"></i> Tiempo estimado: ${eta} min.`;
+  if (vuelto != null && vuelto > 0.001) {
+    info += `<br><i class="bi bi-cash-coin"></i> Vuelto: ${money(vuelto)}`;
+  }
+  confirmEta.innerHTML = info;
   orderConfirm.classList.remove("hidden");
 }
 
@@ -311,6 +454,116 @@ function hideOrderConfirm() {
 confirmDismiss.addEventListener("click", hideOrderConfirm);
 confirmNew.addEventListener("click", hideOrderConfirm);
 orderConfirm.addEventListener("click", (e) => { if (e.target === orderConfirm) hideOrderConfirm(); });
+
+// --- Cobro en efectivo + vuelto -------------------------------------
+let cobroTotal = 0;
+
+function abrirCobro() {
+  cobroTotal = getTotals().total;
+  cobroTotalNode.textContent = money(cobroTotal);
+  cobroRecibido.value = "";
+  cobroMixto.checked = false;
+  cobroMetodo2.value = "";
+  cobroMonto2.value = "";
+  cobroMixtoBlock.classList.add("hidden");
+  actualizarVuelto();
+  cobroModal.classList.remove("hidden");
+  setTimeout(() => cobroRecibido.focus(), 50);
+}
+
+function cerrarCobro() {
+  cobroModal.classList.add("hidden");
+}
+
+// En pago mixto, parte del total va a otro metodo; el resto se cobra en efectivo.
+function montoDigital() {
+  return cobroMixto.checked ? Number(cobroMonto2.value) || 0 : 0;
+}
+
+function porcionEfectivo() {
+  return Math.max(0, cobroTotal - montoDigital());
+}
+
+function actualizarVuelto() {
+  const efectivo = porcionEfectivo();
+  const recibido = Number(cobroRecibido.value) || 0;
+  const vuelto = recibido - efectivo;
+  const falta = recibido > 0 && vuelto < -0.001;
+  cobroVueltoBox.classList.toggle("falta", falta);
+  cobroVueltoNode.textContent = falta ? `Falta ${money(Math.abs(vuelto))}` : money(Math.max(0, vuelto));
+  cobroConfirm.disabled = !cobroPuedeConfirmar(recibido, efectivo);
+}
+
+// Confirmable si cubre el efectivo y, en mixto, el segundo metodo es valido (>0 y < total).
+function cobroPuedeConfirmar(recibido, efectivo) {
+  if (recibido + 0.001 < efectivo) return false;
+  if (!cobroMixto.checked) return true;
+  const digital = montoDigital();
+  return Boolean(cobroMetodo2.value) && digital > 0.001 && digital + 0.001 < cobroTotal;
+}
+
+cobroRecibido.addEventListener("input", actualizarVuelto);
+
+document.querySelectorAll(".cobro-billete[data-monto]").forEach((boton) => {
+  boton.addEventListener("click", () => {
+    const actual = Number(cobroRecibido.value) || 0;
+    cobroRecibido.value = (actual + Number(boton.dataset.monto)).toFixed(2);
+    actualizarVuelto();
+  });
+});
+
+cobroExacto.addEventListener("click", () => {
+  cobroRecibido.value = porcionEfectivo().toFixed(2);
+  actualizarVuelto();
+});
+
+cobroMixto.addEventListener("change", () => {
+  cobroMixtoBlock.classList.toggle("hidden", !cobroMixto.checked);
+  if (!cobroMixto.checked) { cobroMetodo2.value = ""; cobroMonto2.value = ""; }
+  actualizarVuelto();
+});
+cobroMetodo2.addEventListener("change", actualizarVuelto);
+cobroMonto2.addEventListener("input", actualizarVuelto);
+
+cobroReset.addEventListener("click", () => {
+  cobroRecibido.value = "";
+  actualizarVuelto();
+  cobroRecibido.focus();
+});
+
+cobroClose.addEventListener("click", cerrarCobro);
+cobroModal.addEventListener("click", (e) => { if (e.target === cobroModal) cerrarCobro(); });
+
+cobroConfirm.addEventListener("click", () => {
+  const efectivo = porcionEfectivo();
+  const vuelto = (Number(cobroRecibido.value) || 0) - efectivo;
+  let pagos = null;
+  if (cobroMixto.checked) {
+    pagos = [
+      { idMetodoPago: Number(paymentMethod.value), monto: Number(efectivo.toFixed(2)) },
+      { idMetodoPago: Number(cobroMetodo2.value), monto: Number(montoDigital().toFixed(2)) },
+    ];
+  }
+  cerrarCobro();
+  enviarVenta(vuelto, pagos);
+});
+
+// --- Atajos de teclado ----------------------------------------------
+document.addEventListener("keydown", (e) => {
+  if (!cobroModal.classList.contains("hidden")) {
+    if (e.key === "Escape") { e.preventDefault(); cerrarCobro(); }
+    else if (e.key === "Enter" && !cobroConfirm.disabled) { e.preventDefault(); cobroConfirm.click(); }
+    return;
+  }
+  if (!orderConfirm.classList.contains("hidden")) {
+    if (e.key === "Escape" || e.key === "Enter") { e.preventDefault(); hideOrderConfirm(); }
+    return;
+  }
+  const enCampo = ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName);
+  if (e.key === "/" && !enCampo) { e.preventDefault(); productSearch.focus(); }
+  else if (e.key === "F9") { e.preventDefault(); generateTicket(); }
+  else if (e.key === "Escape" && enCampo) { document.activeElement.blur(); }
+});
 
 // --- Buscador + paginacion -----------------------------------------
 productSearch.addEventListener("input", () => {
@@ -324,7 +577,10 @@ pageNext.addEventListener("click", () => { currentPage += 1; renderGrid(); });
 
 clearOrderBtn.addEventListener("click", clearOrder);
 generateTicketBtn.addEventListener("click", generateTicket);
+saveOrderBtn.addEventListener("click", guardarPedido);
 
 setupCategories();
 loadProducts();
+cargarPedidoRecuperado();
 renderOrder();
+actualizarBadgeGuardados();

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mamma Tomato | Caja</title>
+  <title>Mamma Tomato | Punto de venta</title>
   <meta name="_csrf" th:content="${_csrf.token}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -13,93 +13,155 @@
   <link rel="stylesheet" th:href="@{/css/components.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
   <link rel="stylesheet" th:href="@{/css/pos.css}">
+  <link rel="stylesheet" th:href="@{/css/pos-shell.css}">
+  <link rel="stylesheet" th:href="@{/css/alertas.css}">
+  <link rel="stylesheet" th:href="@{/css/caja.css}">
+  <script defer th:src="@{/js/alertas.js}"></script>
 </head>
-<body>
-  <header class="pos-header role-header">
-    <div class="role-brand">
-      <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
-      <div>
-        <p class="eyebrow">Punto de venta</p>
-        <h1>Registro de pedidos</h1>
+<body class="pos-shell">
+
+  <!-- Sidebar delgado: marca, modulos del cajero y pie con sesion / salir -->
+  <aside class="pos-sidebar">
+    <div class="pos-brand">
+      <img th:src="@{/img/logo.png}" alt="Mamma Tomato">
+      <div class="pos-brand-text">
+        <strong>Mamma Tomato</strong>
+        <span>ERP System</span>
       </div>
     </div>
-    <div class="user-box">
-      <div class="user-avatar" th:text="${#strings.substring(#authentication.name, 0, 1)}">C</div>
-      <div class="user-meta">
-        <strong sec:authentication="name">Cajero</strong>
-        <span>Cajero</span>
-      </div>
-      <form th:action="@{/logout}" method="post" style="margin:0">
-        <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
-      </form>
-    </div>
-  </header>
 
-  <main class="pos-layout">
-    <section class="pos-column categories-panel">
-      <div class="section-heading">
-        <h2>Categorias</h2>
-        <span class="muted">Seleccione una categoria</span>
-      </div>
-      <div id="categoryButtons" class="stack-list">
-        <button th:each="cat, it : ${categorias}" type="button"
-                th:text="${cat.nombre}"
-                th:attr="data-category=${cat.idCategoria}"
-                th:classappend="${it.first} ? 'btn-secondary' : 'btn-ghost'"
-                class="btn category-btn">Categoria</button>
-      </div>
-    </section>
+    <nav class="pos-nav">
+      <a th:href="@{/cajero/pos}" class="pos-nav-item active">
+        <i class="bi bi-shop"></i><span>Punto de Venta</span>
+      </a>
+      <a th:href="@{/cajero/guardados}" class="pos-nav-item">
+        <i class="bi bi-bookmark"></i><span>Guardar Pedido</span>
+        <span id="badgeGuardados" class="pos-nav-badge" hidden>0</span>
+      </a>
+    </nav>
 
-    <section class="pos-column products-panel">
-      <div class="section-heading products-heading">
-        <h2>Modulo Pedidos</h2>
-        <div class="search-box">
-          <i class="bi bi-search"></i>
-          <input id="productSearch" type="search" placeholder="Buscar producto por nombre..." autocomplete="off">
+    <div class="pos-sidebar-foot">
+      <div class="pos-session">
+        <span class="session-label session-on" id="sessionLabel">Sesion activa</span>
+        <div class="toggler" title="Bloquear sesion">
+          <input id="sessionToggle" type="checkbox" checked>
+          <label for="sessionToggle">
+            <svg class="toggler-on" viewBox="0 0 130.2 130.2">
+              <polyline class="path check" points="100.2,40.2 51.5,88.8 29.8,67.5"></polyline>
+            </svg>
+            <svg class="toggler-off" viewBox="0 0 130.2 130.2">
+              <line class="path line" x1="34.4" y1="34.4" x2="95.8" y2="95.8"></line>
+              <line class="path line" x1="95.8" y1="34.4" x2="34.4" y2="95.8"></line>
+            </svg>
+          </label>
         </div>
       </div>
-      <span id="stockAlert" class="inline-alert hidden">Stock insuficiente para registrar este producto.</span>
-      <div id="productGrid" class="product-grid"></div>
-      <div class="grid-pager">
-        <button id="pagePrev" class="pager-btn" type="button" aria-label="Anterior"><i class="bi bi-chevron-left"></i></button>
-        <span id="pageInfo" class="pager-info">0 de 0</span>
-        <button id="pageNext" class="pager-btn" type="button" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></button>
-      </div>
-    </section>
-
-    <aside class="pos-column order-panel">
-      <div class="section-heading">
-        <h2>Pedido actual</h2>
-        <button id="clearOrderBtn" class="btn btn-secondary" type="button">Cancelar</button>
-      </div>
-
-      <form id="customerForm" class="compact-form">
-        <label>Cliente
-          <input id="customerName" type="text" maxlength="15" placeholder="Nombre del cliente" required>
-        </label>
-        <label>Telefono
-          <input id="customerPhone" type="tel" maxlength="9" placeholder="Opcional">
-        </label>
-        <label>Metodo de pago
-          <select id="paymentMethod">
-            <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Efectivo</option>
-          </select>
-        </label>
+      <form th:action="@{/logout}" method="post">
+        <button type="submit" class="pos-logout">
+          <i class="bi bi-box-arrow-right"></i> Cerrar sesion
+        </button>
       </form>
+    </div>
+  </aside>
 
-      <div id="orderItems" class="order-items empty-state">No hay productos agregados.</div>
-
-      <div class="totals-box">
-        <div><span>Subtotal</span><strong id="subtotal">S/ 0.00</strong></div>
-        <div><span>IGV 18%</span><strong id="igv">S/ 0.00</strong></div>
-        <div class="total-line"><span>Total</span><strong id="total">S/ 0.00</strong></div>
-      </div>
-
-      <button id="generateTicketBtn" class="btn btn-primary btn-full btn-large" type="button">
-        <i class="bi bi-receipt"></i> Generar boleta
+  <div class="pos-body">
+    <header class="pos-topbar">
+      <button type="button" class="pos-hamburger" id="navToggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
       </button>
-    </aside>
-  </main>
+      <div class="pos-topbar-titles">
+        <h1>Punto de Venta</h1>
+        <p>Registro de ventas</p>
+      </div>
+      <div class="pos-topbar-actions">
+        <button type="button" class="pos-cerrar-caja" id="btnCerrarCaja" title="Cerrar caja / cuadre">
+          <i class="bi bi-cash-stack"></i> Cerrar caja
+        </button>
+        <span class="pos-user-chip">
+          <i class="bi bi-person-circle"></i><span sec:authentication="name">Cajero</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="pos-content">
+      <main class="pos-layout">
+        <section class="pos-column categories-panel">
+          <div class="section-heading">
+            <h2>Categorias</h2>
+            <span class="muted">Seleccione una categoria</span>
+          </div>
+          <div id="categoryButtons" class="stack-list">
+            <button th:each="cat, it : ${categorias}" type="button"
+                    th:text="${cat.nombre}"
+                    th:attr="data-category=${cat.idCategoria}"
+                    th:classappend="${it.first} ? 'btn-secondary' : 'btn-ghost'"
+                    class="btn category-btn">Categoria</button>
+          </div>
+        </section>
+
+        <section class="pos-column products-panel">
+          <div class="section-heading products-heading">
+            <h2>Modulo Pedidos</h2>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input id="productSearch" type="search" placeholder="Buscar producto por nombre..." autocomplete="off">
+            </div>
+          </div>
+          <span id="stockAlert" class="inline-alert hidden">Stock insuficiente para registrar este producto.</span>
+          <div id="productGrid" class="product-grid"></div>
+          <div class="grid-pager">
+            <button id="pagePrev" class="pager-btn" type="button" aria-label="Anterior"><i class="bi bi-chevron-left"></i></button>
+            <span id="pageInfo" class="pager-info">0 de 0</span>
+            <button id="pageNext" class="pager-btn" type="button" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </section>
+
+        <aside class="pos-column order-panel">
+          <div class="section-heading">
+            <h2>Pedido actual</h2>
+            <button id="clearOrderBtn" class="btn btn-secondary" type="button">Cancelar</button>
+          </div>
+
+          <form id="customerForm" class="compact-form">
+            <label>Cliente
+              <input id="customerName" type="text" maxlength="15" placeholder="Nombre del cliente" required>
+            </label>
+            <label>Telefono
+              <input id="customerPhone" type="tel" maxlength="9" placeholder="Opcional">
+            </label>
+            <label>Metodo de pago
+              <select id="paymentMethod">
+                <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Efectivo</option>
+              </select>
+            </label>
+          </form>
+
+          <div id="orderItems" class="order-items empty-state">No hay productos agregados.</div>
+
+          <div class="totals-box">
+            <div><span>Subtotal</span><strong id="subtotal">S/ 0.00</strong></div>
+            <div><span>IGV 18%</span><strong id="igv">S/ 0.00</strong></div>
+            <div class="total-line"><span>Total</span><strong id="total">S/ 0.00</strong></div>
+          </div>
+
+          <div class="order-actions">
+            <button id="saveOrderBtn" class="btn btn-secondary btn-full" type="button">
+              <i class="bi bi-bookmark-plus"></i> Guardar
+            </button>
+            <button id="generateTicketBtn" class="btn btn-primary btn-full btn-large" type="button">
+              <i class="bi bi-receipt"></i> Generar boleta
+            </button>
+          </div>
+          <p class="order-shortcuts"><kbd>F9</kbd> cobrar &middot; <kbd>/</kbd> buscar</p>
+        </aside>
+      </main>
+    </div>
+
+    <footer class="pos-statusbar">
+      <span>Cajero: <strong sec:authentication="name">Cajero</strong></span>
+      <span class="pos-status-online">Sistema en linea <i class="pos-status-dot"></i></span>
+    </footer>
+  </div>
 
   <div id="orderConfirm" class="confirm-overlay hidden">
     <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -120,6 +182,156 @@
     </div>
   </div>
 
+  <div id="aperturaModal" class="caja-overlay hidden">
+    <div class="caja-card" role="dialog" aria-modal="true">
+      <h3 class="caja-title">Abrir caja</h3>
+      <p class="caja-subtitle">Ingresa el monto inicial con el que abres tu turno.</p>
+      <label class="caja-field">
+        Monto inicial (S/)
+        <input id="aperturaMonto" type="number" inputmode="decimal" step="0.10" min="0" value="400.00">
+      </label>
+      <button type="button" class="btn btn-primary btn-full btn-large" id="aperturaConfirm">
+        <i class="bi bi-unlock"></i> Abrir caja
+      </button>
+      <!-- Cierra la sesion del cajero y vuelve al login para que entre otro usuario. -->
+      <form th:action="@{/logout}" method="post" class="caja-cambiar-usuario">
+        <button type="submit" class="btn btn-ghost btn-full">
+          <i class="bi bi-box-arrow-right"></i> Cambiar de usuario
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="cierreModal" class="caja-overlay hidden">
+    <div class="caja-card" role="dialog" aria-modal="true">
+      <button type="button" class="caja-close" id="cierreClose" aria-label="Cerrar">&times;</button>
+      <h3 class="caja-title">Cierre / cuadre de caja</h3>
+      <p class="caja-subtitle">Resumen del turno por metodo de pago.</p>
+
+      <div class="caja-reporte">
+        <div class="caja-rep-row"><span>Monto inicial</span><strong id="repInicial">S/ 0.00</strong></div>
+        <div class="caja-rep-row"><span><i class="caja-dot dot-efectivo"></i> Efectivo</span><strong id="repEfectivo">S/ 0.00</strong></div>
+        <div class="caja-rep-row"><span><i class="caja-dot dot-tarjeta"></i> Tarjeta</span><strong id="repTarjeta">S/ 0.00</strong></div>
+        <div class="caja-rep-row"><span><i class="caja-dot dot-yape"></i> Yape</span><strong id="repYape">S/ 0.00</strong></div>
+        <div class="caja-rep-row"><span><i class="caja-dot dot-plin"></i> Plin</span><strong id="repPlin">S/ 0.00</strong></div>
+        <div class="caja-rep-row total"><span>Total ventas del turno</span><strong id="repTotal">S/ 0.00</strong></div>
+        <div class="caja-rep-row esperado"><span>Efectivo esperado en caja</span><strong id="repEsperado">S/ 0.00</strong></div>
+      </div>
+
+      <label class="caja-field">
+        Efectivo contado en caja (S/)
+        <input id="cajaContado" type="number" inputmode="decimal" step="0.10" min="0" placeholder="0.00">
+      </label>
+
+      <div id="cierreResultado" class="caja-resultado hidden"></div>
+
+      <button type="button" class="btn btn-primary btn-full btn-large" id="cierreConfirm">
+        <i class="bi bi-check2-circle"></i> Confirmar cuadre
+      </button>
+    </div>
+  </div>
+
+  <div id="cajaLock" class="caja-lock hidden">
+    <div class="caja-lock-card" role="dialog" aria-modal="true">
+      <div class="caja-lock-icon"><i class="bi bi-lock-fill"></i></div>
+      <h3>Caja bloqueada</h3>
+      <p>Se superaron los 3 intentos de cuadre. Solicita el codigo de supervisor para desbloquear.</p>
+      <input id="lockPin" type="password" inputmode="numeric" placeholder="Codigo" autocomplete="off">
+      <p id="cajaLockError" class="caja-lock-error hidden"></p>
+      <button type="button" class="btn btn-primary btn-full btn-large" id="lockUnlock">
+        <i class="bi bi-unlock"></i> Desbloquear
+      </button>
+    </div>
+  </div>
+
+  <div id="cobroModal" class="cobro-overlay hidden">
+    <div class="cobro-card" role="dialog" aria-modal="true" aria-labelledby="cobroTitle">
+      <button type="button" class="cobro-close" id="cobroClose" aria-label="Cerrar">&times;</button>
+      <h3 id="cobroTitle" class="cobro-title">Cobro en efectivo</h3>
+
+      <div class="cobro-total">
+        <span>Total a pagar</span>
+        <strong id="cobroTotal">S/ 0.00</strong>
+      </div>
+
+      <label class="cobro-mixto-check">
+        <input type="checkbox" id="cobroMixto"> Pago mixto: una parte con otro metodo
+      </label>
+      <div id="cobroMixtoBlock" class="cobro-mixto-block hidden">
+        <div class="cobro-mixto-row">
+          <select id="cobroMetodo2" class="cobro-mixto-select">
+            <option value="">Otro metodo</option>
+            <option th:each="mp : ${metodosPago}"
+                    th:if="${!#strings.containsIgnoreCase(mp.descripcion, 'efectivo')}"
+                    th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Tarjeta</option>
+          </select>
+          <input type="number" id="cobroMonto2" class="cobro-mixto-input" step="0.10" min="0" placeholder="Monto S/">
+        </div>
+        <p class="cobro-mixto-hint">El resto se cobra en efectivo abajo.</p>
+      </div>
+
+      <p class="cobro-label">Agrega lo que paga el cliente (parte en efectivo)</p>
+      <div class="cobro-denoms">
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="0.10">S/ 0.10</button>
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="0.20">S/ 0.20</button>
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="0.50">S/ 0.50</button>
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="1">S/ 1</button>
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="2">S/ 2</button>
+        <button type="button" class="cobro-billete cobro-moneda" data-monto="5">S/ 5</button>
+        <button type="button" class="cobro-billete" data-monto="10">S/ 10</button>
+        <button type="button" class="cobro-billete" data-monto="20">S/ 20</button>
+        <button type="button" class="cobro-billete" data-monto="50">S/ 50</button>
+        <button type="button" class="cobro-billete" data-monto="100">S/ 100</button>
+        <button type="button" class="cobro-billete" data-monto="200">S/ 200</button>
+      </div>
+      <div class="cobro-quick-actions">
+        <button type="button" class="cobro-mini cobro-exacto" id="cobroExacto"><i class="bi bi-check2"></i> Exacto</button>
+        <button type="button" class="cobro-mini cobro-reset" id="cobroReset"><i class="bi bi-x-lg"></i> Reiniciar</button>
+      </div>
+
+      <label class="cobro-field">
+        Monto recibido (S/)
+        <input id="cobroRecibido" type="number" inputmode="decimal" step="0.10" min="0" placeholder="0.00">
+      </label>
+
+      <div class="cobro-vuelto" id="cobroVueltoBox">
+        <span>Vuelto</span>
+        <strong id="cobroVuelto">S/ 0.00</strong>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-full btn-large" id="cobroConfirm" disabled>
+        <i class="bi bi-cash-coin"></i> Cobrar y generar
+      </button>
+    </div>
+  </div>
+
+  <!-- Overlay de sesion bloqueada: se desbloquea con la contrasena del cajero. -->
+  <div id="lockOverlay" class="lock-overlay hidden" aria-hidden="true">
+    <div class="lock-modal">
+      <div class="lock-avatar"
+           th:text="${currentUser != null ? #strings.substring(currentUser.nombre, 0, 1) : '?'}">C</div>
+      <h3 class="lock-title">Sesion bloqueada</h3>
+      <p class="lock-subtitle">Ingresa tu contrasena para continuar</p>
+      <p class="lock-user" th:text="${currentUser != null ? currentUser.nombre : ''}">Cajero</p>
+      <input type="password" id="lockPassword" class="lock-input"
+             placeholder="Contrasena" autocomplete="current-password">
+      <p id="lockError" class="lock-error hidden">Contrasena incorrecta. Intenta de nuevo.</p>
+      <div class="lock-actions">
+        <button class="lock-btn" id="lockUnlockBtn" type="button">Desbloquear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantalla de carga para la transicion cierre de turno -> apertura de caja. -->
+  <div id="cajaCarga" class="caja-carga hidden">
+    <div class="caja-carga-spinner"></div>
+    <p class="caja-carga-text">Cerrando turno</p>
+    <p class="caja-carga-sub">Preparando la caja para el siguiente turno...</p>
+  </div>
+
   <script type="module" th:src="@{/js/cajero.js}"></script>
+  <script type="module" th:src="@{/js/caja.js}"></script>
+  <script th:src="@{/js/admin-session.js}"></script>
+  <script th:src="@{/js/shell-nav.js}"></script>
 </body>
 </html>

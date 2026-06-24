@@ -1,92 +1,158 @@
 const REFRESH_MS = 8000;
+const SALIDA_MS = 5000; // tiempo visible de la card tras marcarse atendida
 
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
 const kitchenOrders = document.querySelector("#kitchenOrders");
+const refreshBtn = document.querySelector("#cocinaRefresh");
+const colaCount = document.querySelector("#colaCount");
 
-function badgeClass(estado) {
-  const e = String(estado).toLowerCase();
-  if (e.includes("atendido")) return "badge badge-success";
-  if (e.includes("anulado")) return "badge badge-danger";
-  if (e.includes("pendiente")) return "badge badge-warning";
-  return "badge badge-info"; // preparando
+let pedidos = [];
+let conocidos = new Set();
+let primeraCarga = true;
+// Pedidos con animacion de salida en curso: mientras existan, no se re-renderiza la cola.
+let animando = new Set();
+
+function formatId(id) {
+  return `PED-${String(id).padStart(3, "0")}`;
 }
 
-function formatFecha(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("es-PE");
+function minutosEspera(iso) {
+  const t = iso ? new Date(iso).getTime() : NaN;
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 60000));
+}
+
+// Semaforo por tiempo en cola: verde < 6 min, naranja 6-10 min, rojo > 10 min.
+function claseUrgencia(min) {
+  if (min > 10) return "estado-urgente";
+  if (min >= 6) return "estado-demora";
+  return "estado-reciente";
+}
+
+function textoEspera(min) {
+  return min <= 0 ? "recien" : `hace ${min} min`;
 }
 
 async function loadKitchen() {
   try {
     const res = await fetch("/api/pedidos/cocina", { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(res.statusText);
-    const orders = await res.json();
-    renderKitchen(orders);
+    pedidos = await res.json();
+    detectarNuevos(pedidos);
+    render();
   } catch (err) {
+    if (animando.size) return; // no pisar una animacion de salida en curso
+    kitchenOrders.className = "cocina-pedidos-grid empty-state";
     kitchenOrders.textContent = `No se pudo cargar la cola: ${err.message}`;
   }
 }
 
-function renderKitchen(orders) {
-  if (!orders.length) {
-    kitchenOrders.className = "kitchen-grid empty-state";
-    kitchenOrders.textContent = "No hay pedidos en cola.";
+function detectarNuevos(lista) {
+  if (!primeraCarga) {
+    lista.forEach((p) => {
+      if (!conocidos.has(p.idPedido)) {
+        MammaTomatoAlert.info("Nuevo pedido recibido", `${formatId(p.idPedido)} · ${p.cliente ?? "Cliente"}`, 6000);
+      }
+    });
+  }
+  conocidos = new Set(lista.map((p) => p.idPedido));
+  primeraCarga = false;
+}
+
+function actualizarColaCount() {
+  if (colaCount) colaCount.textContent = pedidos.length;
+}
+
+function render() {
+  actualizarColaCount();
+  // Mientras una card sale (atendido), no destruir la cola para no cortar la animacion.
+  if (animando.size) return;
+
+  // Cola: el pedido mas demorado primero (rojo), respetando el orden de llegada.
+  const visibles = [...pedidos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  if (!visibles.length) {
+    kitchenOrders.className = "cocina-pedidos-grid empty-state";
+    kitchenOrders.replaceChildren(estadoVacio());
     return;
   }
-  kitchenOrders.className = "kitchen-grid";
-  kitchenOrders.replaceChildren(...orders.map(renderCard));
+  kitchenOrders.className = "cocina-pedidos-grid";
+  kitchenOrders.replaceChildren(...visibles.map(renderCard));
+}
+
+function estadoVacio() {
+  const box = document.createElement("div");
+  box.className = "cocina-vacio";
+  box.innerHTML = `<i class="bi bi-check2-all"></i><p>Sin pedidos en cola</p><span>Los nuevos pedidos apareceran aqui</span>`;
+  return box;
 }
 
 function renderCard(pedido) {
+  const estado = String(pedido.estado).toUpperCase();
+  const min = minutosEspera(pedido.fecha);
   const card = document.createElement("article");
-  card.className = "kitchen-card";
+  card.className = `cocina-pedido-card ${claseUrgencia(min)}`;
+  card.dataset.id = pedido.idPedido;
 
-  const head = document.createElement("div");
-  head.className = "kitchen-card-head";
-  const info = document.createElement("div");
-  info.innerHTML = `<p class="eyebrow"></p><h2></h2><p class="muted"></p>`;
-  info.querySelector(".eyebrow").textContent = `Pedido #${pedido.idPedido}`;
-  info.querySelector("h2").textContent = pedido.cliente ?? "";
-  info.querySelector(".muted").textContent = formatFecha(pedido.fecha);
-  const badge = document.createElement("span");
-  badge.className = badgeClass(pedido.estado);
-  badge.textContent = pedido.estado;
-  head.append(info, badge);
+  const header = document.createElement("div");
+  header.className = "cocina-card-header";
+  const id = document.createElement("span");
+  id.className = "cocina-card-id";
+  id.textContent = formatId(pedido.idPedido);
+  const tiempo = document.createElement("span");
+  tiempo.className = "cocina-card-tiempo";
+  tiempo.textContent = textoEspera(min);
+  header.append(id, tiempo);
 
-  const list = document.createElement("ul");
-  list.className = "kitchen-items";
-  list.append(...(pedido.items || []).map((item) => {
-    const li = document.createElement("li");
-    const name = document.createElement("strong");
-    name.textContent = item.producto;
-    li.append(name, ` x ${item.cantidad}`);
-    if (item.observacion) {
-      const obs = document.createElement("p");
-      obs.className = "muted";
-      obs.textContent = item.observacion;
-      li.append(obs);
+  const cliente = document.createElement("div");
+  cliente.className = "cocina-card-cliente";
+  const nombre = document.createElement("strong");
+  nombre.textContent = pedido.cliente ?? "Sin nombre";
+  const etiqueta = document.createElement("span");
+  etiqueta.textContent = estado === "PENDIENTE" ? "Pendiente" : "Preparando";
+  cliente.append(nombre, etiqueta);
+
+  const items = document.createElement("div");
+  items.className = "cocina-card-items";
+  (pedido.items || []).forEach((it) => {
+    const row = document.createElement("div");
+    row.className = "cocina-item";
+    const qty = document.createElement("span");
+    qty.className = "cocina-item-qty";
+    qty.textContent = `${it.cantidad}x`;
+    const texto = document.createElement("div");
+    const prod = document.createElement("span");
+    prod.className = "cocina-item-nombre";
+    prod.textContent = it.producto;
+    texto.append(prod);
+    if (it.observacion) {
+      const obs = document.createElement("span");
+      obs.className = "cocina-item-obs";
+      obs.textContent = it.observacion;
+      texto.append(obs);
     }
-    return li;
-  }));
+    row.append(qty, texto);
+    items.append(row);
+  });
 
-  const actions = document.createElement("div");
-  actions.className = "kitchen-actions";
-  actions.append(
-    actionButton("Preparando", "btn btn-secondary", pedido.idPedido, "PREPARANDO"),
-    actionButton("Atendido", "btn btn-primary", pedido.idPedido, "ATENDIDO")
-  );
+  const footer = document.createElement("div");
+  footer.className = "cocina-card-footer";
+  if (estado === "PENDIENTE") {
+    footer.append(accionBtn("Empezar a preparar", "accion-preparar", pedido.idPedido, "PREPARANDO"));
+  } else {
+    footer.append(accionBtn("Marcar entregado", "accion-entregar", pedido.idPedido, "ATENDIDO"));
+  }
 
-  card.append(head, list, actions);
+  card.append(header, cliente, items, footer);
   return card;
 }
 
-function actionButton(text, className, idPedido, estado) {
+function accionBtn(text, clase, idPedido, estado) {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = className;
+  b.className = `btn-cocina-accion ${clase}`;
   b.textContent = text;
   b.addEventListener("click", () => updateStatus(idPedido, estado, b));
   return b;
@@ -106,12 +172,45 @@ async function updateStatus(idPedido, estado, btn) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.mensaje || res.statusText);
     }
-    await loadKitchen();
+    if (estado === "ATENDIDO") {
+      MammaTomatoAlert.success("Pedido entregado", `${formatId(idPedido)} marcado como entregado`);
+      animarAtendido(idPedido, btn.closest(".cocina-pedido-card"));
+    } else {
+      MammaTomatoAlert.info("Estado actualizado", `${formatId(idPedido)} en preparacion`);
+      await loadKitchen();
+    }
   } catch (err) {
-    alert(`No se pudo actualizar el estado: ${err.message}`);
+    MammaTomatoAlert.error("No se pudo actualizar el estado", err.message);
     btn.disabled = false;
   }
 }
+
+// La card atendida queda 5s con barra de progreso y luego sale con animacion.
+function animarAtendido(idPedido, card) {
+  if (!card) { loadKitchen(); return; }
+  animando.add(idPedido);
+  card.classList.add("atendido");
+  const footer = card.querySelector(".cocina-card-footer");
+  if (footer) {
+    footer.innerHTML =
+      '<div class="cocina-atendido-box">' +
+      '  <div class="cocina-atendido-label"><i class="bi bi-check-circle-fill"></i> Atendido</div>' +
+      '  <div class="cocina-progress"><div class="cocina-progress-bar"></div></div>' +
+      '</div>';
+  }
+  setTimeout(() => {
+    card.classList.add("saliendo");
+    setTimeout(() => {
+      animando.delete(idPedido);
+      conocidos.delete(idPedido);
+      pedidos = pedidos.filter((p) => p.idPedido !== idPedido);
+      card.remove();
+      render();
+    }, 450);
+  }, SALIDA_MS);
+}
+
+if (refreshBtn) refreshBtn.addEventListener("click", loadKitchen);
 
 loadKitchen();
 setInterval(loadKitchen, REFRESH_MS);
