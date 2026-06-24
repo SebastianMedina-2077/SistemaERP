@@ -57,7 +57,7 @@ public class ReporteService {
         long anulados = pedidos.stream().filter(p -> p.getEstado() == EstadoPedido.ANULADO).count();
 
         return List.of(
-                new StatDTO("Ventas del dia", money(ventas)),
+                new StatDTO("Ventas del día", money(ventas)),
                 new StatDTO("Pedidos pendientes", String.valueOf(pendientes)),
                 new StatDTO("Insumos bajo stock", String.valueOf(inventarioService.getInsumosBajoStock().size())),
                 new StatDTO("Pedidos anulados", String.valueOf(anulados))
