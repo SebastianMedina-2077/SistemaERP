@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Pedidos guardados</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/components.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <link rel="stylesheet" th:href="@{/css/pos.css}">
+  <link rel="stylesheet" th:href="@{/css/pos-shell.css}">
+  <link rel="stylesheet" th:href="@{/css/alertas.css}">
+  <script defer th:src="@{/js/alertas.js}"></script>
+</head>
+<body class="pos-shell">
+
+  <aside class="pos-sidebar">
+    <div class="pos-brand">
+      <img th:src="@{/img/logo.png}" alt="Mamma Tomato">
+      <div class="pos-brand-text">
+        <strong>Mamma Tomato</strong>
+        <span>ERP System</span>
+      </div>
+    </div>
+
+    <nav class="pos-nav">
+      <a th:href="@{/cajero/pos}" class="pos-nav-item">
+        <i class="bi bi-shop"></i><span>Punto de Venta</span>
+      </a>
+      <a th:href="@{/cajero/guardados}" class="pos-nav-item active">
+        <i class="bi bi-bookmark"></i><span>Guardar Pedido</span>
+      </a>
+    </nav>
+
+    <div class="pos-sidebar-foot">
+      <div class="pos-session">
+        <span class="session-label session-on" id="sessionLabel">Sesion activa</span>
+        <div class="toggler" title="Bloquear sesion">
+          <input id="sessionToggle" type="checkbox" checked>
+          <label for="sessionToggle">
+            <svg class="toggler-on" viewBox="0 0 130.2 130.2">
+              <polyline class="path check" points="100.2,40.2 51.5,88.8 29.8,67.5"></polyline>
+            </svg>
+            <svg class="toggler-off" viewBox="0 0 130.2 130.2">
+              <line class="path line" x1="34.4" y1="34.4" x2="95.8" y2="95.8"></line>
+              <line class="path line" x1="95.8" y1="34.4" x2="34.4" y2="95.8"></line>
+            </svg>
+          </label>
+        </div>
+      </div>
+      <form th:action="@{/logout}" method="post">
+        <button type="submit" class="pos-logout">
+          <i class="bi bi-box-arrow-right"></i> Cerrar sesion
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="pos-body">
+    <header class="pos-topbar">
+      <button type="button" class="pos-hamburger" id="navToggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="pos-topbar-titles">
+        <h1>Pedidos Guardados</h1>
+        <p>Pedidos en espera de pago</p>
+      </div>
+      <div class="pos-topbar-actions">
+        <span class="pos-user-chip">
+          <i class="bi bi-person-circle"></i><span sec:authentication="name">Cajero</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="pos-content">
+      <main class="guardados-main">
+        <div class="guardados-empty" th:if="${pedidosGuardados.isEmpty()}">
+          <i class="bi bi-bookmark"></i>
+          <p>Sin pedidos guardados</p>
+          <span>Los pedidos en espera apareceran aqui</span>
+        </div>
+
+        <div class="guardados-lista" th:unless="${pedidosGuardados.isEmpty()}">
+          <article class="pedido-guardado-card" th:each="pg : ${pedidosGuardados}" th:attr="data-card=${pg.id}">
+            <div class="pg-header">
+              <div class="pg-referencia">
+                <span class="pg-icono"><i class="bi bi-person"></i></span>
+                <div>
+                  <strong th:text="${pg.cliente}">Cliente</strong>
+                  <small th:text="${pg.telefono} ?: 'Sin telefono'">Telefono</small>
+                </div>
+              </div>
+              <span class="pg-tiempo" th:text="${pg.hora}">14:32</span>
+            </div>
+
+            <div class="pg-resumen">
+              <span th:text="${pg.cantidadItems} + ' item(s)'">3 item(s)</span>
+              <strong th:text="'S/ ' + ${#numbers.formatDecimal(pg.total, 1, 2)}">S/ 0.00</strong>
+            </div>
+
+            <div class="pg-acciones">
+              <button class="btn-recuperar-pedido" type="button" th:attr="data-id=${pg.id}">
+                <i class="bi bi-arrow-return-left"></i> Recuperar
+              </button>
+              <button class="btn-eliminar-guardado" type="button" th:attr="data-id=${pg.id}" aria-label="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </article>
+        </div>
+      </main>
+    </div>
+
+    <footer class="pos-statusbar">
+      <span>Cajero: <strong sec:authentication="name">Cajero</strong></span>
+      <span class="pos-status-online">Sistema en linea <i class="pos-status-dot"></i></span>
+    </footer>
+  </div>
+
+  <!-- Overlay de sesion bloqueada: se desbloquea con la contrasena del cajero. -->
+  <div id="lockOverlay" class="lock-overlay hidden" aria-hidden="true">
+    <div class="lock-modal">
+      <div class="lock-avatar"
+           th:text="${currentUser != null ? #strings.substring(currentUser.nombre, 0, 1) : '?'}">C</div>
+      <h3 class="lock-title">Sesion bloqueada</h3>
+      <p class="lock-subtitle">Ingresa tu contrasena para continuar</p>
+      <p class="lock-user" th:text="${currentUser != null ? currentUser.nombre : ''}">Cajero</p>
+      <input type="password" id="lockPassword" class="lock-input"
+             placeholder="Contrasena" autocomplete="current-password">
+      <p id="lockError" class="lock-error hidden">Contrasena incorrecta. Intenta de nuevo.</p>
+      <div class="lock-actions">
+        <button class="lock-btn" id="lockUnlockBtn" type="button">Desbloquear</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" th:src="@{/js/guardados.js}"></script>
+  <script th:src="@{/js/admin-session.js}"></script>
+  <script th:src="@{/js/shell-nav.js}"></script>
+</body>
+</html>

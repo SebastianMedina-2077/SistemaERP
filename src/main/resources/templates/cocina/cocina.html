@@ -13,31 +13,37 @@
   <link rel="stylesheet" th:href="@{/css/components.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
   <link rel="stylesheet" th:href="@{/css/cocina.css}">
+  <link rel="stylesheet" th:href="@{/css/alertas.css}">
+  <script defer th:src="@{/js/alertas.js}"></script>
 </head>
 <body>
-  <header class="kitchen-header role-header">
-    <div class="role-brand">
-      <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
-      <div>
-        <p class="eyebrow">Pantalla cocina</p>
-        <h1>Pedidos en preparacion</h1>
+  <div class="cocina-layout">
+    <header class="cocina-header">
+      <div class="cocina-brand">
+        <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
+        <div>
+          <p class="eyebrow">Pantalla de cocina</p>
+          <h1>Cola de preparacion</h1>
+        </div>
       </div>
-    </div>
-    <div class="user-box">
-      <div class="user-avatar" th:text="${#strings.substring(#authentication.name, 0, 1)}">C</div>
-      <div class="user-meta">
-        <strong sec:authentication="name">Cocina</strong>
-        <span>Cocina</span>
+      <div class="cocina-header-right">
+        <span class="cocina-cola-count"><strong id="colaCount">0</strong> en cola</span>
+        <button class="cocina-refresh" id="cocinaRefresh" type="button" title="Actualizar">
+          <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+        <div class="cocina-user">
+          <span class="pos-user-chip">
+            <i class="bi bi-person-circle"></i><span sec:authentication="name">Cocina</span>
+          </span>
+          <form th:action="@{/logout}" method="post" style="margin:0">
+            <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
+          </form>
+        </div>
       </div>
-      <form th:action="@{/logout}" method="post" style="margin:0">
-        <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
-      </form>
-    </div>
-  </header>
+    </header>
 
-  <main>
-    <section id="kitchenOrders" class="kitchen-grid"></section>
-  </main>
+    <section id="kitchenOrders" class="cocina-pedidos-grid"></section>
+  </div>
 
   <script type="module" th:src="@{/js/cocina.js}"></script>
 </body>

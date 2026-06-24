@@ -30,4 +30,8 @@ public class PedidoDTO {
     @NotEmpty
     @Valid
     private List<DetallePedidoDTO> items;
+
+    /** Desglose de pago. Opcional: si viene vacio se asume un solo pago con idMetodoPago. */
+    @Valid
+    private List<PagoDTO> pagos;
 }

@@ -7,10 +7,12 @@
   document.querySelectorAll("[data-table-tools]").forEach(setupTable);
 
   function setupTable(card) {
-    const pageSize = parseInt(card.dataset.pageSize || "30", 10);
     const tbody = card.querySelector("tbody");
     if (!tbody) return;
     const table = card.querySelector("table");
+    // Sin data-page-size explicito, la cantidad de filas se adapta al alto de pantalla.
+    const pageSizeFijo = card.dataset.pageSize;
+    let pageSize = pageSizeFijo ? parseInt(pageSizeFijo, 10) : calcPageSize(card, tbody);
 
     let page = 0;
     let term = "";
@@ -81,7 +83,29 @@
       pager.style.display = totalPages > 1 ? "flex" : "none";
     }
 
+    if (!pageSizeFijo) {
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { pageSize = calcPageSize(card, tbody); render(); }, 150);
+      });
+    }
+
     render();
+  }
+
+  // Cuantas filas caben para que la tabla no genere scroll vertical.
+  function calcPageSize(card, tbody) {
+    const RESERVA = 116; // espacio para paginador + barra de estado + margenes
+    const MIN = 8;
+    const MAX = 24;
+    const filas = [...tbody.querySelectorAll("tr")].filter((r) => !r.hasAttribute("data-empty"));
+    const muestra = filas.find((r) => r.offsetHeight > 0);
+    const altoFila = muestra ? muestra.offsetHeight : 46;
+    const thead = card.querySelector("thead");
+    const altoHead = thead ? thead.offsetHeight : 40;
+    const disponible = window.innerHeight - card.getBoundingClientRect().top - altoHead - RESERVA;
+    return Math.max(MIN, Math.min(MAX, Math.floor(disponible / altoFila)));
   }
 
   // Filtros dropdown por columna (client-side). Se activan marcando un

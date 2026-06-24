@@ -17,6 +17,8 @@
   <link rel="stylesheet" th:href="@{/css/admin.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
   <link rel="stylesheet" th:href="@{/css/improvements.css}">
+  <link rel="stylesheet" th:href="@{/css/alertas.css}">
+  <script defer th:src="@{/js/alertas.js}"></script>
 </head>
 <body>
 <div class="erp-shell">
@@ -40,6 +42,7 @@
         <a th:href="@{/admin/pedidos}" class="nav-item" th:classappend="${active == 'pedidos'} ? 'active'"><i class="bi bi-receipt"></i> Pedidos</a>
         <a th:href="@{/admin/productos}" class="nav-item" th:classappend="${active == 'productos'} ? 'active'"><i class="bi bi-box-seam"></i> Productos</a>
         <a th:href="@{/admin/promociones}" class="nav-item" th:classappend="${active == 'promociones'} ? 'active'"><i class="bi bi-tags"></i> Promociones</a>
+        <a th:href="@{/admin/caja}" class="nav-item" th:classappend="${active == 'caja'} ? 'active'"><i class="bi bi-cash-stack"></i> Caja</a>
       </div>
 
       <div class="nav-group">
@@ -65,52 +68,59 @@
     </nav>
 
     <div class="sidebar-foot">
-      <div class="user-info">
-        <span class="user-name" th:text="${currentUser != null ? currentUser.nombre : ''}">usuario</span>
-        <span class="session-label session-on" id="sessionLabel">&middot; sesion activa</span>
+      <div class="pos-session">
+        <span class="session-label session-on" id="sessionLabel">Sesion activa</span>
+        <div class="toggler" title="Bloquear sesion">
+          <input id="sessionToggle" type="checkbox" checked>
+          <label for="sessionToggle">
+            <svg class="toggler-on" viewBox="0 0 130.2 130.2">
+              <polyline class="path check" points="100.2,40.2 51.5,88.8 29.8,67.5"></polyline>
+            </svg>
+            <svg class="toggler-off" viewBox="0 0 130.2 130.2">
+              <line class="path line" x1="34.4" y1="34.4" x2="95.8" y2="95.8"></line>
+              <line class="path line" x1="95.8" y1="34.4" x2="34.4" y2="95.8"></line>
+            </svg>
+          </label>
+        </div>
       </div>
-      <div class="toggler" title="Activar / Bloquear sesion">
-        <input id="sessionToggle" type="checkbox" checked>
-        <label for="sessionToggle">
-          <svg class="toggler-on" viewBox="0 0 130.2 130.2">
-            <polyline class="path check" points="100.2,40.2 51.5,88.8 29.8,67.5"></polyline>
-          </svg>
-          <svg class="toggler-off" viewBox="0 0 130.2 130.2">
-            <line class="path line" x1="34.4" y1="34.4" x2="95.8" y2="95.8"></line>
-            <line class="path line" x1="95.8" y1="34.4" x2="34.4" y2="95.8"></line>
-          </svg>
-        </label>
-      </div>
+      <form class="sidebar-salir" th:action="@{/logout}" method="post">
+        <button type="submit" class="btn-salir-sidebar">
+          <i class="bi bi-box-arrow-right"></i> Salir del sistema
+        </button>
+      </form>
     </div>
-
-    <form class="sidebar-salir" th:action="@{/logout}" method="post">
-      <button type="submit" class="btn-salir-sidebar">
-        <i class="bi bi-box-arrow-right"></i> Salir del sistema
-      </button>
-    </form>
   </aside>
 
   <div class="main-area">
     <header class="topbar">
-      <div>
+      <button type="button" class="pos-hamburger" id="navToggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="topbar-titles">
         <p class="eyebrow">Panel administrador</p>
         <h1 th:text="${pageTitle} ?: 'Dashboard'">Dashboard</h1>
       </div>
-      <div class="user-box">
-        <div class="user-avatar"
-             th:text="${currentUser != null ? #strings.substring(currentUser.nombre, 0, 1) : '?'}">A</div>
-        <div class="user-meta">
-          <strong th:text="${currentUser != null ? currentUser.nombre : 'Usuario'}">Usuario</strong>
-          <span th:text="${currentUser != null ? currentUser.rol : ''}">Rol</span>
-        </div>
+      <div class="topbar-actions">
         <button type="button" class="comic-btn-cerrar-dia" id="btnCerrarDia">
           <i class="bi bi-box-arrow-in-up"></i> Cerrar dia
         </button>
+        <span class="pos-user-chip">
+          <i class="bi bi-person-circle"></i>
+          <span th:text="${currentUser != null ? currentUser.nombre : 'Usuario'}">Usuario</span>
+        </span>
       </div>
     </header>
 
     <main class="content-area" layout:fragment="content">
     </main>
+
+    <footer class="pos-statusbar">
+      <span>
+        <strong th:text="${currentUser != null ? currentUser.rol : 'Admin'}">Admin</strong>:
+        <span th:text="${currentUser != null ? currentUser.nombre : ''}">Usuario</span>
+      </span>
+      <span class="pos-status-online">Sistema en linea <i class="pos-status-dot"></i></span>
+    </footer>
   </div>
 </div>
 <!-- Cambio 5: overlay de bloqueo de sesion (inactividad / toggle manual) -->
@@ -157,6 +167,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/table-tools.js}"></script>
 <script th:src="@{/js/admin-session.js}"></script>
+<script th:src="@{/js/shell-nav.js}"></script>
 <script th:src="@{/js/cierre-dia.js}"></script>
 <th:block layout:fragment="scripts"></th:block>
 </body>

@@ -215,3 +215,24 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ===== Chip de usuario (cabecera de todos los modulos) ===== */
+.pos-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pos-user-chip i { font-size: 16px; }
+
+/* Evita el parpadeo de animacion del sidebar al restaurar su estado en la carga. */
+body.nav-no-anim *,
+body.nav-no-anim *::before,
+body.nav-no-anim *::after { transition: none !important; }

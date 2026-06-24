@@ -24,20 +24,12 @@
   }
 }
 
-/* ---- Cambio 5: pie del sidebar con usuario + toggle ------------ */
-.sidebar-foot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-}
-
+/* ---- Cambio 5: el pie del sidebar se define en layout.css (rediseño) ---- */
 .session-label.session-on { color: var(--brand); font-weight: 700; }
 .session-label.session-off { color: var(--red); font-weight: 700; }
 
 /* ---- Cambio 5: toggle de sesion (Uiverse.io by mobinkakei) ----- */
-.toggler { width: 72px; margin: 6px auto 2px; }
+.toggler { width: 72px; }
 .toggler input { display: none; }
 .toggler label {
   display: block; position: relative;

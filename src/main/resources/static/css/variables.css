@@ -20,5 +20,7 @@
   --shadow: 0 8px 24px rgba(21, 92, 47, 0.08);
   --radius: 8px;
   --sidebar-width: 270px;
+  --sidebar-w: 212px;        /* ancho del sidebar delgado (cajero/admin) */
+  --nav-anim: 280ms;         /* duracion de la animacion abrir/colapsar sidebar */
   --font: Inter, Arial, sans-serif;
 }
