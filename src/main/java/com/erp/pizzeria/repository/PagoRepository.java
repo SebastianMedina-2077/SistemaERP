@@ -11,6 +11,9 @@ import java.util.List;
 
 public interface PagoRepository extends JpaRepository<Pago, Integer> {
 
+    /** Partes de pago de un pedido, en orden de registro (para mostrar el desglose). */
+    List<Pago> findByPedido_IdPedidoOrderByIdPago(Integer idPedido);
+
     /** Total cobrado por metodo de pago en el turno de un cajero (para el cuadre de caja). */
     @Query("SELECT p.metodoPago.descripcion, SUM(p.monto) FROM Pago p "
             + "WHERE p.pedido.usuario.idUsuario = :cajeroId AND p.pedido.fecha >= :desde "

@@ -43,8 +43,24 @@
           <article class="card stat-card"><span>Subtotal</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.subtotal,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
           <article class="card stat-card"><span>IGV</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.igv,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
           <article class="card stat-card"><span>Total</span><strong th:text="'S/ ' + ${#numbers.formatDecimal(boleta.total,1,'COMMA',2,'POINT')}">S/ 0.00</strong></article>
-          <article class="card stat-card"><span>Metodo</span><strong th:text="${boleta.metodoPago.descripcion}">Efectivo</strong></article>
+          <article class="card stat-card">
+            <span>Pago</span>
+            <strong th:if="${pagos == null or pagos.size() le 1}"
+                    th:text="${boleta.metodoPago != null ? boleta.metodoPago.descripcion : '-'}">Efectivo</strong>
+            <strong th:if="${pagos != null and pagos.size() gt 1}">Mixto</strong>
+          </article>
         </div>
+
+        <!-- Desglose solo cuando hubo pago mixto (varias partes). -->
+        <table th:if="${pagos != null and pagos.size() gt 1}">
+          <thead><tr><th>Metodo</th><th>Monto</th></tr></thead>
+          <tbody>
+            <tr th:each="pago : ${pagos}">
+              <td th:text="${pago.metodoPago.descripcion}">Efectivo</td>
+              <td th:text="'S/ ' + ${#numbers.formatDecimal(pago.monto,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            </tr>
+          </tbody>
+        </table>
       </article>
 
       <article class="card panel" th:if="${pedido.estado.name() != 'ANULADO'}">

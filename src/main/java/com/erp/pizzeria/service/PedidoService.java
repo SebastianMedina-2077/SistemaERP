@@ -124,6 +124,11 @@ public class PedidoService {
         return detallePedidoRepository.findByPedido_IdPedido(idPedido);
     }
 
+    /** Desglose de pago de un pedido: una parte si fue pago simple, varias si fue mixto. */
+    public List<Pago> getPagos(Integer idPedido) {
+        return pagoRepository.findByPedido_IdPedidoOrderByIdPago(idPedido);
+    }
+
     public List<MetodoPago> listMetodosPago() {
         return metodoPagoRepository.findByActivoTrue();
     }

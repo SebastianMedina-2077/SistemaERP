@@ -296,7 +296,7 @@ function esEfectivo() {
   return opcion ? /efectivo/i.test(opcion.textContent) : false;
 }
 
-async function enviarVenta(vuelto, pagos) {
+async function enviarVenta(vuelto, pagos, desglose) {
   const payload = {
     clienteNombre: customerName.value.trim(),
     clienteTelefono: customerPhone.value.trim() || null,
@@ -311,7 +311,7 @@ async function enviarVenta(vuelto, pagos) {
   generateTicketBtn.disabled = true;
   try {
     const boleta = await sendJson("POST", "/api/pedidos", payload);
-    showOrderConfirm(boleta, eta, vuelto);
+    showOrderConfirm(boleta, eta, vuelto, desglose);
     clearOrder();
   } catch (err) {
     const faltantes = err.payload?.detalle;
@@ -436,10 +436,14 @@ const cobroMixtoBlock = document.querySelector("#cobroMixtoBlock");
 const cobroMetodo2 = document.querySelector("#cobroMetodo2");
 const cobroMonto2 = document.querySelector("#cobroMonto2");
 
-function showOrderConfirm(boleta, eta, vuelto) {
+function showOrderConfirm(boleta, eta, vuelto, desglose) {
   const numero = boleta.idPedido != null ? boleta.idPedido : boleta.numeroBoleta;
   confirmTitle.textContent = `Orden #${numero} enviada a cocina`;
   let info = `<i class="bi bi-clock"></i> Tiempo estimado: ${eta} min.`;
+  if (Array.isArray(desglose) && desglose.length) {
+    const partes = desglose.map((p) => `${p.metodo} ${money(p.monto)}`).join(" + ");
+    info += `<br><i class="bi bi-wallet2"></i> Pago: ${partes}`;
+  }
   if (vuelto != null && vuelto > 0.001) {
     info += `<br><i class="bi bi-cash-coin"></i> Vuelto: ${money(vuelto)}`;
   }
@@ -534,18 +538,30 @@ cobroReset.addEventListener("click", () => {
 cobroClose.addEventListener("click", cerrarCobro);
 cobroModal.addEventListener("click", (e) => { if (e.target === cobroModal) cerrarCobro(); });
 
+function metodoLabel(select) {
+  const opcion = select.options[select.selectedIndex];
+  return opcion ? opcion.textContent.trim() : "";
+}
+
 cobroConfirm.addEventListener("click", () => {
   const efectivo = porcionEfectivo();
   const vuelto = (Number(cobroRecibido.value) || 0) - efectivo;
   let pagos = null;
+  let desglose = null;
   if (cobroMixto.checked) {
+    const efectivoMonto = Number(efectivo.toFixed(2));
+    const digitalMonto = Number(montoDigital().toFixed(2));
     pagos = [
-      { idMetodoPago: Number(paymentMethod.value), monto: Number(efectivo.toFixed(2)) },
-      { idMetodoPago: Number(cobroMetodo2.value), monto: Number(montoDigital().toFixed(2)) },
+      { idMetodoPago: Number(paymentMethod.value), monto: efectivoMonto },
+      { idMetodoPago: Number(cobroMetodo2.value), monto: digitalMonto },
+    ];
+    desglose = [
+      { metodo: metodoLabel(paymentMethod), monto: efectivoMonto },
+      { metodo: metodoLabel(cobroMetodo2), monto: digitalMonto },
     ];
   }
   cerrarCobro();
-  enviarVenta(vuelto, pagos);
+  enviarVenta(vuelto, pagos, desglose);
 });
 
 // --- Atajos de teclado ----------------------------------------------
