@@ -8,10 +8,15 @@
     <div class="page-head">
       <p class="muted">Cada compra registrada genera una entrada de inventario automatica.</p>
     </div>
+    <div class="flash flash-success" th:if="${flash}" th:text="${flash}">ok</div>
+    <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
     <div class="search-box">
       <i class="bi bi-search"></i>
       <input type="search" data-search-for="tablaCompras" placeholder="Buscar por proveedor..." autocomplete="off">
     </div>
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#compraModal">
+      <i class="bi bi-plus-lg"></i> Nueva compra
+    </button>
   </div>
   <div class="card table-card" id="tablaCompras" data-table-tools>
     <table>
@@ -31,6 +36,113 @@
       </tbody>
     </table>
   </div>
+
+  <div class="modal fade" id="compraModal" tabindex="-1" aria-labelledby="compraModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <form th:object="${compraForm}" method="post" th:action="@{/admin/compras}">
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow mb-1">Ingreso de inventario</p>
+              <h5 class="modal-title" id="compraModalTitle">Registrar compra</h5>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <label class="field compra-proveedor">Proveedor
+              <select th:field="*{idProveedor}" th:classappend="${#fields.hasErrors('idProveedor')} ? 'is-invalid'">
+                <option value="">Seleccione...</option>
+                <option th:each="p : ${proveedores}" th:value="${p.idProveedor}" th:text="${p.nombre}">Proveedor</option>
+              </select>
+              <span class="invalid-feedback" th:if="${#fields.hasErrors('idProveedor')}" th:errors="*{idProveedor}"></span>
+            </label>
+
+            <section class="compra-lines" data-compra-lines>
+              <div class="mov-lines-head">
+                <h2>Detalle de compra</h2>
+                <button class="btn btn-secondary btn-sm" type="button" data-add-compra-line>
+                  <i class="bi bi-plus-lg"></i> Agregar insumo
+                </button>
+              </div>
+
+              <div class="compra-line-grid compra-line-grid--header">
+                <span>Insumo</span>
+                <span>Cantidad</span>
+                <span>Precio unitario</span>
+                <span>Subtotal</span>
+                <span></span>
+              </div>
+
+              <div class="compra-line-grid" th:each="item, stat : *{items}" data-compra-line>
+                <label class="field">Insumo
+                  <select class="compra-insumo"
+                          th:field="*{items[__${stat.index}__].idInsumo}"
+                          th:classappend="${#fields.hasErrors('items[' + stat.index + '].idInsumo')} ? 'is-invalid'">
+                    <option value="">Seleccione...</option>
+                    <option th:each="i : ${insumos}" th:value="${i.idInsumo}"
+                            th:attr="data-precio=${i.precio},data-medida=${i.medida.sigla}"
+                            th:text="${i.codigo + ' - ' + i.nombre + ' (' + i.medida.sigla + ')'}">IN0001 - Harina</option>
+                  </select>
+                  <span class="invalid-feedback"
+                        th:if="${#fields.hasErrors('items[' + stat.index + '].idInsumo')}"
+                        th:errors="*{items[__${stat.index}__].idInsumo}"></span>
+                </label>
+                <label class="field">Cantidad
+                  <input class="compra-cantidad" type="number" step="0.001" min="0.001"
+                         th:field="*{items[__${stat.index}__].cantidad}"
+                         th:classappend="${#fields.hasErrors('items[' + stat.index + '].cantidad')} ? 'is-invalid'"
+                         placeholder="0.000">
+                  <span class="invalid-feedback"
+                        th:if="${#fields.hasErrors('items[' + stat.index + '].cantidad')}"
+                        th:errors="*{items[__${stat.index}__].cantidad}"></span>
+                </label>
+                <label class="field">Precio unitario
+                  <input class="compra-precio" type="number" step="0.01" min="0.01"
+                         th:field="*{items[__${stat.index}__].precioUnitario}"
+                         th:classappend="${#fields.hasErrors('items[' + stat.index + '].precioUnitario')} ? 'is-invalid'"
+                         placeholder="0.00">
+                  <span class="invalid-feedback"
+                        th:if="${#fields.hasErrors('items[' + stat.index + '].precioUnitario')}"
+                        th:errors="*{items[__${stat.index}__].precioUnitario}"></span>
+                </label>
+                <label class="field">Subtotal
+                  <input class="compra-subtotal readonly-field" type="text" value="S/ 0.00" readonly tabindex="-1">
+                </label>
+                <button class="btn btn-ghost btn-sm" type="button" data-remove-compra-line aria-label="Quitar linea">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+
+              <p class="invalid-feedback" data-compra-line-error th:if="${#fields.hasErrors('items')}" th:errors="*{items}"></p>
+            </section>
+
+            <div class="compra-total">
+              <span>Total</span>
+              <strong data-compra-total>S/ 0.00</strong>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg"></i> Registrar compra
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </main>
+
+<th:block layout:fragment="scripts">
+  <script th:src="@{/js/compra-form.js}"></script>
+  <script th:if="${abrirCompraModal}">
+    document.addEventListener("DOMContentLoaded", () => {
+      const modalEl = document.getElementById("compraModal");
+      if (modalEl && window.bootstrap) {
+        new bootstrap.Modal(modalEl).show();
+      }
+    });
+  </script>
+</th:block>
 </body>
 </html>
