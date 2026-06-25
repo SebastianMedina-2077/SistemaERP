@@ -56,7 +56,7 @@
           </label>
         </div>
       </div>
-      <form th:action="@{/logout}" method="post">
+      <form th:action="@{/cajero/salir}" method="post">
         <button type="submit" class="pos-logout">
           <i class="bi bi-box-arrow-right"></i> Cerrar sesion
         </button>
@@ -194,7 +194,7 @@
         <i class="bi bi-unlock"></i> Abrir caja
       </button>
       <!-- Cierra la sesion del cajero y vuelve al login para que entre otro usuario. -->
-      <form th:action="@{/logout}" method="post" class="caja-cambiar-usuario">
+      <form th:action="@{/cajero/salir}" method="post" class="caja-cambiar-usuario">
         <button type="submit" class="btn btn-ghost btn-full">
           <i class="bi bi-box-arrow-right"></i> Cambiar de usuario
         </button>
@@ -255,21 +255,31 @@
       </div>
 
       <label class="cobro-mixto-check">
-        <input type="checkbox" id="cobroMixto"> Pago mixto: una parte con otro metodo
+        <input type="checkbox" id="cobroMixto"> Pago mixto: dividir entre varios metodos
       </label>
       <div id="cobroMixtoBlock" class="cobro-mixto-block hidden">
+        <div id="cobroMixtoLineas"></div>
+        <button type="button" class="cobro-mini cobro-add-metodo" id="cobroAddMetodo">
+          <i class="bi bi-plus-lg"></i> Agregar metodo
+        </button>
+        <p class="cobro-mixto-hint" id="cobroMixtoResumen">El resto se cobra en efectivo abajo.</p>
+      </div>
+
+      <!-- Plantilla de una linea de pago (metodo + monto); se clona en JS. -->
+      <template id="cobroLineaTpl">
         <div class="cobro-mixto-row">
-          <select id="cobroMetodo2" class="cobro-mixto-select">
-            <option value="">Otro metodo</option>
+          <select class="cobro-mixto-select cobro-linea-metodo">
+            <option value="">Metodo</option>
             <option th:each="mp : ${metodosPago}"
                     th:if="${!#strings.containsIgnoreCase(mp.descripcion, 'efectivo')}"
                     th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Tarjeta</option>
           </select>
-          <input type="number" id="cobroMonto2" class="cobro-mixto-input" step="0.10" min="0" placeholder="Monto S/">
+          <input type="number" class="cobro-mixto-input cobro-linea-monto" step="0.10" min="0" placeholder="Monto S/">
+          <button type="button" class="cobro-linea-quitar" aria-label="Quitar metodo">&times;</button>
         </div>
-        <p class="cobro-mixto-hint">El resto se cobra en efectivo abajo.</p>
-      </div>
+      </template>
 
+      <div id="cobroEfectivoBlock">
       <p class="cobro-label">Agrega lo que paga el cliente (parte en efectivo)</p>
       <div class="cobro-denoms">
         <button type="button" class="cobro-billete cobro-moneda" data-monto="0.10">S/ 0.10</button>
@@ -297,6 +307,7 @@
       <div class="cobro-vuelto" id="cobroVueltoBox">
         <span>Vuelto</span>
         <strong id="cobroVuelto">S/ 0.00</strong>
+      </div>
       </div>
 
       <button type="button" class="btn btn-primary btn-full btn-large" id="cobroConfirm" disabled>

@@ -136,12 +136,12 @@ async function enviarCuadre(confirmar) {
 function manejarResultado(r) {
   const dif = Number(r.diferencia);
   if (r.resultado === "CUADRA") {
-    mostrarBanner("ok", "Caja cuadrada", "El efectivo coincide con lo esperado. Turno cerrado.");
+    mostrarCuadre("ok", r, "El efectivo coincide con lo esperado. Turno cerrado.");
     finalizarTurno();
   } else if (r.resultado === "SOBRA") {
     if (r.requiereConfirmacion) {
       // Sobrante: pedir una segunda confirmacion antes de cerrar el turno.
-      mostrarBanner("sobra", `Sobran ${money(dif)}`, "Revisa el efectivo y confirma para cerrar el turno.");
+      mostrarCuadre("sobra", r, "Revisa el efectivo y confirma para cerrar el turno.");
       cierreConfirm.disabled = false;
       mostrarModalConfirmacion({
         titulo: "Hay un sobrante en caja",
@@ -151,11 +151,11 @@ function manejarResultado(r) {
         onConfirmar: () => enviarCuadre(true),
       });
     } else {
-      mostrarBanner("sobra", `Sobran ${money(dif)}`, "Se registra el sobrante. Turno cerrado.");
+      mostrarCuadre("sobra", r, "Se registra el sobrante. Turno cerrado.");
       finalizarTurno();
     }
   } else if (r.resultado === "FALTA") {
-    mostrarBanner("falta", `Faltan ${money(Math.abs(dif))}`, `Vuelve a contar el efectivo. Intentos restantes: ${r.intentosRestantes}.`);
+    mostrarCuadre("falta", r, `Vuelve a contar el efectivo. Intentos restantes: ${r.intentosRestantes}.`);
     cajaContado.value = "";
     cierreConfirm.disabled = false;
     cajaContado.focus();
@@ -165,9 +165,17 @@ function manejarResultado(r) {
   }
 }
 
-function mostrarBanner(tipo, titulo, detalle) {
-  cierreResultado.className = `caja-resultado caja-resultado--${tipo}`;
-  cierreResultado.innerHTML = `<strong>${titulo}</strong><span>${detalle}</span>`;
+// Tres metricas del cierre: esperado, contado y la diferencia (coloreada por resultado).
+function mostrarCuadre(tipo, r, mensaje) {
+  const etiqueta = { ok: "Cuadra", sobra: "Sobrante", falta: "Faltante" }[tipo];
+  cierreResultado.className = `caja-cuadre caja-cuadre--${tipo}`;
+  cierreResultado.innerHTML = `
+    <div class="cuadre-cards">
+      <div class="cuadre-card"><span>Esperado</span><strong>${money(Number(r.esperado))}</strong></div>
+      <div class="cuadre-card"><span>Contado</span><strong>${money(Number(r.contado))}</strong></div>
+      <div class="cuadre-card cuadre-card--res"><span>${etiqueta}</span><strong>${money(Math.abs(Number(r.diferencia)))}</strong></div>
+    </div>
+    <p class="cuadre-msg">${mensaje}</p>`;
 }
 
 function finalizarTurno() {

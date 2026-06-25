@@ -192,14 +192,27 @@ body {
 .totals-box div strong { color: var(--text); font-weight: 700; }
 
 .total-line {
-  margin-top: 4px;
-  padding-top: 10px;
+  margin-top: 6px;
+  padding-top: 12px;
   border-top: 1px dashed var(--border);
-  font-size: 22px;
+  align-items: baseline;
 }
 
-.total-line span { color: var(--text); font-weight: 600; }
-.total-line strong { color: var(--brand-700); font-weight: 800; }
+.total-line span {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.total-line strong {
+  color: var(--brand-700);
+  font-weight: 800;
+  font-size: 2.3rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
 
 .campo-error {
   border-color: var(--red) !important;
@@ -568,16 +581,30 @@ body {
 
 .cobro-total {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 10px 14px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 16px 14px;
   background: var(--brand-50);
-  border-radius: 10px;
-  margin-bottom: 14px;
+  border-radius: 12px;
+  margin-bottom: 16px;
 }
 
-.cobro-total span { font-size: 13px; color: var(--muted); }
-.cobro-total strong { font-size: 20px; font-weight: 800; color: var(--brand-700); }
+.cobro-total span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.cobro-total strong {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--brand-700);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
 
 .cobro-label {
   margin: 0 0 8px;
@@ -680,6 +707,9 @@ body {
 .cobro-vuelto.falta { background: var(--red-50); border-color: #f3b4b4; }
 .cobro-vuelto.falta strong { color: var(--red); }
 
+.cobro-vuelto.exacto { background: var(--brand-50); border-color: var(--brand-100); }
+.cobro-vuelto.exacto strong { color: var(--brand-700); font-size: 16px; }
+
 /* ===== Pago mixto dentro del modal de cobro ===== */
 .cobro-mixto-check {
   display: flex;
@@ -702,7 +732,8 @@ body {
 }
 .cobro-mixto-block.hidden { display: none; }
 
-.cobro-mixto-row { display: flex; gap: 8px; }
+.cobro-mixto-row { display: flex; gap: 8px; align-items: center; }
+.cobro-mixto-row + .cobro-mixto-row { margin-top: 8px; }
 .cobro-mixto-select {
   flex: 1;
   height: 38px;
@@ -713,7 +744,7 @@ body {
   font-size: 13px;
 }
 .cobro-mixto-input {
-  width: 120px;
+  width: 110px;
   height: 38px;
   border: 1.5px solid var(--border);
   border-radius: 9px;
@@ -729,3 +760,19 @@ body {
   box-shadow: 0 0 0 3px var(--brand-50);
 }
 .cobro-mixto-hint { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+
+.cobro-linea-quitar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 38px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cobro-linea-quitar:hover { border-color: var(--red); color: var(--red); }
+
+.cobro-add-metodo { margin-top: 8px; }
