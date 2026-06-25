@@ -153,6 +153,7 @@ public class AdminController {
         model.addAttribute("pedido", pedidoService.getPedido(id));
         model.addAttribute("detalles", pedidoService.getDetalle(id));
         model.addAttribute("boleta", pedidoService.getBoletasPorPedido().get(id));
+        model.addAttribute("pagos", pedidoService.getPagos(id));
         return "admin/pedido-detalle";
     }
 
