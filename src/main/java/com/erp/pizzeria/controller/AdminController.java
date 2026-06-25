@@ -68,7 +68,8 @@ public class AdminController {
     private static final Map<String, String> RANGOS_TOTAL = crearRangosTotal();
 
     @GetMapping("/pedidos")
-    public String pedidos(@RequestParam(required = false) String cliente,
+    public String pedidos(@RequestParam(required = false) String codigo,
+                          @RequestParam(required = false) String cliente,
                           @RequestParam(required = false) Integer cajero,
                           @RequestParam(required = false) String estado,
                           @RequestParam(required = false) String total,
@@ -77,15 +78,18 @@ public class AdminController {
                           Model model) {
         EstadoPedido estadoFiltro = parseEstadoFiltro(estado);
         String clienteFiltro = normalizar(cliente);
+        String codigoFiltro = normalizar(codigo);
+        Integer numero = parseNumero(codigoFiltro);
         String totalFiltro = RANGOS_TOTAL.containsKey(total) ? total : null;
         BigDecimal[] rango = parseRangoTotal(totalFiltro);
         LocalDateTime desde = fecha != null ? fecha.atStartOfDay() : null;
         LocalDateTime hasta = fecha != null ? fecha.plusDays(1).atStartOfDay() : null;
 
         Page<Pedido> page = pedidoService.buscarPedidos(
-                estadoFiltro, clienteFiltro, cajero, desde, hasta, rango[0], rango[1], pageable);
+                numero, estadoFiltro, clienteFiltro, cajero, desde, hasta, rango[0], rango[1], pageable);
 
         Map<String, Object> filtros = new LinkedHashMap<>();
+        filtros.put("codigo", codigoFiltro);
         filtros.put("cliente", clienteFiltro);
         filtros.put("cajero", cajero);
         filtros.put("estado", estadoFiltro != null ? estadoFiltro.name() : null);
@@ -100,6 +104,7 @@ public class AdminController {
         model.addAttribute("estados", EstadoPedido.values());
         model.addAttribute("cajeros", pedidoService.listarCajeros());
         model.addAttribute("rangosTotal", RANGOS_TOTAL);
+        model.addAttribute("filtroCodigo", codigoFiltro != null ? codigoFiltro : "");
         model.addAttribute("filtroCliente", clienteFiltro != null ? clienteFiltro : "");
         model.addAttribute("filtroCajero", cajero);
         model.addAttribute("filtroEstado", estadoFiltro != null ? estadoFiltro.name() : "");
@@ -123,6 +128,22 @@ public class AdminController {
 
     private String normalizar(String valor) {
         return (valor == null || valor.isBlank()) ? null : valor.trim();
+    }
+
+    /** Extrae el numero de pedido de un codigo escrito ("PED-001", "001", "1"); null si no hay digitos. */
+    private Integer parseNumero(String codigo) {
+        if (codigo == null) {
+            return null;
+        }
+        String digitos = codigo.replaceAll("\\D", "");
+        if (digitos.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(digitos);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private BigDecimal[] parseRangoTotal(String clave) {

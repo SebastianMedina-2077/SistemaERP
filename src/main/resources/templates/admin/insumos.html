@@ -21,7 +21,7 @@
 
   <div class="card table-card" id="tablaInsumos" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th data-filter="input">Codigo</th><th data-filter="input">Nombre</th><th data-filter="select">Unidad</th><th data-filter="range">Precio</th><th data-filter="range">Stock</th><th>Minimo</th><th data-filter="select">Estado</th><th></th></tr></thead>
+      <thead><tr><th data-filter="input">Codigo</th><th data-filter="input">Nombre</th><th data-filter="select">Unidad</th><th data-filter="bucket" data-step="20">Precio</th><th data-filter="bucket" data-step="50">Stock</th><th>Minimo</th><th data-filter="select">Estado</th><th></th></tr></thead>
       <tbody>
         <tr th:each="i : ${insumos}" th:with="bajo=${i.stock.compareTo(i.cantidadMinima) <= 0}">
           <td th:text="${i.codigo}">IN0001</td>

@@ -9,7 +9,7 @@
       <p class="muted">Compras y ventas generan movimientos automaticos; mermas y ajustes son manuales.</p>
     </div>
     <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
-    <form class="d-flex gap-2 flex-wrap align-items-center" method="get" th:action="@{/admin/movimientos}">
+    <form class="d-flex gap-2 flex-nowrap align-items-center" method="get" th:action="@{/admin/movimientos}">
       <div class="search-box">
         <i class="bi bi-search"></i>
         <input type="search" name="q" th:value="${filtroQ}" placeholder="Buscar por documento o glosa..." autocomplete="off">
@@ -21,7 +21,6 @@
                 th:selected="${filtroTipo != null and t.idTipoMovimiento == filtroTipo}">Tipo</option>
       </select>
       <button class="btn btn-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
-      <a class="btn btn-ghost" th:href="@{/admin/movimientos}">Limpiar</a>
       <a class="btn btn-primary" th:href="@{/admin/movimientos/nuevo}">
         <i class="bi bi-plus-lg"></i> Nuevo movimiento
       </a>

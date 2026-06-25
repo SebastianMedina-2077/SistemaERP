@@ -82,10 +82,10 @@ public class PedidoService {
         return pedidoRepository.findAll();
     }
 
-    public Page<Pedido> buscarPedidos(EstadoPedido estado, String cliente, Integer cajero,
+    public Page<Pedido> buscarPedidos(Integer numero, EstadoPedido estado, String cliente, Integer cajero,
                                       LocalDateTime fechaDesde, LocalDateTime fechaHasta,
                                       BigDecimal totalMin, BigDecimal totalMax, Pageable pageable) {
-        return pedidoRepository.buscar(estado, cliente, cajero, fechaDesde, fechaHasta, totalMin, totalMax, pageable);
+        return pedidoRepository.buscar(numero, estado, cliente, cajero, fechaDesde, fechaHasta, totalMin, totalMax, pageable);
     }
 
     public List<CajeroOpcion> listarCajeros() {

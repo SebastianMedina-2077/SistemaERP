@@ -163,6 +163,41 @@
         min.addEventListener("input", upd);
         max.addEventListener("input", upd);
         pop.appendChild(cont);
+      } else if (tipo === "date") {
+        const inp = crear("input", "form-control form-control-sm");
+        inp.type = "date";
+        inp.setAttribute("aria-label", label);
+        inp.addEventListener("change", () => {
+          filtro.valor = inp.value || null;
+          toggle.classList.toggle("activo", !!filtro.valor);
+          onChange();
+        });
+        pop.appendChild(inp);
+      } else if (tipo === "bucket") {
+        // Rangos preestablecidos por pasos (data-step) generados hasta el maximo de la columna.
+        const step = parseFloat(th.dataset.step) || 20;
+        const sel = crear("select", "form-select form-select-sm");
+        sel.innerHTML = '<option value="">Todos</option>';
+        const count = Math.max(1, Math.ceil(maxColumna(table, index) / step));
+        for (let i = 0; i < count; i++) {
+          const lo = i === 0 ? 0 : i * step + 1;
+          const hi = (i + 1) * step;
+          const o = document.createElement("option");
+          o.value = i;
+          o.textContent = lo + " - " + hi;
+          o.dataset.min = lo;
+          o.dataset.max = hi;
+          sel.appendChild(o);
+        }
+        sel.addEventListener("change", () => {
+          const opt = sel.selectedOptions[0];
+          filtro.valor = sel.value === ""
+            ? null
+            : { min: parseFloat(opt.dataset.min), max: parseFloat(opt.dataset.max) };
+          toggle.classList.toggle("activo", !!filtro.valor);
+          onChange();
+        });
+        pop.appendChild(sel);
       } else {
         const inp = crear("input", "form-control form-control-sm");
         inp.type = "search";
@@ -201,11 +236,20 @@
     const texto = celdaTexto(row, f.index);
     if (f.tipo === "input") return texto.toLowerCase().includes(f.valor);
     if (f.tipo === "select") return texto === f.valor;
+    if (f.tipo === "date") return texto.slice(0, 10) === f.valor; // fecha exacta (ISO yyyy-MM-dd)
     const n = parseFloat(texto.replace(/[^\d.-]/g, ""));
     if (Number.isNaN(n)) return false;
     if (f.valor.min != null && n < f.valor.min) return false;
     if (f.valor.max != null && n > f.valor.max) return false;
     return true;
+  }
+
+  function maxColumna(table, index) {
+    const filas = [...table.querySelectorAll("tbody tr")].filter((r) => !r.hasAttribute("data-empty"));
+    return filas.reduce((m, r) => {
+      const n = parseFloat(celdaTexto(r, index).replace(/[^\d.-]/g, ""));
+      return Number.isNaN(n) ? m : Math.max(m, n);
+    }, 0);
   }
 
   function valoresUnicos(table, index) {

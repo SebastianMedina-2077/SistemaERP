@@ -21,7 +21,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     @Query(value = """
             select distinct p from Pedido p
             left join Boleta b on b.pedido = p
-            where (:estado is null or p.estado = :estado)
+            where (:numero is null or p.idPedido = :numero)
+              and (:estado is null or p.estado = :estado)
               and (:cliente is null or lower(p.cliente.nombre) like lower(concat('%', :cliente, '%')))
               and (:cajero is null or p.usuario.idUsuario = :cajero)
               and (:fechaDesde is null or p.fecha >= :fechaDesde)
@@ -32,7 +33,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
             countQuery = """
             select count(distinct p) from Pedido p
             left join Boleta b on b.pedido = p
-            where (:estado is null or p.estado = :estado)
+            where (:numero is null or p.idPedido = :numero)
+              and (:estado is null or p.estado = :estado)
               and (:cliente is null or lower(p.cliente.nombre) like lower(concat('%', :cliente, '%')))
               and (:cajero is null or p.usuario.idUsuario = :cajero)
               and (:fechaDesde is null or p.fecha >= :fechaDesde)
@@ -40,7 +42,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
               and (:totalMin is null or b.total >= :totalMin)
               and (:totalMax is null or b.total <= :totalMax)
             """)
-    Page<Pedido> buscar(@Param("estado") EstadoPedido estado,
+    Page<Pedido> buscar(@Param("numero") Integer numero,
+                        @Param("estado") EstadoPedido estado,
                         @Param("cliente") String cliente,
                         @Param("cajero") Integer cajero,
                         @Param("fechaDesde") LocalDateTime fechaDesde,
