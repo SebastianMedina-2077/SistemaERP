@@ -43,3 +43,21 @@ new SidebarManager("navToggle");
   const offset = activo.getBoundingClientRect().top - nav.getBoundingClientRect().top;
   nav.scrollTop += offset - (nav.clientHeight - activo.offsetHeight) / 2;
 })();
+
+// El cajero no puede salir con la caja abierta: debe cerrar el turno primero.
+// El servidor tambien lo bloquea; aqui se avisa al instante sin recargar.
+document.querySelectorAll('form[action$="/cajero/salir"]').forEach((form) => {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const estado = await fetch("/cajero/caja/estado").then((r) => r.json());
+      if (estado.abierta) {
+        MammaTomatoAlert.warning("Turno activo", "Debes cerrar la caja antes de salir del sistema");
+        return;
+      }
+    } catch (_) {
+      // Si falla la verificacion, que decida el guard del servidor.
+    }
+    form.submit();
+  });
+});

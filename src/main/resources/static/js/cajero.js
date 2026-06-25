@@ -433,8 +433,11 @@ const cobroClose = document.querySelector("#cobroClose");
 const cobroReset = document.querySelector("#cobroReset");
 const cobroMixto = document.querySelector("#cobroMixto");
 const cobroMixtoBlock = document.querySelector("#cobroMixtoBlock");
-const cobroMetodo2 = document.querySelector("#cobroMetodo2");
-const cobroMonto2 = document.querySelector("#cobroMonto2");
+const cobroMixtoLineas = document.querySelector("#cobroMixtoLineas");
+const cobroAddMetodo = document.querySelector("#cobroAddMetodo");
+const cobroLineaTpl = document.querySelector("#cobroLineaTpl");
+const cobroMixtoResumen = document.querySelector("#cobroMixtoResumen");
+const cobroEfectivoBlock = document.querySelector("#cobroEfectivoBlock");
 
 function showOrderConfirm(boleta, eta, vuelto, desglose) {
   const numero = boleta.idPedido != null ? boleta.idPedido : boleta.numeroBoleta;
@@ -467,8 +470,7 @@ function abrirCobro() {
   cobroTotalNode.textContent = money(cobroTotal);
   cobroRecibido.value = "";
   cobroMixto.checked = false;
-  cobroMetodo2.value = "";
-  cobroMonto2.value = "";
+  cobroMixtoLineas.innerHTML = "";
   cobroMixtoBlock.classList.add("hidden");
   actualizarVuelto();
   cobroModal.classList.remove("hidden");
@@ -479,9 +481,37 @@ function cerrarCobro() {
   cobroModal.classList.add("hidden");
 }
 
-// En pago mixto, parte del total va a otro metodo; el resto se cobra en efectivo.
+// Lineas de pago "no efectivo" del pago mixto (cada una metodo + monto).
+function partesMixto() {
+  return Array.from(cobroMixtoLineas.querySelectorAll(".cobro-mixto-row")).map((row) => {
+    const sel = row.querySelector(".cobro-linea-metodo");
+    const monto = Number(row.querySelector(".cobro-linea-monto").value) || 0;
+    return {
+      idMetodoPago: Number(sel.value),
+      metodo: metodoLabel(sel),
+      monto: Number(monto.toFixed(2)),
+      valida: Boolean(sel.value) && monto > 0.001,
+    };
+  });
+}
+
+function agregarLinea() {
+  const linea = cobroLineaTpl.content.firstElementChild.cloneNode(true);
+  linea.querySelector(".cobro-linea-metodo").addEventListener("change", actualizarVuelto);
+  linea.querySelector(".cobro-linea-monto").addEventListener("input", actualizarVuelto);
+  linea.querySelector(".cobro-linea-quitar").addEventListener("click", () => {
+    linea.remove();
+    actualizarVuelto();
+  });
+  cobroMixtoLineas.appendChild(linea);
+  return linea;
+}
+
+// Suma de las partes no-efectivo; el resto se cobra en efectivo.
 function montoDigital() {
-  return cobroMixto.checked ? Number(cobroMonto2.value) || 0 : 0;
+  return cobroMixto.checked
+    ? partesMixto().reduce((suma, p) => suma + p.monto, 0)
+    : 0;
 }
 
 function porcionEfectivo() {
@@ -493,17 +523,41 @@ function actualizarVuelto() {
   const recibido = Number(cobroRecibido.value) || 0;
   const vuelto = recibido - efectivo;
   const falta = recibido > 0 && vuelto < -0.001;
+  const exacto = !falta && recibido > 0.001 && efectivo > 0.001 && Math.abs(vuelto) < 0.005;
   cobroVueltoBox.classList.toggle("falta", falta);
-  cobroVueltoNode.textContent = falta ? `Falta ${money(Math.abs(vuelto))}` : money(Math.max(0, vuelto));
+  cobroVueltoBox.classList.toggle("exacto", exacto);
+  cobroVueltoNode.textContent = falta
+    ? `Falta ${money(Math.abs(vuelto))}`
+    : exacto ? `${money(0)} · EXACTO`
+    : money(Math.max(0, vuelto));
+
+  // Si los otros metodos ya cubren el total, se oculta el cobro en efectivo.
+  if (cobroMixto.checked) {
+    const otros = montoDigital();
+    cobroEfectivoBlock.classList.toggle("hidden", efectivo <= 0.001);
+    if (otros > cobroTotal + 0.001) {
+      cobroMixtoResumen.textContent = `Los metodos (${money(otros)}) superan el total (${money(cobroTotal)})`;
+    } else if (efectivo > 0.001) {
+      cobroMixtoResumen.textContent = `Otros metodos: ${money(otros)} · falta en efectivo: ${money(efectivo)}`;
+    } else {
+      cobroMixtoResumen.textContent = `Cubierto por otros metodos: ${money(otros)} · sin efectivo`;
+    }
+  } else {
+    cobroEfectivoBlock.classList.remove("hidden");
+  }
+
   cobroConfirm.disabled = !cobroPuedeConfirmar(recibido, efectivo);
 }
 
-// Confirmable si cubre el efectivo y, en mixto, el segundo metodo es valido (>0 y < total).
+// Confirmable si el efectivo recibido cubre su parte y, en mixto, cada linea es valida
+// y las partes no superan el total.
 function cobroPuedeConfirmar(recibido, efectivo) {
   if (recibido + 0.001 < efectivo) return false;
   if (!cobroMixto.checked) return true;
-  const digital = montoDigital();
-  return Boolean(cobroMetodo2.value) && digital > 0.001 && digital + 0.001 < cobroTotal;
+  const partes = partesMixto();
+  if (!partes.length || partes.some((p) => !p.valida)) return false;
+  const suma = partes.reduce((s, p) => s + p.monto, 0);
+  return suma > 0.001 && suma <= cobroTotal + 0.001;
 }
 
 cobroRecibido.addEventListener("input", actualizarVuelto);
@@ -523,11 +577,14 @@ cobroExacto.addEventListener("click", () => {
 
 cobroMixto.addEventListener("change", () => {
   cobroMixtoBlock.classList.toggle("hidden", !cobroMixto.checked);
-  if (!cobroMixto.checked) { cobroMetodo2.value = ""; cobroMonto2.value = ""; }
+  if (cobroMixto.checked) {
+    if (!cobroMixtoLineas.children.length) agregarLinea();
+  } else {
+    cobroMixtoLineas.innerHTML = "";
+  }
   actualizarVuelto();
 });
-cobroMetodo2.addEventListener("change", actualizarVuelto);
-cobroMonto2.addEventListener("input", actualizarVuelto);
+cobroAddMetodo.addEventListener("click", () => { agregarLinea(); actualizarVuelto(); });
 
 cobroReset.addEventListener("click", () => {
   cobroRecibido.value = "";
@@ -549,19 +606,18 @@ cobroConfirm.addEventListener("click", () => {
   let pagos = null;
   let desglose = null;
   if (cobroMixto.checked) {
-    const efectivoMonto = Number(efectivo.toFixed(2));
-    const digitalMonto = Number(montoDigital().toFixed(2));
-    pagos = [
-      { idMetodoPago: Number(paymentMethod.value), monto: efectivoMonto },
-      { idMetodoPago: Number(cobroMetodo2.value), monto: digitalMonto },
-    ];
-    desglose = [
-      { metodo: metodoLabel(paymentMethod), monto: efectivoMonto },
-      { metodo: metodoLabel(cobroMetodo2), monto: digitalMonto },
-    ];
+    const partes = partesMixto().filter((p) => p.valida);
+    pagos = partes.map((p) => ({ idMetodoPago: p.idMetodoPago, monto: p.monto }));
+    desglose = partes.map((p) => ({ metodo: p.metodo, monto: p.monto }));
+    // El efectivo solo entra como parte si los otros metodos no cubren el total.
+    if (efectivo > 0.001) {
+      const efe = Number(efectivo.toFixed(2));
+      pagos.unshift({ idMetodoPago: Number(paymentMethod.value), monto: efe });
+      desglose.unshift({ metodo: metodoLabel(paymentMethod), monto: efe });
+    }
   }
   cerrarCobro();
-  enviarVenta(vuelto, pagos, desglose);
+  enviarVenta(efectivo > 0.001 ? vuelto : 0, pagos, desglose);
 });
 
 // --- Atajos de teclado ----------------------------------------------
