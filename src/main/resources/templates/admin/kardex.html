@@ -8,13 +8,12 @@
     <div class="page-head">
       <p class="muted">Entradas y salidas de cada insumo con el stock resultante.</p>
     </div>
-    <form class="d-flex gap-2 flex-wrap align-items-center" method="get" th:action="@{/admin/kardex}">
+    <form class="d-flex gap-2 flex-nowrap align-items-center" method="get" th:action="@{/admin/kardex}">
       <div class="search-box">
         <i class="bi bi-search"></i>
         <input type="search" name="q" th:value="${filtroQ}" placeholder="Buscar por insumo..." autocomplete="off">
       </div>
       <button class="btn btn-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
-      <a class="btn btn-ghost" th:href="@{/admin/kardex}">Limpiar</a>
     </form>
   </div>
   <div class="card table-card">

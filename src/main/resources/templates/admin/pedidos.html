@@ -21,7 +21,14 @@
     <table class="align-middle" data-filtros-pedidos data-base-url="/admin/pedidos">
       <thead>
         <tr>
-          <th>Codigo</th>
+          <th class="th-filtrable">
+            <span class="th-label">Codigo</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por codigo"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <input type="search" class="form-control form-control-sm" data-filtro="codigo"
+                     th:value="${filtroCodigo}" placeholder="N&deg; de pedido" autocomplete="off">
+            </div>
+          </th>
           <th class="th-filtrable">
             <span class="th-label">Fecha</span>
             <button type="button" class="filtro-toggle" aria-label="Filtrar por fecha"><i class="bi bi-funnel"></i></button>

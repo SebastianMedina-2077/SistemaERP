@@ -3,6 +3,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+# Artefacto de empaquetado (Maven JAR Plugin); no es fuente
+/META-INF/
 
 # IntelliJ IDEA
 .idea/

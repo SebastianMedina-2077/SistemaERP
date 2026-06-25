@@ -21,7 +21,7 @@
 
   <div class="card table-card" id="tablaProveedores" data-table-tools>
     <table class="align-middle">
-      <thead><tr><th>RUC</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th></th></tr></thead>
+      <thead><tr><th data-filter="input">RUC</th><th data-filter="input">Nombre</th><th>Telefono</th><th>Direccion</th><th></th></tr></thead>
       <tbody>
         <tr th:each="p : ${proveedores}">
           <td th:text="${p.ruc}">20000000000</td>
