@@ -425,6 +425,11 @@ a.nav-item {
   color: var(--brand);
 }
 
+/* El item activo tiene fondo oscuro: su icono se mantiene blanco tambien en hover. */
+.nav-item.active:hover i {
+  color: #fff;
+}
+
 .stat-card {
   color: #fff;
   border: none !important;
