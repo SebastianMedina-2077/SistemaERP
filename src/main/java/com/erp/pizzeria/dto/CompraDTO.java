@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -16,10 +17,10 @@ import java.util.List;
 @AllArgsConstructor
 public class CompraDTO {
 
-    @NotNull
+    @NotNull(message = "Seleccione un proveedor")
     private Integer idProveedor;
 
-    @NotEmpty
+    @NotEmpty(message = "Agregue al menos un insumo a la compra")
     @Valid
-    private List<CompraLineaDTO> items;
+    private List<CompraLineaDTO> items = new ArrayList<>();
 }

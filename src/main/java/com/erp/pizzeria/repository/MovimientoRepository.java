@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface MovimientoRepository extends JpaRepository<Movimiento, Integer> {
     boolean existsByUsuario_IdUsuario(Integer idUsuario);
 
@@ -19,4 +21,13 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Integer>
     Page<Movimiento> buscar(@Param("tipo") Integer tipo,
                             @Param("q") String q,
                             Pageable pageable);
+
+    @Query("""
+            select m from Movimiento m
+            join fetch m.tipoMovimiento
+            join fetch m.usuario u
+            left join fetch u.empleado
+            where m.idMovimiento = :idMovimiento
+            """)
+    Optional<Movimiento> findComprobanteById(@Param("idMovimiento") Integer idMovimiento);
 }

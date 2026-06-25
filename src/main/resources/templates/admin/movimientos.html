@@ -8,6 +8,7 @@
     <div class="page-head">
       <p class="muted">Compras y ventas generan movimientos automaticos; mermas y ajustes son manuales.</p>
     </div>
+    <div class="flash flash-danger" th:if="${flashError}" th:text="${flashError}">error</div>
     <form class="d-flex gap-2 flex-wrap align-items-center" method="get" th:action="@{/admin/movimientos}">
       <div class="search-box">
         <i class="bi bi-search"></i>
@@ -21,14 +22,17 @@
       </select>
       <button class="btn btn-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
       <a class="btn btn-ghost" th:href="@{/admin/movimientos}">Limpiar</a>
+      <a class="btn btn-primary" th:href="@{/admin/movimientos/nuevo}">
+        <i class="bi bi-plus-lg"></i> Nuevo movimiento
+      </a>
     </form>
   </div>
   <div class="card table-card">
     <table>
-      <thead><tr><th>N&deg;</th><th>Fecha</th><th>Tipo</th><th>Operacion</th><th>Documento</th><th>Glosa</th><th>Usuario</th></tr></thead>
+      <thead><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Operación</th><th>Documento</th><th>Glosa</th><th>Usuario</th></tr></thead>
       <tbody>
         <tr th:each="m, mStat : ${movimientos}">
-          <td th:text="${page.number * page.size + mStat.count}">1</td>
+          <td th:text="${m.idMovimiento}">12</td>
           <td th:text="${m.fecha}">2026-01-01</td>
           <td th:text="${m.tipoMovimiento.descripcion}">Compra</td>
           <td>
@@ -46,7 +50,99 @@
     </table>
   </div>
 
+  <div class="modal fade" id="movimientoCreadoModal" tabindex="-1" aria-labelledby="movimientoCreadoTitle"
+       aria-hidden="true" th:if="${movimientoCreado != null}">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header no-print">
+          <h5 class="modal-title" id="movimientoCreadoTitle">Movimiento registrado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <section id="movimientoCreadoPrint" class="movimiento-print">
+            <div class="movimiento-print-head">
+              <div>
+                <p class="eyebrow">Comprobante de inventario</p>
+                <h2 th:text="'Movimiento #' + ${movimientoCreado.idMovimiento}">Movimiento #12</h2>
+              </div>
+              <span class="badge"
+                    th:classappend="${movimientoCreado.operacion == 'Entrada'} ? 'badge-success' : 'badge-danger'"
+                    th:text="${movimientoCreado.operacion}">Salida</span>
+            </div>
+
+            <dl class="movimiento-print-meta">
+              <div>
+                <dt>Fecha</dt>
+                <dd th:text="${movimientoCreado.fecha}">2026-06-23</dd>
+              </div>
+              <div>
+                <dt>Tipo</dt>
+                <dd th:text="${movimientoCreado.tipo}">Merma</dd>
+              </div>
+              <div>
+                <dt>Documento</dt>
+                <dd th:text="${movimientoCreado.documento ?: '-'}">M-0004</dd>
+              </div>
+              <div>
+                <dt>Usuario</dt>
+                <dd th:text="${movimientoCreado.usuario}">Usuario</dd>
+              </div>
+              <div class="movimiento-print-meta-wide">
+                <dt>Glosa</dt>
+                <dd th:text="${movimientoCreado.glosa ?: '-'}">Detalle</dd>
+              </div>
+            </dl>
+
+            <div class="table-responsive">
+              <table class="table table-sm movimiento-print-table">
+                <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Insumo</th>
+                  <th class="text-right">Cantidad</th>
+                  <th>Medida</th>
+                  <th class="text-right">Stock resultante</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="linea : ${movimientoCreado.lineas}">
+                  <td th:text="${linea.codigo}">IN0001</td>
+                  <td th:text="${linea.insumo}">Harina</td>
+                  <td class="text-right" th:text="${#numbers.formatDecimal(linea.cantidad, 1, 3)}">1.000</td>
+                  <td th:text="${linea.medida}">kg</td>
+                  <td class="text-right" th:text="${#numbers.formatDecimal(linea.stockResultante, 1, 3)}">10.000</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <div class="modal-footer no-print">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary" id="printMovimientoBtn">
+            <i class="bi bi-printer"></i> Imprimir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div th:replace="~{layout/fragments :: pager(${page}, ${baseUrl}, ${query})}"></div>
 </main>
+
+<th:block layout:fragment="scripts">
+  <script th:if="${movimientoCreado != null}">
+    document.addEventListener("DOMContentLoaded", () => {
+      const modalEl = document.getElementById("movimientoCreadoModal");
+      const printButton = document.getElementById("printMovimientoBtn");
+      if (modalEl && window.bootstrap) {
+        new bootstrap.Modal(modalEl).show();
+      }
+      if (printButton) {
+        printButton.addEventListener("click", () => window.print());
+      }
+    });
+  </script>
+</th:block>
 </body>
 </html>
