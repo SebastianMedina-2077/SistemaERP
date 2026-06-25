@@ -30,7 +30,7 @@
           <td th:text="${p.nombre}">Producto</td>
           <td th:text="${p.categoria.nombre}">Categoria</td>
           <td th:text="${p.tamanio != null ? p.tamanio.name() : 'No aplica'}">-</td>
-          <td th:text="'S/ ' + ${#numbers.formatDecimal(p.precio,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+          <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(p.precio,1,'COMMA',2,'POINT')}">S/ 0.00</td>
           <td th:text="${p.stock != null ? p.stock : 'Preparado'}">Preparado</td>
           <td>
             <span class="badge" th:classappend="${p.disponible} ? 'badge-success' : 'badge-danger'"

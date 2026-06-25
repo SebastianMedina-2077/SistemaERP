@@ -27,9 +27,9 @@
           <tr th:each="d : ${detalles}">
             <td th:text="${d.producto.nombre}">Producto</td>
             <td th:text="${d.cantidad}">1</td>
-            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.precioUnitario,1,'COMMA',2,'POINT')}">S/ 0.00</td>
-            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.descuento != null ? d.descuento : 0,1,'COMMA',2,'POINT')}">S/ 0.00</td>
-            <td th:text="'S/ ' + ${#numbers.formatDecimal(d.subtotal,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(d.precioUnitario,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(d.descuento != null ? d.descuento : 0,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+            <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(d.subtotal,1,'COMMA',2,'POINT')}">S/ 0.00</td>
             <td class="muted" th:text="${d.observacion} ?: '-'">-</td>
           </tr>
         </tbody>
@@ -57,7 +57,7 @@
           <tbody>
             <tr th:each="pago : ${pagos}">
               <td th:text="${pago.metodoPago.descripcion}">Efectivo</td>
-              <td th:text="'S/ ' + ${#numbers.formatDecimal(pago.monto,1,'COMMA',2,'POINT')}">S/ 0.00</td>
+              <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(pago.monto,1,'COMMA',2,'POINT')}">S/ 0.00</td>
             </tr>
           </tbody>
         </table>
