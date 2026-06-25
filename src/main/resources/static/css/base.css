@@ -57,6 +57,10 @@ th {
   background: #fafafa;
 }
 
+tbody tr {
+  transition: background 0.12s ease;
+}
+
 tbody tr:hover {
   background: #fbfdfc;
 }
@@ -71,13 +75,14 @@ textarea {
   color: var(--text);
   padding: 10px 12px;
   outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--green-700);
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+  box-shadow: var(--ring);
 }
 
 label {

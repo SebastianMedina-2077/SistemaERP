@@ -96,8 +96,8 @@
                   th:classappend="${estado == 'ATENDIDO'} ? 'badge-success' : (${estado == 'ANULADO'} ? 'badge-danger' : (${estado == 'PREPARANDO'} ? 'badge-info' : 'badge-warning'))"
                   th:text="${#strings.capitalize(#strings.toLowerCase(p.estado))}">Estado</span>
           </td>
-          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.subtotal,1,'COMMA',2,'POINT') : '-'}">-</td>
-          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td class="text-right" th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.subtotal,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td class="text-right" th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
           <td>
             <div class="dropdown">
               <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">

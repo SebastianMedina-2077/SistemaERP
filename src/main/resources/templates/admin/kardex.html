@@ -25,9 +25,9 @@
           <td th:text="${k.insumo.nombre}">Insumo</td>
           <td th:text="${k.movimiento.documento}">DOC</td>
           <td th:text="${k.movimiento.tipoMovimiento.descripcion}">Tipo</td>
-          <td th:text="${entrada ? #numbers.formatDecimal(k.cantidad,1,3) : '-'}">-</td>
-          <td th:text="${entrada ? '-' : #numbers.formatDecimal(k.cantidad,1,3)}">-</td>
-          <td th:text="${k.stockResultante != null ? #numbers.formatDecimal(k.stockResultante,1,3) : '-'}">-</td>
+          <td class="text-right" th:text="${entrada ? #numbers.formatDecimal(k.cantidad,1,3) : '-'}">-</td>
+          <td class="text-right" th:text="${entrada ? '-' : #numbers.formatDecimal(k.cantidad,1,3)}">-</td>
+          <td class="text-right" th:text="${k.stockResultante != null ? #numbers.formatDecimal(k.stockResultante,1,3) : '-'}">-</td>
         </tr>
         <tr th:if="${#lists.isEmpty(kardex)}" data-empty>
           <td colspan="7"><div class="empty-state">No hay movimientos de inventario que coincidan con el filtro.</div></td>
