@@ -67,7 +67,7 @@ public class PersonaService {
     }
 
     public List<Usuario> listUsuarios() {
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAllConRelaciones();
     }
 
     public List<Proveedor> listProveedores() {
