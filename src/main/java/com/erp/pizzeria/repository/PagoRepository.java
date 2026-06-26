@@ -21,4 +21,12 @@ public interface PagoRepository extends JpaRepository<Pago, Integer> {
     List<Object[]> resumenPorMetodo(@Param("cajeroId") Integer cajeroId,
                                     @Param("desde") LocalDateTime desde,
                                     @Param("anulado") EstadoPedido anulado);
+
+    /** Total cobrado por metodo de pago en un rango (para el cierre de dia, todas las cajas). */
+    @Query("SELECT p.metodoPago.descripcion, SUM(p.monto) FROM Pago p "
+            + "WHERE p.pedido.fecha >= :desde AND p.pedido.fecha < :hasta "
+            + "AND p.pedido.estado <> :anulado GROUP BY p.metodoPago.descripcion")
+    List<Object[]> resumenPorMetodoRango(@Param("desde") LocalDateTime desde,
+                                         @Param("hasta") LocalDateTime hasta,
+                                         @Param("anulado") EstadoPedido anulado);
 }
