@@ -1,4 +1,6 @@
-const REFRESH_MS = 8000;
+// Respaldo lento: el refresco real llega por SSE; este intervalo solo cubre una
+// posible caida del stream.
+const REFRESH_MS = 30000;
 const SALIDA_MS = 5000; // tiempo visible de la card tras marcarse atendida
 
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
@@ -211,6 +213,12 @@ function animarAtendido(idPedido, card) {
 }
 
 if (refreshBtn) refreshBtn.addEventListener("click", loadKitchen);
+
+// Tiempo real: refresca al instante cuando entra un pedido nuevo o cambia un estado.
+if (window.MammaTomatoRealtime) {
+  window.MammaTomatoRealtime.on("pedido-nuevo", loadKitchen);
+  window.MammaTomatoRealtime.on("pedido-estado", loadKitchen);
+}
 
 loadKitchen();
 setInterval(loadKitchen, REFRESH_MS);

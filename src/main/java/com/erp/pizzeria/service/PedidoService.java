@@ -25,6 +25,8 @@ import com.erp.pizzeria.repository.PagoRepository;
 import com.erp.pizzeria.repository.PedidoRepository;
 import com.erp.pizzeria.repository.UsuarioRepository;
 import com.erp.pizzeria.audit.Audit;
+import com.erp.pizzeria.event.PedidoEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,6 +57,7 @@ public class PedidoService {
     private final UsuarioRepository usuarioRepository;
     private final CatalogService catalogService;
     private final InventarioService inventarioService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          DetallePedidoRepository detallePedidoRepository,
@@ -64,7 +67,8 @@ public class PedidoService {
                          MetodoPagoRepository metodoPagoRepository,
                          UsuarioRepository usuarioRepository,
                          CatalogService catalogService,
-                         InventarioService inventarioService) {
+                         InventarioService inventarioService,
+                         ApplicationEventPublisher eventPublisher) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
         this.boletaRepository = boletaRepository;
@@ -74,6 +78,7 @@ public class PedidoService {
         this.usuarioRepository = usuarioRepository;
         this.catalogService = catalogService;
         this.inventarioService = inventarioService;
+        this.eventPublisher = eventPublisher;
     }
 
     // ---- Lecturas --------------------------------------------------
@@ -228,6 +233,10 @@ public class PedidoService {
         String documento = String.format("P-%04d", pedido.getIdPedido());
         inventarioService.aplicarMovimiento("Venta", documento, "Consumo por venta", usuario, null, consumo);
 
+        // Aviso en tiempo real a las pantallas (se entrega tras el commit).
+        eventPublisher.publishEvent(new PedidoEvent("pedido-nuevo",
+                Map.of("idPedido", pedido.getIdPedido(), "cliente", cliente.getNombre())));
+
         return BoletaDTO.from(boleta);
     }
 
@@ -267,7 +276,12 @@ public class PedidoService {
             throw new IllegalArgumentException("El pedido #" + idPedido + " esta anulado y no admite cambios de estado");
         }
         pedido.setEstado(estado);
-        return pedidoRepository.save(pedido);
+        pedido = pedidoRepository.save(pedido);
+
+        eventPublisher.publishEvent(new PedidoEvent("pedido-estado",
+                Map.of("idPedido", pedido.getIdPedido(), "estado", pedido.getEstado().name())));
+
+        return pedido;
     }
 
     @Audit(accion = "ANULAR", entidad = "Pedido")
@@ -291,6 +305,11 @@ public class PedidoService {
             String documento = String.format("A-%04d", pedido.getIdPedido());
             inventarioService.aplicarMovimiento("Ajuste", documento, "Reversion por anulacion", pedido.getUsuario(), null, consumo);
         }
+
+        // Saca el pedido de la cola de cocina en el momento, no en el siguiente refresco.
+        eventPublisher.publishEvent(new PedidoEvent("pedido-estado",
+                Map.of("idPedido", pedido.getIdPedido(), "estado", pedido.getEstado().name())));
+
         return pedido;
     }
 }
