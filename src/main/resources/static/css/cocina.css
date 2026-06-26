@@ -63,47 +63,107 @@ body {
 
 .cocina-user { display: flex; align-items: center; gap: 10px; }
 
-/* ===== Cola de pedidos: flujo izquierda -> derecha con salto de linea ===== */
-.cocina-pedidos-grid {
+/* ===== TABLERO KANBAN DE 3 COLUMNAS ===== */
+.cocina-kanban-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3 columnas de igual ancho */
+  gap: 18px;
+  padding: 18px 24px;
+  min-height: 0; /* Permite el scroll interno en las columnas */
+  background: #f4f6f5;
+}
+
+/* Columnas Individuales */
+.kanban-columna {
+  background: #ebefed; /* Un tono sutil para delimitar la columna */
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Cabeceras de las Columnas */
+.kanban-columna-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 2px solid var(--border);
+  background: var(--white);
+}
+
+.kanban-columna-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Colores Dinámicos de los Bordes del Kanban */
+.columna-pendiente { border-bottom-color: var(--blue); }
+.columna-preparando { border-bottom-color: #fd7e14; }
+.columna-entregado { border-bottom-color: var(--brand); }
+
+/* Badges Contadores del Kanban */
+.kanban-badge-count {
+  background: var(--text);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+/* Contenedor Interno (Mantiene tu clase original para las tarjetas) */
+.kanban-columna-cuerpo.cocina-pedidos-grid {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 22px;
+  padding: 16px;
   display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 16px;
+  flex-direction: column; /* Cambiado a columna fija de arriba a abajo */
+  flex-wrap: nowrap;
+  align-content: stretch;
+  gap: 14px;
+  background: transparent;
 }
 
-.cocina-pedidos-grid.empty-state {
-  align-content: center;
+/* Adaptación del Estado Vacío para las columnas */
+.kanban-columna-cuerpo.cocina-pedidos-grid.empty-state {
   justify-content: center;
+  align-items: center;
 }
 
 .cocina-vacio {
   text-align: center;
   color: var(--muted);
 }
-.cocina-vacio i { font-size: 46px; color: var(--brand-100); }
-.cocina-vacio p { margin: 10px 0 2px; font-size: 17px; font-weight: 700; color: var(--text); }
-.cocina-vacio span { font-size: 13px; }
+.cocina-vacio i { font-size: 38px; color: var(--brand-100); }
+.cocina-vacio p { margin: 6px 0 2px; font-size: 15px; font-weight: 700; color: var(--text); }
+.cocina-vacio span { font-size: 12px; }
 
-/* ===== Tarjeta de pedido ===== */
+/* ===== Tarjeta de pedido (Ancho adaptado a las columnas) ===== */
 .cocina-pedido-card {
-  width: 290px;
+  width: 100%; /* Toma todo el ancho disponible de la columna */
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: stretch;
   background: var(--white);
   border: 1.5px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 18px rgba(21, 92, 47, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 12px rgba(21, 92, 47, 0.05);
   transition: box-shadow 0.2s, transform 0.12s;
 }
 
 .cocina-pedido-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(21, 92, 47, 0.14);
+  box-shadow: 0 8px 18px rgba(21, 92, 47, 0.1);
 }
 
 .cocina-card-header {
@@ -177,7 +237,7 @@ body {
 .btn-cocina-accion.accion-entregar:hover { background: var(--brand-700); }
 .btn-cocina-accion:disabled { opacity: 0.6; cursor: default; }
 
-/* ===== Semaforo por tiempo en cola (borde + cabecera del codigo) ===== */
+/* ===== Semáforo por tiempo en cola ===== */
 .cocina-pedido-card.estado-reciente { border-color: var(--brand-100); }
 .cocina-pedido-card.estado-reciente .cocina-card-header { background: var(--brand-50); }
 .cocina-pedido-card.estado-reciente .cocina-card-id,
@@ -235,7 +295,14 @@ body {
   to { opacity: 0; transform: scale(0.92); }
 }
 
-@media (max-width: 700px) {
-  .cocina-pedidos-grid { padding: 14px; justify-content: center; }
-  .cocina-pedido-card { width: 100%; max-width: 360px; }
+/* ===== Modo Responsivo / Pantallas Chicas ===== */
+@media (max-width: 900px) {
+  .cocina-kanban-container {
+    grid-template-columns: 1fr; /* Se apilan en pantallas pequeñas */
+    overflow-y: auto;
+    height: auto;
+  }
+  .kanban-columna {
+    max-height: 450px; /* Limita la altura para poder scrollear de columna en columna */
+  }
 }
