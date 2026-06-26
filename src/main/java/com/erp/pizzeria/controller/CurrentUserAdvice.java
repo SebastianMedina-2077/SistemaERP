@@ -22,7 +22,7 @@ public class CurrentUserAdvice {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
-        return usuarioRepository.findByUsername(authentication.getName())
+        return usuarioRepository.findByUsernameConRelaciones(authentication.getName())
                 .map(this::toView)
                 .orElse(new CurrentUserView(authentication.getName(), ""));
     }
