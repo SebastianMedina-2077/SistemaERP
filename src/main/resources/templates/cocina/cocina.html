@@ -17,34 +17,60 @@
   <script defer th:src="@{/js/alertas.js}"></script>
 </head>
 <body>
-  <div class="cocina-layout">
-    <header class="cocina-header">
-      <div class="cocina-brand">
-        <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
-        <div>
-          <p class="eyebrow">Pantalla de cocina</p>
-          <h1>Cola de preparación</h1>
-        </div>
+<div class="cocina-layout">
+  <header class="cocina-header">
+    <div class="cocina-brand">
+      <img class="brand-logo" th:src="@{/img/logo.png}" alt="Mamma Tomato">
+      <div>
+        <p class="eyebrow">Pantalla de cocina</p>
+        <h1>Tablero Kanban de Cocina</h1>
       </div>
-      <div class="cocina-header-right">
-        <span class="cocina-cola-count"><strong id="colaCount">0</strong> en cola</span>
-        <button class="cocina-refresh" id="cocinaRefresh" type="button" title="Actualizar">
-          <i class="bi bi-arrow-clockwise"></i> Actualizar
-        </button>
-        <div class="cocina-user">
+    </div>
+    <div class="cocina-header-right">
+      <span class="cocina-cola-count"><strong id="colaCount">0</strong> en cola</span>
+      <button class="cocina-refresh" id="cocinaRefresh" type="button" title="Actualizar">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar
+      </button>
+      <div class="cocina-user">
           <span class="pos-user-chip">
             <i class="bi bi-person-circle"></i><span sec:authentication="name">Cocina</span>
           </span>
-          <form th:action="@{/logout}" method="post" style="margin:0">
-            <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
-          </form>
-        </div>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button class="btn btn-ghost" type="submit"><i class="bi bi-box-arrow-right"></i> Salir</button>
+        </form>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <section id="kitchenOrders" class="cocina-pedidos-grid"></section>
+  <div class="cocina-kanban-container">
+
+    <section class="kanban-columna">
+      <div class="kanban-columna-header columna-pendiente">
+        <h2><i class="bi bi-hourglass-split"></i> Pendientes</h2>
+        <span class="kanban-badge-count" id="countPendientes">0</span>
+      </div>
+      <div id="colPendientes" class="kanban-columna-cuerpo cocina-pedidos-grid"></div>
+    </section>
+
+    <section class="kanban-columna">
+      <div class="kanban-columna-header columna-preparando">
+        <h2><i class="bi bi-fire"></i> En Preparación</h2>
+        <span class="kanban-badge-count" id="countPreparando">0</span>
+      </div>
+      <div id="colPreparando" class="kanban-columna-cuerpo cocina-pedidos-grid"></div>
+    </section>
+
+    <section class="kanban-columna">
+      <div class="kanban-columna-header columna-entregado">
+        <h2><i class="bi bi-check2-circle"></i> Entregados</h2>
+        <span class="kanban-badge-count" id="countEntregados">0</span>
+      </div>
+      <div id="colEntregados" class="kanban-columna-cuerpo cocina-pedidos-grid"></div>
+    </section>
+
   </div>
+</div>
 
-  <script type="module" th:src="@{/js/cocina.js}"></script>
+<script type="module" th:src="@{/js/cocina.js}"></script>
 </body>
 </html>
