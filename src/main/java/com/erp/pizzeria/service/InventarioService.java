@@ -15,7 +15,6 @@ import com.erp.pizzeria.model.Producto;
 import com.erp.pizzeria.model.ProductoInsumo;
 import com.erp.pizzeria.model.TipoMovimiento;
 import com.erp.pizzeria.model.Usuario;
-import com.erp.pizzeria.model.enums.EstadoInsumo;
 import com.erp.pizzeria.util.CodigoUtil;
 import com.erp.pizzeria.audit.Audit;
 import com.erp.pizzeria.dto.MovimientoFormDTO;
@@ -168,8 +167,7 @@ public class InventarioService {
         insumo.setCantidadMinima(form.getCantidadMinima());
         insumo.setMedida(medidaRepository.findById(form.getIdMedida())
                 .orElseThrow(() -> ResourceNotFoundException.of("Medida", form.getIdMedida())));
-        insumo.setEstado(insumo.getStock().compareTo(form.getCantidadMinima()) <= 0
-                ? EstadoInsumo.bajo : EstadoInsumo.normal);
+        insumo.recalcularEstado();
         return insumoRepository.save(insumo);
     }
 
@@ -282,7 +280,7 @@ public class InventarioService {
                 throw new IllegalArgumentException("Stock insuficiente para '" + insumo.getNombre() + "'.");
             }
             insumo.setStock(resultante);
-            insumo.setEstado(resultante.compareTo(insumo.getCantidadMinima()) <= 0 ? EstadoInsumo.bajo : EstadoInsumo.normal);
+            insumo.recalcularEstado();
             insumoRepository.save(insumo);
 
             DetalleMovimiento detalle = new DetalleMovimiento();
