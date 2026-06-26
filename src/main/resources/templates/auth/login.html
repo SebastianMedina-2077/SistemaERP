@@ -54,6 +54,9 @@
       <div th:if="${param.error}" class="alert-soft alert-soft-danger">
         <i class="bi bi-exclamation-octagon"></i> Usuario o contrasena incorrectos.
       </div>
+      <div th:if="${param.locked}" class="alert-soft alert-soft-danger">
+        <i class="bi bi-shield-lock"></i> Cuenta bloqueada temporalmente por intentos fallidos. Espera unos minutos.
+      </div>
       <div th:if="${param.logout}" class="alert-soft alert-soft-ok">
         <i class="bi bi-check-circle"></i> Sesion cerrada correctamente.
       </div>

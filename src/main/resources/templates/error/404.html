@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Pagina no encontrada</title>
+  <link rel="stylesheet" th:href="@{/css/variables.css}">
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/components.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <style>
+    .nf {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .nf::before {
+      content: "";
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(46, 139, 79, 0.10), transparent 62%);
+      filter: blur(6px);
+      z-index: 0;
+    }
+    .nf-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 460px;
+      padding: 40px 36px;
+      text-align: center;
+    }
+    .nf-art {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      background: var(--brand-50);
+      color: var(--brand-700);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 22px rgba(21, 92, 47, 0.14);
+    }
+    .nf-art svg { width: 52px; height: 52px; }
+    .nf-code {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--brand-700);
+      background: var(--brand-50);
+      border: 1px solid var(--brand-100);
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin-bottom: 14px;
+    }
+    .nf-card h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .nf-card p { line-height: 1.55; }
+    .nf-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 26px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="nf">
+    <div class="card nf-card">
+
+      <div class="nf-art" aria-hidden="true">
+        <!-- Lupa sobre una porcion de pizza: "no encontramos esta pagina". -->
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor"
+             stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M14 8 L34 40 Q22 45 8 40 Z"></path>
+          <path d="M10 35 Q22 40 30 36"></path>
+          <circle cx="44" cy="40" r="12"></circle>
+          <line x1="53" y1="49" x2="60" y2="56"></line>
+        </svg>
+      </div>
+
+      <span class="nf-code">ERROR 404</span>
+      <h1>Pagina no encontrada</h1>
+      <p class="muted">
+        La direccion que buscas no existe o fue movida.
+        Revisa el enlace o vuelve al inicio del sistema.
+      </p>
+
+      <div class="nf-actions">
+        <a class="btn btn-primary" th:href="@{/}">Volver a mi inicio</a>
+        <a class="btn btn-ghost" th:href="@{/login}">Ir al login</a>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
