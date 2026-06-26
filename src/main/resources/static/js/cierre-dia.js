@@ -16,10 +16,16 @@
 
   function pintarResumen(data) {
     const ventas = Number(data.totalVentas || 0).toFixed(2);
-    resumen.innerHTML =
+    let html =
       '<div class="resumen-item"><span>Fecha</span><strong>' + data.fecha + "</strong></div>" +
       '<div class="resumen-item"><span>Pedidos del dia</span><strong>' + data.totalPedidos + "</strong></div>" +
       '<div class="resumen-item"><span>Total vendido</span><strong>S/ ' + ventas + "</strong></div>";
+    (data.ventasPorMetodo || []).forEach(function (m) {
+      html +=
+        '<div class="resumen-item"><span>' + m.metodo + "</span><strong>S/ " +
+        Number(m.monto || 0).toFixed(2) + "</strong></div>";
+    });
+    resumen.innerHTML = html;
   }
 
   boton.addEventListener("click", function () {
@@ -47,6 +53,7 @@
     })
       .then(function (res) { return res.json(); })
       .then(function (data) {
+        if (data.ok) pintarResumen(data); // consolidado final por metodo de pago
         mensaje.textContent = data.mensaje || "Operacion completada.";
         mensaje.classList.remove("hidden");
         mensaje.classList.toggle("cierre-mensaje-ok", data.ok === true);
