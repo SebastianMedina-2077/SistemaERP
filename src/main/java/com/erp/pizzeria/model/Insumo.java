@@ -47,4 +47,9 @@ public class Insumo {
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_medida", nullable = false)
     private Medida medida;
+
+    /** Estado derivado del stock: bajo cuando llega al minimo o por debajo, normal en otro caso. */
+    public void recalcularEstado() {
+        this.estado = stock.compareTo(cantidadMinima) <= 0 ? EstadoInsumo.bajo : EstadoInsumo.normal;
+    }
 }
