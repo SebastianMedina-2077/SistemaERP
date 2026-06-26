@@ -656,3 +656,15 @@ loadProducts();
 cargarPedidoRecuperado();
 renderOrder();
 actualizarBadgeGuardados();
+
+// Tiempo real: la cocina avisa al cajero cuando mueve un pedido.
+if (window.MammaTomatoRealtime && window.MammaTomatoAlert) {
+  window.MammaTomatoRealtime.on("pedido-estado", (d) => {
+    const cod = `PED-${String(d.idPedido).padStart(3, "0")}`;
+    if (d.estado === "ATENDIDO") {
+      window.MammaTomatoAlert.success("Pedido entregado", `Cocina marco ${cod} como entregado`);
+    } else if (d.estado === "PREPARANDO") {
+      window.MammaTomatoAlert.info("En preparacion", `Cocina empezo a preparar ${cod}`);
+    }
+  });
+}

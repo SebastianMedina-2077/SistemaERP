@@ -177,6 +177,16 @@
 </main>
 <th:block layout:fragment="scripts">
   <script th:src="@{/js/pedidos-filtros.js}"></script>
+  <script>
+    // Monitor admin: avisa en vivo cuando entra un pedido nuevo. No recarga para no
+    // pisar los filtros activos; el admin recarga si quiere verlo en la tabla.
+    if (window.MammaTomatoRealtime && window.MammaTomatoAlert) {
+      window.MammaTomatoRealtime.on("pedido-nuevo", (d) => {
+        const cod = `PED-${String(d.idPedido).padStart(3, "0")}`;
+        window.MammaTomatoAlert.info("Nuevo pedido", `${cod} · ${d.cliente || "Cliente"}`, 6000);
+      });
+    }
+  </script>
 </th:block>
 </body>
 </html>
