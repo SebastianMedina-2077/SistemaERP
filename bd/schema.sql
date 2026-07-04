@@ -23,6 +23,8 @@ DROP TABLE IF EXISTS `detalle_compra`;
 DROP TABLE IF EXISTS `compra`;
 DROP TABLE IF EXISTS `pago`;
 DROP TABLE IF EXISTS `boleta`;
+DROP TABLE IF EXISTS `cliente_empresa`;
+DROP TABLE IF EXISTS `comprobante_correlativo`;
 DROP TABLE IF EXISTS `detalle_pedido`;
 DROP TABLE IF EXISTS `pedido`;
 DROP TABLE IF EXISTS `promocion_producto`;
@@ -212,10 +214,38 @@ CREATE TABLE `boleta` (
   `subtotal` decimal(6,2) NOT NULL,
   `igv` decimal(8,2) DEFAULT NULL,
   `total` decimal(8,2) NOT NULL,
+  `tipo_comprobante` varchar(20) NOT NULL DEFAULT 'BOLETA',
+  `serie` varchar(4) NOT NULL DEFAULT 'B001',
+  `correlativo` int NOT NULL DEFAULT 0,
+  `cliente_documento` varchar(11) DEFAULT NULL,
+  `cliente_razon_social` varchar(120) DEFAULT NULL,
+  `cliente_email` varchar(120) DEFAULT NULL,
+  `mesa` varchar(20) DEFAULT NULL,
+  `email_estado` varchar(20) DEFAULT NULL,
   `id_metodopago` int NOT NULL,
   `id_pedido` int NOT NULL,
   PRIMARY KEY (`id_boleta`),
   UNIQUE KEY `uk_boleta_pedido` (`id_pedido`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Contador de correlativos por serie de comprobante: numeracion de negocio
+-- secuencial y SIN HUECOS (el AUTO_INCREMENT de id_boleta es solo clave tecnica).
+CREATE TABLE `comprobante_correlativo` (
+  `serie` varchar(4) NOT NULL,
+  `ultimo_numero` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`serie`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `comprobante_correlativo` (`serie`, `ultimo_numero`) VALUES
+  ('B001', 0), ('F001', 0);
+
+-- Clientes con RUC (empresas) para facturacion: permite autocompletar la razon social.
+CREATE TABLE `cliente_empresa` (
+  `id_cliente_empresa` int NOT NULL AUTO_INCREMENT,
+  `ruc` char(11) NOT NULL,
+  `razon_social` varchar(120) NOT NULL,
+  PRIMARY KEY (`id_cliente_empresa`),
+  UNIQUE KEY `uk_cliente_empresa_ruc` (`ruc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Desglose de pago de un pedido: 1 fila = pago simple, 2+ filas = pago mixto

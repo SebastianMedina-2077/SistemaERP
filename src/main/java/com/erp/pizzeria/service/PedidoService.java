@@ -2,6 +2,7 @@ package com.erp.pizzeria.service;
 
 import com.erp.pizzeria.dto.BoletaDTO;
 import com.erp.pizzeria.dto.CajeroOpcion;
+import com.erp.pizzeria.dto.CotizacionDTO;
 import com.erp.pizzeria.dto.DetallePedidoDTO;
 import com.erp.pizzeria.dto.PagoDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
@@ -17,6 +18,7 @@ import com.erp.pizzeria.model.Pedido;
 import com.erp.pizzeria.model.Producto;
 import com.erp.pizzeria.model.Usuario;
 import com.erp.pizzeria.model.enums.EstadoPedido;
+import com.erp.pizzeria.model.enums.TipoComprobante;
 import com.erp.pizzeria.repository.BoletaRepository;
 import com.erp.pizzeria.repository.ClienteRepository;
 import com.erp.pizzeria.repository.DetallePedidoRepository;
@@ -57,6 +59,9 @@ public class PedidoService {
     private final UsuarioRepository usuarioRepository;
     private final CatalogService catalogService;
     private final InventarioService inventarioService;
+    private final CorrelativoService correlativoService;
+    private final ClienteEmpresaService clienteEmpresaService;
+    private final EmailComprobanteService emailComprobanteService;
     private final ApplicationEventPublisher eventPublisher;
 
     public PedidoService(PedidoRepository pedidoRepository,
@@ -68,6 +73,9 @@ public class PedidoService {
                          UsuarioRepository usuarioRepository,
                          CatalogService catalogService,
                          InventarioService inventarioService,
+                         CorrelativoService correlativoService,
+                         ClienteEmpresaService clienteEmpresaService,
+                         EmailComprobanteService emailComprobanteService,
                          ApplicationEventPublisher eventPublisher) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
@@ -78,6 +86,9 @@ public class PedidoService {
         this.usuarioRepository = usuarioRepository;
         this.catalogService = catalogService;
         this.inventarioService = inventarioService;
+        this.correlativoService = correlativoService;
+        this.clienteEmpresaService = clienteEmpresaService;
+        this.emailComprobanteService = emailComprobanteService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -158,6 +169,59 @@ public class PedidoService {
                 .toList();
     }
 
+    /**
+     * Preview de precios: total AUTORITATIVO del pedido (descuentos de promocion
+     * e IGV incluido) usando el MISMO calculo por linea que {@code crearPedido}.
+     * No verifica stock ni persiste nada.
+     */
+    @Transactional(readOnly = true)
+    public CotizacionDTO cotizar(List<DetallePedidoDTO> items) {
+        List<CotizacionDTO.Linea> lineas = new java.util.ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        for (DetallePedidoDTO item : items) {
+            Producto producto = catalogService.getProducto(item.getIdProducto());
+            CotizacionDTO.Linea linea = calcularLinea(producto, item.getCantidad());
+            lineas.add(linea);
+            total = total.add(linea.getSubtotalLinea());
+        }
+
+        BigDecimal igv = calcularIgvIncluido(total);
+        BigDecimal subtotal = total.subtract(igv);
+
+        return CotizacionDTO.builder()
+                .subtotal(subtotal)
+                .igv(igv)
+                .total(total)
+                .lineas(lineas)
+                .build();
+    }
+
+    /**
+     * Calculo de una linea (unico punto de verdad, reutilizado por crearPedido y cotizar):
+     * subtotalLinea = precio x cantidad - descuento, redondeado a 2 (HALF_UP).
+     */
+    private CotizacionDTO.Linea calcularLinea(Producto producto, int cantidad) {
+        BigDecimal precioUnitario = producto.getPrecio();
+        BigDecimal descuento = catalogService.calcularDescuento(producto, cantidad);
+        BigDecimal subtotalLinea = precioUnitario
+                .multiply(BigDecimal.valueOf(cantidad))
+                .subtract(descuento)
+                .setScale(2, RoundingMode.HALF_UP);
+        return CotizacionDTO.Linea.builder()
+                .idProducto(producto.getIdProducto())
+                .cantidad(cantidad)
+                .precioUnitario(precioUnitario)
+                .descuento(descuento)
+                .subtotalLinea(subtotalLinea)
+                .build();
+    }
+
+    /** Extrae el IGV incluido en un total: igv = total x 18/118, redondeado a 2 (HALF_UP). */
+    private BigDecimal calcularIgvIncluido(BigDecimal total) {
+        return total.multiply(IGV)
+                .divide(BigDecimal.ONE.add(IGV), 2, RoundingMode.HALF_UP);
+    }
+
     // ---- Operaciones transaccionales -------------------------------
 
     @Audit(accion = "CREAR", entidad = "Pedido")
@@ -186,41 +250,58 @@ public class PedidoService {
         pedido.setCliente(cliente);
         pedido = pedidoRepository.save(pedido);
 
-        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
+        List<DetallePedido> detalles = new java.util.ArrayList<>();
         for (DetallePedidoDTO item : dto.getItems()) {
             Producto producto = productos.get(item.getIdProducto());
-            BigDecimal descuento = catalogService.calcularDescuento(producto, item.getCantidad());
-            BigDecimal lineaSubtotal = producto.getPrecio()
-                    .multiply(BigDecimal.valueOf(item.getCantidad()))
-                    .subtract(descuento)
-                    .setScale(2, RoundingMode.HALF_UP);
+            // MISMO calculo por linea que usa la cotizacion (preview de precios).
+            CotizacionDTO.Linea linea = calcularLinea(producto, item.getCantidad());
 
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedido);
             detalle.setProducto(producto);
             detalle.setCantidad(item.getCantidad());
-            detalle.setPrecioUnitario(producto.getPrecio());
-            detalle.setDescuento(descuento);
-            detalle.setSubtotal(lineaSubtotal);
+            detalle.setPrecioUnitario(linea.getPrecioUnitario());
+            detalle.setDescuento(linea.getDescuento());
+            detalle.setSubtotal(linea.getSubtotalLinea());
             detalle.setObservacion(item.getObservacion());
             detallePedidoRepository.save(detalle);
+            detalles.add(detalle);
 
-            subtotal = subtotal.add(lineaSubtotal);
+            total = total.add(linea.getSubtotalLinea());
         }
 
-        BigDecimal igv = subtotal.multiply(IGV).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal total = subtotal.add(igv);
+        // Los precios ya incluyen IGV: el total es la suma directa y el IGV se extrae
+        // (igv = total x 18/118); el subtotal queda como base imponible de la boleta.
+        BigDecimal igv = calcularIgvIncluido(total);
+        BigDecimal subtotal = total.subtract(igv);
 
         List<PagoDTO> pagos = resolverPagos(dto, total);
         Map<Integer, MetodoPago> metodos = resolverMetodos(pagos);
+
+        // Comprobante: serie y correlativo SECUENCIAL SIN HUECOS (numeracion de negocio).
+        TipoComprobante tipo = parseTipoComprobante(dto.getTipoComprobante());
+        int correlativo = correlativoService.siguiente(tipo.getSerie());
 
         Boleta boleta = new Boleta();
         boleta.setSubtotal(subtotal);
         boleta.setIgv(igv);
         boleta.setTotal(total);
+        boleta.setTipoComprobante(tipo);
+        boleta.setSerie(tipo.getSerie());
+        boleta.setCorrelativo(correlativo);
+        boleta.setMesa(normalizarMesa(dto.getMesa()));
+        aplicarAdquiriente(boleta, tipo, dto);
         boleta.setMetodoPago(metodos.get(pagos.get(0).getIdMetodoPago()));
         boleta.setPedido(pedido);
         boleta = boletaRepository.save(boleta);
+
+        // Boleta electronica: se envia por email. El envio nunca rompe la venta.
+        if (tipo.requiereEnvioEmail()) {
+            boleta.setEmailEstado(emailComprobanteService.enviar(boleta, detalles, boleta.getClienteEmail()));
+        } else {
+            boleta.setEmailEstado("NO_APLICA");
+        }
 
         for (PagoDTO parte : pagos) {
             Pago pago = new Pago();
@@ -255,6 +336,65 @@ public class PedidoService {
                     "La suma de los pagos (S/ " + suma + ") no coincide con el total (S/ " + total + ")");
         }
         return pagos;
+    }
+
+    /** Convierte el tipo de comprobante del DTO; por defecto BOLETA. */
+    private TipoComprobante parseTipoComprobante(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return TipoComprobante.BOLETA;
+        }
+        try {
+            return TipoComprobante.valueOf(valor.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Tipo de comprobante invalido: " + valor);
+        }
+    }
+
+    /** Normaliza la mesa: vacio/null -> null (para llevar / sin mesa). */
+    private String normalizarMesa(String mesa) {
+        return (mesa == null || mesa.isBlank()) ? null : mesa.trim();
+    }
+
+    /** Completa los datos del adquiriente segun el tipo de comprobante y valida lo obligatorio. */
+    private void aplicarAdquiriente(Boleta boleta, TipoComprobante tipo, PedidoDTO dto) {
+        switch (tipo) {
+            case FACTURA -> {
+                String ruc = dto.getClienteRuc() != null ? dto.getClienteRuc().trim() : "";
+                String razon = dto.getClienteRazonSocial() != null ? dto.getClienteRazonSocial().trim() : "";
+                if (!ruc.matches("\\d{11}")) {
+                    throw new IllegalArgumentException("La factura requiere un RUC valido de 11 digitos");
+                }
+                if (razon.isBlank()) {
+                    throw new IllegalArgumentException("La factura requiere la razon social del cliente");
+                }
+                boleta.setClienteDocumento(ruc);
+                boleta.setClienteRazonSocial(razon);
+                // Registra el RUC para autocompletar en futuras ventas.
+                clienteEmpresaService.registrar(ruc, razon);
+            }
+            case BOLETA_ELECTRONICA -> {
+                String email = dto.getClienteEmail() != null ? dto.getClienteEmail().trim() : "";
+                if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                    throw new IllegalArgumentException("La boleta electronica requiere un email valido");
+                }
+                boleta.setClienteEmail(email);
+                boleta.setClienteDocumento(limpiarDni(dto.getClienteDni()));
+            }
+            default -> // BOLETA: DNI opcional
+                    boleta.setClienteDocumento(limpiarDni(dto.getClienteDni()));
+        }
+    }
+
+    /** DNI opcional: null si vacio; valida 8 digitos si viene. */
+    private String limpiarDni(String dni) {
+        if (dni == null || dni.isBlank()) {
+            return null;
+        }
+        String limpio = dni.trim();
+        if (!limpio.matches("\\d{8}")) {
+            throw new IllegalArgumentException("El DNI debe tener 8 digitos");
+        }
+        return limpio;
     }
 
     /** Resuelve cada metodo de pago una sola vez. */

@@ -31,12 +31,15 @@ public class PedidoCocinaDTO {
     @Builder
     public static class Item {
         private String producto;
+        private String categoria;
         private Integer cantidad;
         private String observacion;
 
         public static Item from(DetallePedido d) {
             return Item.builder()
                     .producto(d.getProducto() != null ? d.getProducto().getNombre() : null)
+                    .categoria(d.getProducto() != null && d.getProducto().getCategoria() != null
+                            ? d.getProducto().getCategoria().getNombre() : null)
                     .cantidad(d.getCantidad())
                     .observacion(d.getObservacion())
                     .build();
