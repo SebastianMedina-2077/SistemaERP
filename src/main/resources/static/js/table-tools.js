@@ -148,11 +148,11 @@
         });
         pop.appendChild(sel);
       } else if (tipo === "range") {
-        const cont = crear("div", "filtro-rango");
-        cont.innerHTML =
+        const contenedor = crear("div", "filtro-rango");
+        contenedor.innerHTML =
           '<input type="number" class="form-control form-control-sm" placeholder="Min" step="any">' +
           '<input type="number" class="form-control form-control-sm" placeholder="Max" step="any">';
-        const [min, max] = cont.querySelectorAll("input");
+        const [min, max] = contenedor.querySelectorAll("input");
         const upd = () => {
           const lo = min.value !== "" ? parseFloat(min.value) : null;
           const hi = max.value !== "" ? parseFloat(max.value) : null;
@@ -162,7 +162,7 @@
         };
         min.addEventListener("input", upd);
         max.addEventListener("input", upd);
-        pop.appendChild(cont);
+        pop.appendChild(contenedor);
       } else if (tipo === "date") {
         const inp = crear("input", "form-control form-control-sm");
         inp.type = "date";

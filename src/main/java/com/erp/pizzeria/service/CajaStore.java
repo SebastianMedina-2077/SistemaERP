@@ -26,15 +26,15 @@ public class CajaStore {
     }
 
     public CajaSesion abrir(Integer cajeroId, String cajero, BigDecimal montoInicial) {
-        CajaSesion s = new CajaSesion();
-        s.setCajeroId(cajeroId);
-        s.setCajero(cajero);
-        s.setMontoInicial(montoInicial);
-        s.setFechaApertura(LocalDateTime.now());
-        s.setBloqueada(false);
-        s.setIntentos(0);
-        sesiones.put(cajeroId, s);
-        return s;
+        CajaSesion sesion = new CajaSesion();
+        sesion.setCajeroId(cajeroId);
+        sesion.setCajero(cajero);
+        sesion.setMontoInicial(montoInicial);
+        sesion.setFechaApertura(LocalDateTime.now());
+        sesion.setBloqueada(false);
+        sesion.setIntentos(0);
+        sesiones.put(cajeroId, sesion);
+        return sesion;
     }
 
     public CajaSesion obtener(Integer cajeroId) {
@@ -42,12 +42,12 @@ public class CajaStore {
     }
 
     public int registrarFalla(Integer cajeroId, BigDecimal diferencia) {
-        CajaSesion s = sesiones.get(cajeroId);
-        if (s == null) return 0;
-        s.setIntentos(s.getIntentos() + 1);
-        s.setUltimaDiferencia(diferencia);
-        if (s.getIntentos() >= MAX_INTENTOS) s.setBloqueada(true);
-        return s.getIntentos();
+        CajaSesion sesion = sesiones.get(cajeroId);
+        if (sesion == null) return 0;
+        sesion.setIntentos(sesion.getIntentos() + 1);
+        sesion.setUltimaDiferencia(diferencia);
+        if (sesion.getIntentos() >= MAX_INTENTOS) sesion.setBloqueada(true);
+        return sesion.getIntentos();
     }
 
     public void cerrar(Integer cajeroId) {
@@ -55,18 +55,18 @@ public class CajaStore {
     }
 
     public boolean desbloquear(Integer cajeroId, String pin) {
-        CajaSesion s = sesiones.get(cajeroId);
-        if (s == null || !supervisorPin.equals(pin)) return false;
-        s.setBloqueada(false);
-        s.setIntentos(0);
+        CajaSesion sesion = sesiones.get(cajeroId);
+        if (sesion == null || !supervisorPin.equals(pin)) return false;
+        sesion.setBloqueada(false);
+        sesion.setIntentos(0);
         return true;
     }
 
     public boolean desbloquearAdmin(Integer cajeroId) {
-        CajaSesion s = sesiones.get(cajeroId);
-        if (s == null) return false;
-        s.setBloqueada(false);
-        s.setIntentos(0);
+        CajaSesion sesion = sesiones.get(cajeroId);
+        if (sesion == null) return false;
+        sesion.setBloqueada(false);
+        sesion.setIntentos(0);
         return true;
     }
 
