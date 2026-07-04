@@ -147,9 +147,9 @@
     focusQuantity(activeLine);
   }
 
-  root.addEventListener('input',(event)=>{
-    const line= event.target.closest("[data-line]");
-    if(event.target.classList.contains(("mov-code")&&linea)){
+  root.addEventListener("input", (event) => {
+    const line = event.target.closest("[data-line]");
+    if (line && event.target.classList.contains("mov-code")) {
       refreshLine(line);
     }
   });
