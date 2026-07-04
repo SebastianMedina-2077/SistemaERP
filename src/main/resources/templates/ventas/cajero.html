@@ -16,6 +16,7 @@
   <link rel="stylesheet" th:href="@{/css/pos-shell.css}">
   <link rel="stylesheet" th:href="@{/css/alertas.css}">
   <link rel="stylesheet" th:href="@{/css/caja.css}">
+  <link rel="stylesheet" th:href="@{/css/orden.css}">
   <script defer th:src="@{/js/alertas.js}"></script>
 </head>
 <body class="pos-shell">
@@ -122,16 +123,35 @@
             <button id="clearOrderBtn" class="btn btn-secondary" type="button">Cancelar</button>
           </div>
 
-          <form id="customerForm" class="compact-form">
+          <form id="customerForm" class="compact-form" novalidate>
             <label>Cliente
-              <input id="customerName" type="text" maxlength="15" placeholder="Nombre del cliente" required>
+              <input id="customerName" type="text" class="form-control" maxlength="15"
+                     placeholder="Nombre del cliente" autocomplete="off" required>
+              <span class="invalid-feedback" id="customerNameError">Ingresa el nombre (solo letras y espacios).</span>
             </label>
-            <label>Teléfono
-              <input id="customerPhone" type="tel" maxlength="9" placeholder="Opcional">
+            <label>Teléfono <span class="opcional">(opcional)</span>
+              <span class="phone-row">
+                <select id="phonePrefix" class="form-control phone-prefix" aria-label="Prefijo de país">
+                  <option value="+51" selected>🇵🇪 +51</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+54">🇦🇷 +54</option>
+                  <option value="+56">🇨🇱 +56</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+593">🇪🇨 +593</option>
+                  <option value="+591">🇧🇴 +591</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input id="customerPhone" type="tel" class="form-control" maxlength="11"
+                       inputmode="numeric" placeholder="900-000-000" autocomplete="off">
+              </span>
+              <span class="invalid-feedback" id="customerPhoneError">El teléfono debe tener 9 dígitos numéricos.</span>
             </label>
             <label>Método de pago
-              <select id="paymentMethod">
-                <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Efectivo</option>
+              <select id="paymentMethod" class="form-control">
+                <option th:each="mp : ${metodosPago}" th:value="${mp.idMetodoPago}"
+                        th:text="${mp.descripcion}"
+                        th:attr="data-metodo=${mp.descripcion}">Efectivo</option>
               </select>
             </label>
           </form>
@@ -141,6 +161,7 @@
           <div class="totals-box">
             <div><span>Subtotal</span><strong id="subtotal">S/ 0.00</strong></div>
             <div><span>IGV 18%</span><strong id="igv">S/ 0.00</strong></div>
+            <div id="descuentoRow" class="descuento-line hidden"><span>Descuento</span><strong id="descuento">- S/ 0.00</strong></div>
             <div class="total-line"><span>Total</span><strong id="total">S/ 0.00</strong></div>
           </div>
 
@@ -149,7 +170,7 @@
               <i class="bi bi-bookmark-plus"></i> Guardar
             </button>
             <button id="generateTicketBtn" class="btn btn-primary btn-full btn-large" type="button">
-              <i class="bi bi-receipt"></i> Generar boleta
+              <i class="bi bi-receipt"></i> Generar orden
             </button>
           </div>
           <p class="order-shortcuts"><kbd>F9</kbd> cobrar &middot; <kbd>/</kbd> buscar</p>
@@ -176,6 +197,9 @@
           <p class="confirm-eta" id="confirmEta"><i class="bi bi-clock"></i> Tiempo estimado: 15 min.</p>
         </div>
         <div class="confirm-actions">
+          <button type="button" class="confirm-secondary" id="confirmPrint">
+            <i class="bi bi-printer"></i> Imprimir boleta
+          </button>
           <button type="button" class="confirm-primary" id="confirmNew">Nueva venta</button>
         </div>
       </div>
@@ -244,6 +268,95 @@
     </div>
   </div>
 
+  <!-- Modal de orden: izquierda seleccion de mesa, derecha datos del comprobante -->
+  <div id="ordenModal" class="orden-overlay hidden">
+    <div class="orden-card" role="dialog" aria-modal="true" aria-labelledby="ordenTitle">
+      <button type="button" class="orden-close" id="ordenClose" aria-label="Cerrar">&times;</button>
+      <h3 id="ordenTitle" class="orden-title"><i class="bi bi-receipt"></i> Generar orden</h3>
+
+      <div class="orden-body">
+        <!-- IZQUIERDA: plano de mesas -->
+        <section class="orden-mesas">
+          <h4>Ubicación del pedido</h4>
+          <p class="orden-hint">El local tiene 4 mesas de 4 asientos y una barra. El cliente puede no ir a mesa.</p>
+          <div id="mesaPlano" class="mesa-plano" role="group" aria-label="Selección de mesa"></div>
+          <div class="mesa-extra">
+            <button type="button" class="mesa-chip" data-mesa="BARRA"><i class="bi bi-cup-straw"></i> Barra (recojo)</button>
+            <button type="button" class="mesa-chip selected" data-mesa=""><i class="bi bi-bag"></i> Para llevar / sin mesa</button>
+          </div>
+          <p class="mesa-seleccion">Seleccionado: <strong id="mesaSeleccionLabel">Para llevar</strong></p>
+        </section>
+
+        <!-- DERECHA: datos de la orden -->
+        <section class="orden-datos">
+          <div class="orden-resumen">
+            <div><span>N° de orden</span><strong id="ordenNumero">—</strong></div>
+            <div><span>Tiempo aprox.</span><strong id="ordenTiempo">— min</strong></div>
+            <div class="orden-resumen-total"><span>Total</span><strong id="ordenTotal">S/ 0.00</strong></div>
+          </div>
+
+          <label class="orden-field">Tipo de comprobante
+            <select id="tipoComprobante" class="form-control">
+              <option value="BOLETA">Boleta</option>
+              <option value="FACTURA">Factura</option>
+              <option value="BOLETA_ELECTRONICA">Boleta electrónica</option>
+            </select>
+          </label>
+
+          <!-- BOLETA: DNI opcional -->
+          <div id="campoDni" class="comprobante-campo">
+            <label class="orden-field">DNI del cliente (opcional)
+              <input id="clienteDni" class="form-control" maxlength="8" inputmode="numeric" placeholder="8 dígitos" autocomplete="off">
+              <span class="invalid-feedback" id="clienteDniError">El DNI debe tener 8 dígitos.</span>
+            </label>
+          </div>
+
+          <!-- FACTURA: RUC + razón social -->
+          <div id="campoFactura" class="comprobante-campo hidden">
+            <label class="orden-field">RUC
+              <span class="ruc-row">
+                <input id="clienteRuc" class="form-control" maxlength="11" inputmode="numeric" placeholder="11 dígitos" autocomplete="off">
+                <button type="button" id="guardarRucBtn" class="btn btn-secondary" hidden>Guardar RUC</button>
+              </span>
+              <span class="invalid-feedback" id="clienteRucError">El RUC debe tener 11 dígitos.</span>
+              <span class="ruc-estado" id="rucEstado"></span>
+            </label>
+            <label class="orden-field">Razón social
+              <input id="clienteRazonSocial" class="form-control" maxlength="120" placeholder="Razón social del cliente" autocomplete="off">
+              <span class="invalid-feedback" id="clienteRazonError">La razón social es obligatoria.</span>
+            </label>
+          </div>
+
+          <!-- BOLETA ELECTRONICA: email -->
+          <div id="campoEmail" class="comprobante-campo hidden">
+            <label class="orden-field">Email del cliente
+              <input id="clienteEmail" class="form-control" type="email" maxlength="120" placeholder="cliente@correo.com" autocomplete="off">
+              <span class="invalid-feedback" id="clienteEmailError">Ingresa un email válido.</span>
+            </label>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-full btn-large" id="completarOrdenBtn">
+            <i class="bi bi-check2-circle"></i> Completar Orden
+          </button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submodal de pago con QR (Yape / Plin) -->
+  <div id="pagoQrModal" class="orden-overlay hidden">
+    <div class="orden-card orden-card--qr" role="dialog" aria-modal="true" aria-labelledby="pagoQrTitle">
+      <button type="button" class="orden-close" id="pagoQrClose" aria-label="Cerrar">&times;</button>
+      <h3 class="orden-title" id="pagoQrTitle">Pago con billetera digital</h3>
+      <p class="orden-hint">Escanea el código para pagar <strong id="pagoQrMonto">S/ 0.00</strong>.</p>
+      <div class="pago-qr-box"><img id="pagoQrImg" alt="Código QR de pago"></div>
+      <p class="pago-qr-nota"><i class="bi bi-info-circle"></i> QR de demostración: no corresponde a una pasarela real.</p>
+      <button type="button" class="btn btn-primary btn-full btn-large" id="pagoQrConfirm">
+        <i class="bi bi-check2"></i> Confirmar pago y generar
+      </button>
+    </div>
+  </div>
+
   <div id="cobroModal" class="cobro-overlay hidden">
     <div class="cobro-card" role="dialog" aria-modal="true" aria-labelledby="cobroTitle">
       <button type="button" class="cobro-close" id="cobroClose" aria-label="Cerrar">&times;</button>
@@ -275,6 +388,7 @@
                     th:value="${mp.idMetodoPago}" th:text="${mp.descripcion}">Tarjeta</option>
           </select>
           <input type="number" class="cobro-mixto-input cobro-linea-monto" step="0.10" min="0" placeholder="Monto S/">
+          <button type="button" class="cobro-linea-qr" hidden title="Ver QR de pago" aria-label="Ver QR de pago"><i class="bi bi-qr-code"></i></button>
           <button type="button" class="cobro-linea-quitar" aria-label="Quitar metodo">&times;</button>
         </div>
       </template>

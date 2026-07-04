@@ -192,6 +192,9 @@ body {
 
 .totals-box div strong { color: var(--text); font-weight: 700; }
 
+/* Descuento aplicado por promociones; solo visible cuando hay descuento. */
+.descuento-line strong { color: var(--success, #16a34a); }
+
 .total-line {
   margin-top: 6px;
   padding-top: 12px;
@@ -340,6 +343,32 @@ body {
 
 .confirm-actions {
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-secondary {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--brand);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.confirm-secondary:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+.confirm-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .confirm-primary {
@@ -781,5 +810,20 @@ body {
   cursor: pointer;
 }
 .cobro-linea-quitar:hover { border-color: var(--red); color: var(--red); }
+
+.cobro-linea-qr {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 38px;
+  border: 1.5px solid var(--brand, #c0392b);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--brand, #c0392b);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cobro-linea-qr:hover { background: var(--brand, #c0392b); color: #fff; }
+.cobro-linea-qr[hidden] { display: none; }
 
 .cobro-add-metodo { margin-top: 8px; }
