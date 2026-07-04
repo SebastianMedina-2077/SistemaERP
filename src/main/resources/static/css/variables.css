@@ -25,8 +25,7 @@
   --shadow-md: 0 6px 16px rgba(21, 92, 47, 0.09), 0 2px 6px rgba(21, 92, 47, 0.06);
   --ring: 0 0 0 3px rgba(46, 139, 79, 0.16);
   --radius: 8px;
-  --sidebar-width: 270px;
-  --sidebar-w: 212px;        /* ancho del sidebar delgado (cajero/admin) */
+  --sidebar-w: 212px;        /* ancho del sidebar (cajero/admin) */
   --nav-anim: 280ms;         /* duracion de la animacion abrir/colapsar sidebar */
   --font: Inter, Arial, sans-serif;
 }

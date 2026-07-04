@@ -156,21 +156,21 @@ function renderCard(pedido) {
   (pedido.items || []).forEach((it) => {
     const row = document.createElement("div");
     row.className = "cocina-item";
-    const qty = document.createElement("span");
-    qty.className = "cocina-item-qty";
-    qty.textContent = `${it.cantidad}x`;
+    const cantidad = document.createElement("span");
+    cantidad.className = "cocina-item-qty";
+    cantidad.textContent = `${it.cantidad}x`;
     const texto = document.createElement("div");
-    const prod = document.createElement("span");
-    prod.className = "cocina-item-nombre";
-    prod.textContent = it.producto;
-    texto.append(prod);
+    const producto = document.createElement("span");
+    producto.className = "cocina-item-nombre";
+    producto.textContent = it.producto;
+    texto.append(producto);
     if (it.observacion) {
-      const obs = document.createElement("span");
-      obs.className = "cocina-item-obs";
-      obs.textContent = it.observacion;
-      texto.append(obs);
+      const observacion = document.createElement("span");
+      observacion.className = "cocina-item-obs";
+      observacion.textContent = it.observacion;
+      texto.append(observacion);
     }
-    row.append(qty, texto);
+    row.append(cantidad, texto);
     items.append(row);
   });
 

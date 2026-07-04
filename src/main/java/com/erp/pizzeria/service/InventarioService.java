@@ -199,7 +199,7 @@ public class InventarioService {
     }
 
     public Map<Insumo, BigDecimal> combinar(Map<Insumo, BigDecimal> acumulado, Map<Insumo, BigDecimal> nuevo) {
-        nuevo.forEach((insumo, cant) -> acumulado.merge(insumo, cant, BigDecimal::add));
+        nuevo.forEach((insumo, cantidad) -> acumulado.merge(insumo, cantidad, BigDecimal::add));
         return acumulado;
     }
 

@@ -35,8 +35,8 @@ public class ReporteExportService {
     private static final Color HEADER_BG = new Color(0xF3, 0xE6, 0xE3);
 
     private static String money(BigDecimal value) {
-        BigDecimal v = value != null ? value : BigDecimal.ZERO;
-        return "S/ " + v.setScale(2, RoundingMode.HALF_UP).toPlainString();
+        BigDecimal valor = value != null ? value : BigDecimal.ZERO;
+        return "S/ " + valor.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     // ===================== PDF =====================
