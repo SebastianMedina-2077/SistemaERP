@@ -263,6 +263,7 @@ public class CatalogService {
         } else {
             descuento = promo.getValorDescuento().multiply(BigDecimal.valueOf(cantidad));
         }
-        return descuento.setScale(2, RoundingMode.HALF_UP);
+        // Un descuento de monto fijo no puede superar el subtotal de la linea.
+        return descuento.min(base).setScale(2, RoundingMode.HALF_UP);
     }
 }
