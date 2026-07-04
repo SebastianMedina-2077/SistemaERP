@@ -1,6 +1,8 @@
 package com.erp.pizzeria.controller;
 
 import com.erp.pizzeria.dto.BoletaDTO;
+import com.erp.pizzeria.dto.CotizacionDTO;
+import com.erp.pizzeria.dto.CotizacionRequestDTO;
 import com.erp.pizzeria.dto.EstadoUpdateDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
 import com.erp.pizzeria.dto.PedidoDTO;
@@ -44,6 +46,16 @@ public class PedidoRestController {
         Usuario usuario = usuarioActual(authentication);
         BoletaDTO boleta = pedidoService.crearPedido(dto, usuario.getIdUsuario());
         return ResponseEntity.status(HttpStatus.CREATED).body(boleta);
+    }
+
+    /**
+     * Preview de precios: devuelve el total AUTORITATIVO del pedido (con descuentos
+     * de promocion e IGV incluido) sin persistir nada. Accesible al CAJERO por el
+     * matcher /api/pedidos/** de SecurityConfig.
+     */
+    @PostMapping("/api/pedidos/cotizar")
+    public CotizacionDTO cotizar(@Valid @RequestBody CotizacionRequestDTO body) {
+        return pedidoService.cotizar(body.getItems());
     }
 
     @GetMapping("/api/pedidos/cocina")

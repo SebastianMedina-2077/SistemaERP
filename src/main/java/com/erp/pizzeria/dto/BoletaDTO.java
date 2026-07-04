@@ -18,19 +18,21 @@ public class BoletaDTO {
     private Integer idBoleta;
     private Integer idPedido;
     private String numeroBoleta;
+    private String tipoComprobante;
+    private String mesa;
+    private String emailEstado;
     private BigDecimal subtotal;
     private BigDecimal igv;
     private BigDecimal total;
-
-    public static String numeroDe(Integer idBoleta) {
-        return idBoleta == null ? "B001-000000" : String.format("B001-%06d", idBoleta);
-    }
 
     public static BoletaDTO from(Boleta b) {
         return BoletaDTO.builder()
                 .idBoleta(b.getIdBoleta())
                 .idPedido(b.getPedido() != null ? b.getPedido().getIdPedido() : null)
-                .numeroBoleta(numeroDe(b.getIdBoleta()))
+                .numeroBoleta(b.getNumeroFormateado())
+                .tipoComprobante(b.getTipoComprobante() != null ? b.getTipoComprobante().name() : null)
+                .mesa(b.getMesa())
+                .emailEstado(b.getEmailEstado())
                 .subtotal(b.getSubtotal())
                 .igv(b.getIgv())
                 .total(b.getTotal())

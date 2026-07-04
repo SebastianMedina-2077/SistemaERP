@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'Boleta ' + ${boleta.numero}">Boleta</title>
+  <style>
+    /* ===== Ticket tipo supermercado (~80mm) ===== */
+    :root { --ticket-ancho: 80mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #f1f1f1;
+      font-family: "Consolas", "Courier New", monospace;
+      color: #000;
+    }
+    .ticket {
+      width: var(--ticket-ancho);
+      margin: 12px auto;
+      background: #fff;
+      padding: 6mm 5mm;
+      font-size: 12px;
+      line-height: 1.35;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .15);
+    }
+    .ticket-logo { text-align: center; }
+    .ticket-logo img { max-width: 42mm; max-height: 22mm; object-fit: contain; }
+    .ticket-marca {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin: 4px 0 2px;
+    }
+    .ticket-empresa { text-align: center; font-size: 11px; margin: 0; }
+    .ticket-sep {
+      border: none;
+      border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+    .ticket-doc { text-align: center; }
+    .ticket-doc strong { display: block; font-size: 13px; }
+    .ticket-meta { font-size: 11px; }
+    .ticket-meta div { display: flex; justify-content: space-between; gap: 8px; }
+    table.ticket-items { width: 100%; border-collapse: collapse; font-size: 11px; }
+    table.ticket-items th {
+      text-align: left;
+      border-bottom: 1px solid #000;
+      padding: 2px 0;
+      font-weight: 700;
+    }
+    table.ticket-items td { padding: 2px 0; vertical-align: top; }
+    .col-cant { width: 10%; text-align: left; }
+    .col-desc { width: 56%; }
+    .col-imp { width: 34%; text-align: right; white-space: nowrap; }
+    .ticket-prod-unit { display: block; color: #333; font-size: 10px; }
+    .ticket-totales { font-size: 12px; }
+    .ticket-totales div { display: flex; justify-content: space-between; }
+    .ticket-totales .total-final { font-size: 14px; font-weight: 700; margin-top: 3px; }
+    .ticket-pagos { font-size: 11px; }
+    .ticket-pagos div { display: flex; justify-content: space-between; }
+    .ticket-qr { text-align: center; margin-top: 8px; }
+    .ticket-qr img { width: 38mm; height: 38mm; }
+    .ticket-qr small { display: block; font-size: 9px; word-break: break-all; color: #333; margin-top: 2px; }
+    .ticket-foot { text-align: center; font-size: 11px; margin-top: 6px; }
+    .ticket-acciones {
+      width: var(--ticket-ancho);
+      margin: 0 auto 24px;
+      display: flex;
+      gap: 8px;
+    }
+    .ticket-acciones button {
+      flex: 1;
+      padding: 9px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-imprimir { background: #c0392b; color: #fff; }
+    .btn-cerrar { background: #ddd; color: #222; }
+
+    @media print {
+      html, body { background: #fff; }
+      .ticket { box-shadow: none; margin: 0; width: auto; }
+      .ticket-acciones { display: none; }
+      @page { margin: 0; size: 80mm auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ticket">
+    <!-- Encabezado: logo + marca + datos de empresa -->
+    <div class="ticket-logo">
+      <img th:src="@{/img/logo.png}" th:alt="${boleta.nombreComercial}">
+    </div>
+    <p class="ticket-marca" th:text="${boleta.nombreComercial}">Mamma Tomato</p>
+    <p class="ticket-empresa" th:text="${boleta.razonSocial}">MAMMA TOMATO S.A.C.</p>
+    <p class="ticket-empresa">RUC: <span th:text="${boleta.ruc}">20123456789</span></p>
+    <p class="ticket-empresa" th:text="${boleta.direccion}">Av. Los Olivos 123 - Lima</p>
+    <p class="ticket-empresa" th:if="${boleta.telefono}" th:text="'Tel: ' + ${boleta.telefono}">Tel: (01) 555-1234</p>
+
+    <hr class="ticket-sep">
+
+    <!-- Datos del comprobante -->
+    <div class="ticket-doc">
+      <strong th:text="${boleta.titulo}">BOLETA DE VENTA ELECTRONICA</strong>
+      <span th:text="${boleta.numero}">B001-000123</span>
+    </div>
+
+    <hr class="ticket-sep">
+
+    <div class="ticket-meta">
+      <div><span>Fecha:</span>
+        <span th:text="${#temporals.format(boleta.fecha, 'dd/MM/yyyy HH:mm')}">30/06/2026 12:30</span></div>
+      <div><span>Cajero:</span><span th:text="${boleta.cajero}">Cajero</span></div>
+      <div th:if="${boleta.mesa}"><span>Ubicacion:</span><span th:text="${boleta.mesa}">MESA-1</span></div>
+      <!-- Factura: datos del adquiriente (RUC + razon social) -->
+      <div th:if="${boleta.factura}"><span>RUC:</span><span th:text="${boleta.clienteDocumento}">20123456789</span></div>
+      <div th:if="${boleta.factura}"><span>Razon social:</span><span th:text="${boleta.clienteRazonSocial}">Cliente S.A.C.</span></div>
+      <!-- Boleta: cliente y, si lo hay, DNI -->
+      <div th:unless="${boleta.factura}"><span>Cliente:</span><span th:text="${boleta.cliente}">Consumidor final</span></div>
+      <div th:if="${!boleta.factura and boleta.clienteDocumento != null}"><span>DNI:</span><span th:text="${boleta.clienteDocumento}">12345678</span></div>
+    </div>
+
+    <hr class="ticket-sep">
+
+    <!-- Detalle de items -->
+    <table class="ticket-items">
+      <thead>
+        <tr>
+          <th class="col-cant">Cant</th>
+          <th class="col-desc">Descripcion</th>
+          <th class="col-imp">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="item : ${boleta.items}">
+          <td class="col-cant" th:text="${item.cantidad}">1</td>
+          <td class="col-desc">
+            <span th:text="${item.nombre}">Producto</span>
+            <span class="ticket-prod-unit"
+                  th:text="'P.U. S/ ' + ${#numbers.formatDecimal(item.precioUnitario, 1, 2)}">P.U. S/ 0.00</span>
+          </td>
+          <td class="col-imp" th:text="'S/ ' + ${#numbers.formatDecimal(item.importe, 1, 2)}">S/ 0.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr class="ticket-sep">
+
+    <!-- Totales -->
+    <div class="ticket-totales">
+      <div><span>Op. Gravada</span>
+        <span th:text="'S/ ' + ${#numbers.formatDecimal(boleta.subtotal, 1, 2)}">S/ 0.00</span></div>
+      <div><span>IGV (18%)</span>
+        <span th:text="'S/ ' + ${#numbers.formatDecimal(boleta.igv, 1, 2)}">S/ 0.00</span></div>
+      <div class="total-final"><span>TOTAL</span>
+        <span th:text="'S/ ' + ${#numbers.formatDecimal(boleta.total, 1, 2)}">S/ 0.00</span></div>
+    </div>
+
+    <hr class="ticket-sep">
+
+    <!-- Desglose de pago -->
+    <div class="ticket-pagos">
+      <div th:each="pago : ${boleta.pagos}">
+        <span th:text="${pago.metodo}">Efectivo</span>
+        <span th:text="'S/ ' + ${#numbers.formatDecimal(pago.monto, 1, 2)}">S/ 0.00</span>
+      </div>
+    </div>
+
+    <hr class="ticket-sep">
+
+    <!-- QR formato SUNAT -->
+    <div class="ticket-qr">
+      <img th:src="${boleta.qrDataUri}" alt="Codigo QR del comprobante">
+      <small th:text="${boleta.qrContenido}">RUC|03|B001|...</small>
+    </div>
+
+    <p class="ticket-foot">Representacion impresa de la boleta de venta electronica.</p>
+    <p class="ticket-foot">Gracias por su compra</p>
+  </div>
+
+  <div class="ticket-acciones">
+    <button type="button" class="btn-imprimir" onclick="window.print()">Imprimir</button>
+    <button type="button" class="btn-cerrar" onclick="window.close()">Cerrar</button>
+  </div>
+
+  <script>
+    // Lanza el dialogo de impresion automaticamente al abrir el ticket.
+    window.addEventListener("load", () => setTimeout(() => window.print(), 250));
+  </script>
+</body>
+</html>
