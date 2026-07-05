@@ -1,0 +1,206 @@
+/* =====================================================================
+   Validacion estilo Bootstrap (is-valid / is-invalid) + feedback
+   ===================================================================== */
+.form-control {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd2d9;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--brand, #c0392b);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, .15);
+}
+.form-control.is-valid {
+  border-color: #198754;
+  background-image: none;
+}
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+.invalid-feedback,
+.valid-feedback {
+  display: none;
+  width: 100%;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.invalid-feedback { color: #dc3545; }
+.valid-feedback { color: #198754; }
+.form-control.is-invalid ~ .invalid-feedback { display: block; }
+.form-control.is-valid ~ .valid-feedback { display: block; }
+/* El feedback tambien se muestra cuando el input va envuelto (p. ej. .phone-row) */
+label:has(.form-control.is-invalid) .invalid-feedback { display: block; }
+label:has(.form-control.is-valid) .valid-feedback { display: block; }
+
+/* Telefono: prefijo de pais + numero */
+.phone-row { display: flex; gap: 6px; margin-top: 4px; }
+.phone-row .form-control { margin-top: 0; }
+.phone-prefix { flex: 0 0 auto; width: auto; max-width: 100px; }
+.opcional { font-size: 11px; color: #94a3b8; font-weight: 400; }
+
+/* El submodal de pago QR debe quedar por ENCIMA del modal de cobro */
+#pagoQrModal { z-index: 1500; }
+
+/* =====================================================================
+   Modal de orden (overlay + tarjeta de dos columnas)
+   ===================================================================== */
+.orden-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+.orden-overlay.hidden { display: none; }
+
+.orden-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  width: min(900px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 22px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+.orden-card--qr { width: min(400px, 96vw); text-align: center; }
+
+.orden-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+}
+.orden-close:hover { color: #334155; }
+
+.orden-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.orden-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+@media (max-width: 720px) {
+  .orden-body { grid-template-columns: 1fr; }
+}
+
+.orden-mesas h4 { margin: 0 0 4px; font-size: 15px; }
+.orden-hint { margin: 0 0 12px; font-size: 12px; color: #64748b; }
+
+/* ---- Plano de mesas ---- */
+.mesa-plano {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.mesa-btn {
+  position: relative;
+  border: 2px solid #d8dee6;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+}
+.mesa-btn:hover { border-color: var(--brand, #c0392b); }
+.mesa-btn.selected {
+  border-color: var(--brand, #c0392b);
+  background: #fdecea;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, .15);
+}
+.mesa-svg { width: 78px; height: 78px; display: block; }
+.mesa-svg .tabla { fill: #c98a5e; transition: fill .12s ease; }
+.mesa-svg .asiento { fill: #cbd2db; transition: fill .12s ease; }
+.mesa-btn.selected .mesa-svg .tabla { fill: var(--brand, #c0392b); }
+.mesa-btn.selected .mesa-svg .asiento { fill: #e6a695; }
+.mesa-label { font-weight: 700; font-size: 13px; color: #334155; }
+.mesa-sub { font-size: 11px; color: #94a3b8; }
+
+.mesa-extra {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.mesa-chip {
+  flex: 1;
+  min-width: 130px;
+  border: 2px solid #d8dee6;
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: .12s ease;
+}
+.mesa-chip:hover { border-color: var(--brand, #c0392b); }
+.mesa-chip.selected {
+  border-color: var(--brand, #c0392b);
+  background: #fdecea;
+  font-weight: 700;
+}
+.mesa-seleccion { margin: 10px 0 0; font-size: 13px; color: #475569; }
+
+/* ---- Datos de la orden ---- */
+.orden-resumen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.orden-resumen > div { display: flex; flex-direction: column; }
+.orden-resumen span { font-size: 11px; color: #64748b; text-transform: uppercase; }
+.orden-resumen strong { font-size: 16px; color: #1f2937; }
+.orden-resumen-total strong { color: var(--brand, #c0392b); }
+
+.orden-field { display: block; margin-bottom: 12px; font-size: 13px; color: #334155; }
+.orden-field .form-control { margin-top: 4px; }
+
+.comprobante-campo.hidden { display: none; }
+
+.ruc-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 4px; }
+.ruc-row .form-control { flex: 1; }
+.ruc-row .btn { white-space: nowrap; }
+.ruc-estado { display: block; font-size: 12px; margin-top: 4px; color: #198754; }
+.ruc-estado.pendiente { color: #b45309; }
+
+/* ---- Submodal pago QR ---- */
+.pago-qr-box {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 8px;
+}
+.pago-qr-box img {
+  width: 220px;
+  height: 220px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px;
+  background: #fff;
+}
+.pago-qr-nota { font-size: 11px; color: #94a3b8; margin: 0 0 14px; }

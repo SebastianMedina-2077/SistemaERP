@@ -153,8 +153,8 @@ public class ReporteController {
     private List<TipoMovReporteDTO> movimientosPorTipo() {
         Map<String, TipoMovReporteDTO> mapa = new LinkedHashMap<>();
         for (Movimiento m : inventarioService.listMovimientos()) {
-            String desc = m.getTipoMovimiento().getDescripcion();
-            TipoMovReporteDTO dto = mapa.computeIfAbsent(desc,
+            String descripcion = m.getTipoMovimiento().getDescripcion();
+            TipoMovReporteDTO dto = mapa.computeIfAbsent(descripcion,
                     d -> new TipoMovReporteDTO(d, m.getTipoMovimiento().getOperacion(), 0));
             dto.setRegistros(dto.getRegistros() + 1);
         }

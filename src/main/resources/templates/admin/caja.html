@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+  <div class="toolbar">
+    <div class="page-head">
+      <p class="muted">Cajas bloqueadas tras 3 intentos fallidos de cuadre. Dicta el codigo de supervisor al cajero o desbloquea desde aqui.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end">
+      <span class="muted" style="font-size:12px">Codigo de supervisor</span>
+      <strong style="font-size:18px; letter-spacing:0.15em" th:text="${supervisorPin}">----</strong>
+    </div>
+  </div>
+
+  <div th:if="${flash}" class="card" style="padding:12px 16px; margin-bottom:14px; border-left:4px solid var(--brand); color:var(--brand-700)" th:text="${flash}"></div>
+  <div th:if="${flashError}" class="card" style="padding:12px 16px; margin-bottom:14px; border-left:4px solid var(--red); color:var(--red)" th:text="${flashError}"></div>
+
+  <div class="card table-card">
+    <table class="align-middle">
+      <thead>
+        <tr><th>Cajero</th><th>Apertura</th><th>Intentos</th><th>Ultima diferencia</th><th>Accion</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="c : ${bloqueadas}">
+          <td th:text="${c.cajero}">cajero</td>
+          <td th:text="${c.fechaApertura != null ? #temporals.format(c.fechaApertura, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+          <td><span class="badge badge-danger" th:text="${c.intentos} + '/3'">3/3</span></td>
+          <td class="muted" th:text="${c.ultimaDiferencia != null ? 'S/ ' + #numbers.formatDecimal(c.ultimaDiferencia, 1, 2) : '-'}">-</td>
+          <td>
+            <form th:action="@{'/admin/caja/' + ${c.cajeroId} + '/desbloquear'}" method="post" style="margin:0">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-unlock"></i> Desbloquear</button>
+            </form>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(bloqueadas)}">
+          <td colspan="5"><div class="empty-state">No hay cajas bloqueadas.</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</body>
+</html>

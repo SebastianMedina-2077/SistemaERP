@@ -1,92 +1,204 @@
-const REFRESH_MS = 8000;
+// Respaldo lento: el refresco real llega por SSE; este intervalo solo cubre una
+// posible caida del stream.
+const REFRESH_MS = 30000;
+const SALIDA_MS = 5000; // tiempo visible de la card tras marcarse atendida
 
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-const kitchenOrders = document.querySelector("#kitchenOrders");
+// Referencias Kanban de las 3 columnas
+const colPendientes = document.querySelector("#colPendientes");
+const colPreparando = document.querySelector("#colPreparando");
+const colEntregados = document.querySelector("#colEntregados");
 
-function badgeClass(estado) {
-  const e = String(estado).toLowerCase();
-  if (e.includes("atendido")) return "badge badge-success";
-  if (e.includes("anulado")) return "badge badge-danger";
-  if (e.includes("pendiente")) return "badge badge-warning";
-  return "badge badge-info"; // preparando
+const countPendientes = document.querySelector("#countPendientes");
+const countPreparando = document.querySelector("#countPreparando");
+const countEntregados = document.querySelector("#countEntregados");
+
+const refreshBtn = document.querySelector("#cocinaRefresh");
+const colaCount = document.querySelector("#colaCount");
+
+let pedidos = [];
+let conocidos = new Set();
+let primeraCarga = true;
+// Pedidos con animacion de salida en curso: mientras existan, no se re-renderiza la cola por API.
+let animando = new Set();
+
+function formatId(id) {
+  return `PED-${String(id).padStart(3, "0")}`;
 }
 
-function formatFecha(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("es-PE");
+function minutosEspera(iso) {
+  const t = iso ? new Date(iso).getTime() : NaN;
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 60000));
+}
+
+function claseUrgencia(min) {
+  if (min > 10) return "estado-urgente";
+  if (min >= 6) return "estado-demora";
+  return "estado-reciente";
+}
+
+function textoEspera(min) {
+  return min <= 0 ? "recién" : `hace ${min} min`;
 }
 
 async function loadKitchen() {
   try {
     const res = await fetch("/api/pedidos/cocina", { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(res.statusText);
-    const orders = await res.json();
-    renderKitchen(orders);
+
+    const datosNuevos = await res.json();
+    detectarNuevos(datosNuevos);
+
+    // Si hay elementos animándose en la salida, no machacamos los pedidos locales para no romper el DOM
+    if (animando.size) return;
+
+    pedidos = datosNuevos;
+    render();
   } catch (err) {
-    kitchenOrders.textContent = `No se pudo cargar la cola: ${err.message}`;
+    if (animando.size) return;
+    if (colPendientes && colPreparando && colEntregados) {
+      colPendientes.innerHTML = `<div class="cocina-error">Error al cargar</div>`;
+      colPreparando.innerHTML = `<div class="cocina-error">${err.message}</div>`;
+      colEntregados.innerHTML = ``;
+    }
   }
 }
 
-function renderKitchen(orders) {
-  if (!orders.length) {
-    kitchenOrders.className = "kitchen-grid empty-state";
-    kitchenOrders.textContent = "No hay pedidos en cola.";
-    return;
+function detectarNuevos(lista) {
+  if (!primeraCarga) {
+    lista.forEach((p) => {
+      if (!conocidos.has(p.idPedido)) {
+        MammaTomatoAlert.info("Nuevo pedido recibido", `${formatId(p.idPedido)} · ${p.cliente ?? "Cliente"}`, 6000);
+      }
+    });
   }
-  kitchenOrders.className = "kitchen-grid";
-  kitchenOrders.replaceChildren(...orders.map(renderCard));
+  conocidos = new Set(lista.map((p) => p.idPedido));
+  primeraCarga = false;
+}
+
+function actualizarContadores(pendientes, preparando, entregados) {
+  if (colaCount) colaCount.textContent = pedidos.length;
+  if (countPendientes) countPendientes.textContent = pendientes.length;
+  if (countPreparando) countPreparando.textContent = preparando.length;
+  if (countEntregados) countEntregados.textContent = entregados.length;
+}
+
+function render() {
+  // Ordenar respetando el orden cronológico de llegada
+  const pedidosOrdenados = [...pedidos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  const listaPendientes = pedidosOrdenados.filter(p => String(p.estado).toUpperCase() === "PENDIENTE");
+  const listaPreparando = pedidosOrdenados.filter(p => String(p.estado).toUpperCase() === "PREPARANDO");
+  const listaEntregados = pedidosOrdenados.filter(p => String(p.estado).toUpperCase() === "ATENDIDO");
+
+  actualizarContadores(listaPendientes, listaPreparando, listaEntregados);
+
+  // 1. Renderizar Pendientes
+  if (!listaPendientes.length) {
+    colPendientes.replaceChildren(estadoVacio("Sin pedidos pendientes"));
+  } else {
+    colPendientes.replaceChildren(...listaPendientes.map(renderCard));
+  }
+
+  // 2. Renderizar Preparando
+  if (!listaPreparando.length) {
+    colPreparando.replaceChildren(estadoVacio("Sin platos en preparación"));
+  } else {
+    colPreparando.replaceChildren(...listaPreparando.map(renderCard));
+  }
+
+  // 3. Renderizar Entregados (para las tarjetas que se están desvaneciendo)
+  if (!listaEntregados.length) {
+    colEntregados.replaceChildren(estadoVacio("Historial vacío"));
+  } else {
+    colEntregados.replaceChildren(...listaEntregados.map(renderCard));
+  }
+}
+
+function estadoVacio(mensaje) {
+  const box = document.createElement("div");
+  box.className = "cocina-vacio";
+  box.innerHTML = `<i class="bi bi-check2-all"></i><p>${mensaje}</p>`;
+  return box;
 }
 
 function renderCard(pedido) {
+  const estado = String(pedido.estado).toUpperCase();
+  const min = minutosEspera(pedido.fecha);
   const card = document.createElement("article");
-  card.className = "kitchen-card";
+  card.className = `cocina-pedido-card ${claseUrgencia(min)}`;
+  card.dataset.id = pedido.idPedido;
 
-  const head = document.createElement("div");
-  head.className = "kitchen-card-head";
-  const info = document.createElement("div");
-  info.innerHTML = `<p class="eyebrow"></p><h2></h2><p class="muted"></p>`;
-  info.querySelector(".eyebrow").textContent = `Pedido #${pedido.idPedido}`;
-  info.querySelector("h2").textContent = pedido.cliente ?? "";
-  info.querySelector(".muted").textContent = formatFecha(pedido.fecha);
-  const badge = document.createElement("span");
-  badge.className = badgeClass(pedido.estado);
-  badge.textContent = pedido.estado;
-  head.append(info, badge);
+  const header = document.createElement("div");
+  header.className = "cocina-card-header";
+  const id = document.createElement("span");
+  id.className = "cocina-card-id";
+  id.textContent = formatId(pedido.idPedido);
+  const tiempo = document.createElement("span");
+  tiempo.className = "cocina-card-tiempo";
+  tiempo.textContent = textoEspera(min);
+  header.append(id, tiempo);
 
-  const list = document.createElement("ul");
-  list.className = "kitchen-items";
-  list.append(...(pedido.items || []).map((item) => {
-    const li = document.createElement("li");
-    const name = document.createElement("strong");
-    name.textContent = item.producto;
-    li.append(name, ` x ${item.cantidad}`);
-    if (item.observacion) {
-      const obs = document.createElement("p");
-      obs.className = "muted";
-      obs.textContent = item.observacion;
-      li.append(obs);
+  const cliente = document.createElement("div");
+  cliente.className = "cocina-card-cliente";
+  const nombre = document.createElement("strong");
+  nombre.textContent = pedido.cliente ?? "Sin nombre";
+  const etiqueta = document.createElement("span");
+  etiqueta.className = `badge-estado-${estado.toLowerCase()}`;
+  etiqueta.textContent = estado === "PENDIENTE" ? "Pendiente" : estado === "PREPARANDO" ? "Preparando" : "Entregado";
+  cliente.append(nombre, etiqueta);
+
+  const items = document.createElement("div");
+  items.className = "cocina-card-items";
+  (pedido.items || []).forEach((it) => {
+    const row = document.createElement("div");
+    row.className = "cocina-item";
+    const cantidad = document.createElement("span");
+    cantidad.className = "cocina-item-qty";
+    cantidad.textContent = `${it.cantidad}x`;
+    const texto = document.createElement("div");
+    const producto = document.createElement("span");
+    producto.className = "cocina-item-nombre";
+    producto.textContent = it.producto;
+    texto.append(producto);
+    if (it.observacion) {
+      const observacion = document.createElement("span");
+      observacion.className = "cocina-item-obs";
+      observacion.textContent = it.observacion;
+      texto.append(observacion);
     }
-    return li;
-  }));
+    row.append(cantidad, texto);
+    items.append(row);
+  });
 
-  const actions = document.createElement("div");
-  actions.className = "kitchen-actions";
-  actions.append(
-    actionButton("Preparando", "btn btn-secondary", pedido.idPedido, "PREPARANDO"),
-    actionButton("Atendido", "btn btn-primary", pedido.idPedido, "ATENDIDO")
-  );
+  const footer = document.createElement("div");
+  footer.className = "cocina-card-footer";
 
-  card.append(head, list, actions);
+  if (estado === "PENDIENTE") {
+    footer.append(accionBtn("Empezar a preparar", "accion-preparar", pedido.idPedido, "PREPARANDO"));
+  } else if (estado === "PREPARANDO") {
+    footer.append(accionBtn("Marcar entregado", "accion-entregar", pedido.idPedido, "ATENDIDO"));
+  } else if (estado === "ATENDIDO") {
+    // Si se renderiza directamente un estado ATENDIDO en proceso de salida
+    card.classList.add("atendido");
+    footer.innerHTML =
+        '<div class="cocina-atendido-box">' +
+        '  <div class="cocina-atendido-label"><i class="bi bi-check-circle-fill"></i> Atendido</div>' +
+        '  <div class="cocina-progress"><div class="cocina-progress-bar"></div></div>' +
+        '</div>';
+  }
+
+  card.append(header, cliente, items, footer);
   return card;
 }
 
-function actionButton(text, className, idPedido, estado) {
+function accionBtn(text, clase, idPedido, estado) {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = className;
+  b.className = `btn-cocina-accion ${clase}`;
   b.textContent = text;
   b.addEventListener("click", () => updateStatus(idPedido, estado, b));
   return b;
@@ -106,11 +218,59 @@ async function updateStatus(idPedido, estado, btn) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.mensaje || res.statusText);
     }
-    await loadKitchen();
+
+    if (estado === "ATENDIDO") {
+      MammaTomatoAlert.success("Pedido entregado", `${formatId(idPedido)} movido a entregados`);
+
+      // Localmente mutamos el estado a ATENDIDO para que viaje de columna en el render
+      const idx = pedidos.findIndex(p => p.idPedido === idPedido);
+      if (idx !== -1) pedidos[idx].estado = "ATENDIDO";
+
+      // Forzamos el traspaso inmediato a la columna "Entregados"
+      render();
+
+      // Buscamos la tarjeta recién movida en su nueva columna para animarla
+      const tarjetaEnEntregados = colEntregados.querySelector(`[data-id="${idPedido}"]`);
+      animarAtendido(idPedido, tarjetaEnEntregados);
+    } else {
+      MammaTomatoAlert.info("Estado actualizado", `${formatId(idPedido)} en preparación`);
+      await loadKitchen();
+    }
   } catch (err) {
-    alert(`No se pudo actualizar el estado: ${err.message}`);
+    MammaTomatoAlert.error("No se pudo actualizar el estado", err.message);
     btn.disabled = false;
   }
+}
+
+function animarAtendido(idPedido, card) {
+  animando.add(idPedido);
+  if (!card) {
+    setTimeout(() => finalizarSalida(idPedido), SALIDA_MS);
+    return;
+  }
+
+  setTimeout(() => {
+    card.classList.add("saliendo");
+    setTimeout(() => {
+      finalizarSalida(idPedido, card);
+    }, 450); // Tiempo de la transición CSS fading/collapse
+  }, SALIDA_MS);
+}
+
+function finalizarSalida(idPedido, card) {
+  animando.delete(idPedido);
+  conocidos.delete(idPedido);
+  pedidos = pedidos.filter((p) => p.idPedido !== idPedido);
+  if (card) card.remove();
+  render();
+}
+
+if (refreshBtn) refreshBtn.addEventListener("click", loadKitchen);
+
+// Tiempo real: refresca al instante cuando entra un pedido nuevo o cambia un estado.
+if (window.MammaTomatoRealtime) {
+  window.MammaTomatoRealtime.on("pedido-nuevo", loadKitchen);
+  window.MammaTomatoRealtime.on("pedido-estado", loadKitchen);
 }
 
 loadKitchen();

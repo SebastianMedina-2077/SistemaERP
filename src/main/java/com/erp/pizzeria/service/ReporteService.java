@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,25 +40,31 @@ public class ReporteService {
     }
 
     private static String money(BigDecimal value) {
-        BigDecimal v = value != null ? value : BigDecimal.ZERO;
-        return "S/ " + v.setScale(2, RoundingMode.HALF_UP).toPlainString();
+        BigDecimal valor = value != null ? value : BigDecimal.ZERO;
+        return "S/ " + valor.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     private boolean noAnulado(Boleta b) {
         return b.getPedido() != null && b.getPedido().getEstado() != EstadoPedido.ANULADO;
     }
 
+    private boolean esDeHoy(Boleta b) {
+        return b.getPedido() != null && b.getPedido().getFecha() != null
+                && b.getPedido().getFecha().toLocalDate().isEqual(LocalDate.now());
+    }
+
     public List<StatDTO> getDashboardStats() {
         List<Pedido> pedidos = pedidoRepository.findAll();
         BigDecimal ventas = boletaRepository.findAll().stream()
                 .filter(this::noAnulado)
+                .filter(this::esDeHoy)
                 .map(Boleta::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         long pendientes = pedidos.stream().filter(p -> p.getEstado() == EstadoPedido.PENDIENTE).count();
         long anulados = pedidos.stream().filter(p -> p.getEstado() == EstadoPedido.ANULADO).count();
 
         return List.of(
-                new StatDTO("Ventas del dia", money(ventas)),
+                new StatDTO("Ventas del día", money(ventas)),
                 new StatDTO("Pedidos pendientes", String.valueOf(pendientes)),
                 new StatDTO("Insumos bajo stock", String.valueOf(inventarioService.getInsumosBajoStock().size())),
                 new StatDTO("Pedidos anulados", String.valueOf(anulados))

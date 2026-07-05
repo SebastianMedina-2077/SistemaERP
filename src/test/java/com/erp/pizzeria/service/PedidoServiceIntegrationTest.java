@@ -54,7 +54,7 @@ class PedidoServiceIntegrationTest {
         long boletasAntes = boletaRepository.count();
 
         PedidoDTO dto = new PedidoDTO("Cliente Test", "999000111", ID_EFECTIVO,
-                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 1, "Sin aceitunas")));
+                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 1, "Sin aceitunas")), null);
 
         BoletaDTO boleta = pedidoService.crearPedido(dto, ID_CAJERO);
 
@@ -83,7 +83,7 @@ class PedidoServiceIntegrationTest {
 
         // 100 pizzas requieren mucho mas queso/masa del disponible
         PedidoDTO dto = new PedidoDTO("Cliente Test", "999000111", ID_EFECTIVO,
-                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 100, null)));
+                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 100, null)), null);
 
         assertThatThrownBy(() -> pedidoService.crearPedido(dto, ID_CAJERO))
                 .isInstanceOf(StockInsuficienteException.class)

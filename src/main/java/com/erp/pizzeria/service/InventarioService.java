@@ -1,6 +1,7 @@
 package com.erp.pizzeria.service;
 
 import com.erp.pizzeria.dto.InsumoFormDTO;
+import com.erp.pizzeria.dto.MovimientoComprobanteDTO;
 import com.erp.pizzeria.dto.StockAlertDTO;
 import com.erp.pizzeria.dto.StockFaltanteDTO;
 import com.erp.pizzeria.exception.ResourceNotFoundException;
@@ -14,9 +15,10 @@ import com.erp.pizzeria.model.Producto;
 import com.erp.pizzeria.model.ProductoInsumo;
 import com.erp.pizzeria.model.TipoMovimiento;
 import com.erp.pizzeria.model.Usuario;
-import com.erp.pizzeria.model.enums.EstadoInsumo;
 import com.erp.pizzeria.util.CodigoUtil;
 import com.erp.pizzeria.audit.Audit;
+import com.erp.pizzeria.dto.MovimientoFormDTO;
+import com.erp.pizzeria.dto.MovimientoLineaDTO;
 import com.erp.pizzeria.repository.DetalleCompraRepository;
 import com.erp.pizzeria.repository.DetalleMovimientoRepository;
 import com.erp.pizzeria.repository.InsumoRepository;
@@ -41,6 +43,8 @@ import java.util.Map;
 public class InventarioService {
 
     private static final String OP_SALIDA = "Salida";
+    private static final BigDecimal STOCK_INICIAL = BigDecimal.ZERO;
+    private static final List<String> TIPOS_AUTOMATICOS = List.of("Compra", "Venta");
 
     private final InsumoRepository insumoRepository;
     private final MedidaRepository medidaRepository;
@@ -99,8 +103,21 @@ public class InventarioService {
         return tipoMovimientoRepository.findAll();
     }
 
+    public List<TipoMovimiento> listTiposMovimientoManual() {
+        return tipoMovimientoRepository.findAll().stream()
+                .filter(t -> !TIPOS_AUTOMATICOS.contains(t.getDescripcion()))
+                .toList();
+    }
+
     public Page<Movimiento> buscarMovimientos(Integer idTipo, String q, Pageable pageable) {
         return movimientoRepository.buscar(idTipo, q, pageable);
+    }
+
+    public MovimientoComprobanteDTO getComprobanteMovimiento(Integer idMovimiento) {
+        Movimiento movimiento = movimientoRepository.findComprobanteById(idMovimiento)
+                .orElseThrow(() -> ResourceNotFoundException.of("Movimiento", idMovimiento));
+        List<DetalleMovimiento> detalles = detalleMovimientoRepository.findComprobanteLineas(idMovimiento);
+        return MovimientoComprobanteDTO.from(movimiento, detalles);
     }
 
     public Page<DetalleMovimiento> buscarKardex(String q, Pageable pageable) {
@@ -141,14 +158,16 @@ public class InventarioService {
     }
 
     private Insumo guardarInsumo(Insumo insumo, InsumoFormDTO form) {
+        boolean nuevo = insumo.getIdInsumo() == null;
         insumo.setNombre(form.getNombre().trim());
         insumo.setPrecio(form.getPrecio());
-        insumo.setStock(form.getStock());
+        if (nuevo) {
+            insumo.setStock(STOCK_INICIAL);
+        }
         insumo.setCantidadMinima(form.getCantidadMinima());
         insumo.setMedida(medidaRepository.findById(form.getIdMedida())
                 .orElseThrow(() -> ResourceNotFoundException.of("Medida", form.getIdMedida())));
-        insumo.setEstado(form.getStock().compareTo(form.getCantidadMinima()) <= 0
-                ? EstadoInsumo.bajo : EstadoInsumo.normal);
+        insumo.recalcularEstado();
         return insumoRepository.save(insumo);
     }
 
@@ -180,7 +199,7 @@ public class InventarioService {
     }
 
     public Map<Insumo, BigDecimal> combinar(Map<Insumo, BigDecimal> acumulado, Map<Insumo, BigDecimal> nuevo) {
-        nuevo.forEach((insumo, cant) -> acumulado.merge(insumo, cant, BigDecimal::add));
+        nuevo.forEach((insumo, cantidad) -> acumulado.merge(insumo, cantidad, BigDecimal::add));
         return acumulado;
     }
 
@@ -211,6 +230,29 @@ public class InventarioService {
 
     // ---- Aplicacion de movimientos (escritura) ---------------------
 
+    @Audit(accion = "REGISTRAR", entidad = "Movimiento")
+    @Transactional
+    public Movimiento registrarMovimientoManual(MovimientoFormDTO form, Usuario usuario) {
+        TipoMovimiento tipo = tipoMovimientoRepository.findById(form.getIdTipoMovimiento())
+                .orElseThrow(() -> ResourceNotFoundException.of("TipoMovimiento", form.getIdTipoMovimiento()));
+        if (TIPOS_AUTOMATICOS.contains(tipo.getDescripcion())) {
+            throw new IllegalArgumentException("Las compras y ventas se registran desde sus modulos propios.");
+        }
+
+        Map<Insumo, BigDecimal> lineas = new LinkedHashMap<>();
+        for (MovimientoLineaDTO linea : form.getLineas()) {
+            Insumo insumo = getInsumo(linea.getIdInsumo());
+            lineas.merge(insumo, linea.getCantidad(), BigDecimal::add);
+        }
+        if (lineas.isEmpty()) {
+            throw new IllegalArgumentException("Agregue al menos un insumo al movimiento.");
+        }
+
+        String documento = normalizar(form.getDocumento());
+        String glosa = normalizar(form.getGlosa());
+        return aplicarMovimiento(tipo.getDescripcion(), documento, glosa, usuario, null, lineas);
+    }
+
     @Transactional
     public Movimiento aplicarMovimiento(String tipoDescripcion, String documento, String glosa,
                                         Usuario usuario, Compra compra, Map<Insumo, BigDecimal> lineas) {
@@ -230,9 +272,15 @@ public class InventarioService {
         for (Map.Entry<Insumo, BigDecimal> linea : lineas.entrySet()) {
             Insumo insumo = linea.getKey();
             BigDecimal cantidad = linea.getValue();
+            if (cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("La cantidad del movimiento debe ser mayor a cero.");
+            }
             BigDecimal resultante = salida ? insumo.getStock().subtract(cantidad) : insumo.getStock().add(cantidad);
+            if (resultante.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Stock insuficiente para '" + insumo.getNombre() + "'.");
+            }
             insumo.setStock(resultante);
-            insumo.setEstado(resultante.compareTo(insumo.getCantidadMinima()) <= 0 ? EstadoInsumo.bajo : EstadoInsumo.normal);
+            insumo.recalcularEstado();
             insumoRepository.save(insumo);
 
             DetalleMovimiento detalle = new DetalleMovimiento();
@@ -243,5 +291,9 @@ public class InventarioService {
             detalleMovimientoRepository.save(detalle);
         }
         return movimiento;
+    }
+
+    private String normalizar(String valor) {
+        return (valor == null || valor.isBlank()) ? null : valor.trim();
     }
 }

@@ -54,6 +54,9 @@
       <div th:if="${param.error}" class="alert-soft alert-soft-danger">
         <i class="bi bi-exclamation-octagon"></i> Usuario o contrasena incorrectos.
       </div>
+      <div th:if="${param.locked}" class="alert-soft alert-soft-danger">
+        <i class="bi bi-shield-lock"></i> Cuenta bloqueada temporalmente por intentos fallidos. Espera unos minutos.
+      </div>
       <div th:if="${param.logout}" class="alert-soft alert-soft-ok">
         <i class="bi bi-check-circle"></i> Sesion cerrada correctamente.
       </div>
@@ -69,8 +72,8 @@
         <div class="form-floating mb-2">
           <input id="password" name="password" type="password" class="form-control"
                  placeholder="Contrasena" autocomplete="current-password" required>
-          <label for="password"><i class="bi bi-lock"></i> Contrasena</label>
-          <div class="invalid-feedback">Ingresa tu contrasena.</div>
+          <label for="password"><i class="bi bi-lock"></i> Contraseña</label>
+          <div class="invalid-feedback">Ingresa tu contraseña.</div>
         </div>
 
         <button class="btn-login" type="submit">

@@ -7,10 +7,12 @@
   document.querySelectorAll("[data-table-tools]").forEach(setupTable);
 
   function setupTable(card) {
-    const pageSize = parseInt(card.dataset.pageSize || "30", 10);
     const tbody = card.querySelector("tbody");
     if (!tbody) return;
     const table = card.querySelector("table");
+    // Sin data-page-size explicito, la cantidad de filas se adapta al alto de pantalla.
+    const pageSizeFijo = card.dataset.pageSize;
+    let pageSize = pageSizeFijo ? parseInt(pageSizeFijo, 10) : calcPageSize(card, tbody);
 
     let page = 0;
     let term = "";
@@ -81,7 +83,29 @@
       pager.style.display = totalPages > 1 ? "flex" : "none";
     }
 
+    if (!pageSizeFijo) {
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { pageSize = calcPageSize(card, tbody); render(); }, 150);
+      });
+    }
+
     render();
+  }
+
+  // Cuantas filas caben para que la tabla no genere scroll vertical.
+  function calcPageSize(card, tbody) {
+    const RESERVA = 116; // espacio para paginador + barra de estado + margenes
+    const MIN = 8;
+    const MAX = 24;
+    const filas = [...tbody.querySelectorAll("tr")].filter((r) => !r.hasAttribute("data-empty"));
+    const muestra = filas.find((r) => r.offsetHeight > 0);
+    const altoFila = muestra ? muestra.offsetHeight : 46;
+    const thead = card.querySelector("thead");
+    const altoHead = thead ? thead.offsetHeight : 40;
+    const disponible = window.innerHeight - card.getBoundingClientRect().top - altoHead - RESERVA;
+    return Math.max(MIN, Math.min(MAX, Math.floor(disponible / altoFila)));
   }
 
   // Filtros dropdown por columna (client-side). Se activan marcando un
@@ -124,11 +148,11 @@
         });
         pop.appendChild(sel);
       } else if (tipo === "range") {
-        const cont = crear("div", "filtro-rango");
-        cont.innerHTML =
+        const contenedor = crear("div", "filtro-rango");
+        contenedor.innerHTML =
           '<input type="number" class="form-control form-control-sm" placeholder="Min" step="any">' +
           '<input type="number" class="form-control form-control-sm" placeholder="Max" step="any">';
-        const [min, max] = cont.querySelectorAll("input");
+        const [min, max] = contenedor.querySelectorAll("input");
         const upd = () => {
           const lo = min.value !== "" ? parseFloat(min.value) : null;
           const hi = max.value !== "" ? parseFloat(max.value) : null;
@@ -138,7 +162,42 @@
         };
         min.addEventListener("input", upd);
         max.addEventListener("input", upd);
-        pop.appendChild(cont);
+        pop.appendChild(contenedor);
+      } else if (tipo === "date") {
+        const inp = crear("input", "form-control form-control-sm");
+        inp.type = "date";
+        inp.setAttribute("aria-label", label);
+        inp.addEventListener("change", () => {
+          filtro.valor = inp.value || null;
+          toggle.classList.toggle("activo", !!filtro.valor);
+          onChange();
+        });
+        pop.appendChild(inp);
+      } else if (tipo === "bucket") {
+        // Rangos preestablecidos por pasos (data-step) generados hasta el maximo de la columna.
+        const step = parseFloat(th.dataset.step) || 20;
+        const sel = crear("select", "form-select form-select-sm");
+        sel.innerHTML = '<option value="">Todos</option>';
+        const count = Math.max(1, Math.ceil(maxColumna(table, index) / step));
+        for (let i = 0; i < count; i++) {
+          const lo = i === 0 ? 0 : i * step + 1;
+          const hi = (i + 1) * step;
+          const o = document.createElement("option");
+          o.value = i;
+          o.textContent = lo + " - " + hi;
+          o.dataset.min = lo;
+          o.dataset.max = hi;
+          sel.appendChild(o);
+        }
+        sel.addEventListener("change", () => {
+          const opt = sel.selectedOptions[0];
+          filtro.valor = sel.value === ""
+            ? null
+            : { min: parseFloat(opt.dataset.min), max: parseFloat(opt.dataset.max) };
+          toggle.classList.toggle("activo", !!filtro.valor);
+          onChange();
+        });
+        pop.appendChild(sel);
       } else {
         const inp = crear("input", "form-control form-control-sm");
         inp.type = "search";
@@ -177,11 +236,20 @@
     const texto = celdaTexto(row, f.index);
     if (f.tipo === "input") return texto.toLowerCase().includes(f.valor);
     if (f.tipo === "select") return texto === f.valor;
+    if (f.tipo === "date") return texto.slice(0, 10) === f.valor; // fecha exacta (ISO yyyy-MM-dd)
     const n = parseFloat(texto.replace(/[^\d.-]/g, ""));
     if (Number.isNaN(n)) return false;
     if (f.valor.min != null && n < f.valor.min) return false;
     if (f.valor.max != null && n > f.valor.max) return false;
     return true;
+  }
+
+  function maxColumna(table, index) {
+    const filas = [...table.querySelectorAll("tbody tr")].filter((r) => !r.hasAttribute("data-empty"));
+    return filas.reduce((m, r) => {
+      const n = parseFloat(celdaTexto(r, index).replace(/[^\d.-]/g, ""));
+      return Number.isNaN(n) ? m : Math.max(m, n);
+    }, 0);
   }
 
   function valoresUnicos(table, index) {

@@ -21,7 +21,14 @@
     <table class="align-middle" data-filtros-pedidos data-base-url="/admin/pedidos">
       <thead>
         <tr>
-          <th>ID</th>
+          <th class="th-filtrable">
+            <span class="th-label">Codigo</span>
+            <button type="button" class="filtro-toggle" aria-label="Filtrar por codigo"><i class="bi bi-funnel"></i></button>
+            <div class="filtro-pop">
+              <input type="search" class="form-control form-control-sm" data-filtro="codigo"
+                     th:value="${filtroCodigo}" placeholder="N&deg; de pedido" autocomplete="off">
+            </div>
+          </th>
           <th class="th-filtrable">
             <span class="th-label">Fecha</span>
             <button type="button" class="filtro-toggle" aria-label="Filtrar por fecha"><i class="bi bi-funnel"></i></button>
@@ -79,7 +86,7 @@
       </thead>
       <tbody>
         <tr th:each="p : ${pedidos}" th:with="b=${boletas.get(p.idPedido)},estado=${p.estado.name()}">
-          <td th:text="'#' + ${p.idPedido}">#1</td>
+          <td th:text="'PED-' + ${#numbers.formatInteger(p.idPedido, 3, 'NONE')}">PED-001</td>
           <td th:text="${#temporals.format(p.fecha, 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
           <td th:text="${p.cliente.nombre}">Cliente</td>
           <td th:text="${p.cliente.telefono} ?: '-'">-</td>
@@ -89,8 +96,8 @@
                   th:classappend="${estado == 'ATENDIDO'} ? 'badge-success' : (${estado == 'ANULADO'} ? 'badge-danger' : (${estado == 'PREPARANDO'} ? 'badge-info' : 'badge-warning'))"
                   th:text="${#strings.capitalize(#strings.toLowerCase(p.estado))}">Estado</span>
           </td>
-          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.subtotal,1,'COMMA',2,'POINT') : '-'}">-</td>
-          <td th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td class="text-right" th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.subtotal,1,'COMMA',2,'POINT') : '-'}">-</td>
+          <td class="text-right" th:text="${b != null ? 'S/ ' + #numbers.formatDecimal(b.total,1,'COMMA',2,'POINT') : '-'}">-</td>
           <td>
             <div class="dropdown">
               <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Opciones">
@@ -118,7 +125,7 @@
                 <li th:if="${estado != 'ANULADO'}">
                   <button class="dropdown-item text-danger" type="button"
                           data-bs-toggle="modal" data-bs-target="#anularPedido"
-                          th:attr="data-action=@{/admin/pedidos/{id}/anular(id=${p.idPedido})},data-nombre='#' + ${p.idPedido}">
+                          th:attr="data-action=@{/admin/pedidos/{id}/anular(id=${p.idPedido})},data-nombre='PED-' + ${#numbers.formatInteger(p.idPedido, 3, 'NONE')}">
                     <i class="bi bi-x-circle"></i> Anular pedido
                   </button>
                 </li>
@@ -170,6 +177,16 @@
 </main>
 <th:block layout:fragment="scripts">
   <script th:src="@{/js/pedidos-filtros.js}"></script>
+  <script>
+    // Monitor admin: avisa en vivo cuando entra un pedido nuevo. No recarga para no
+    // pisar los filtros activos; el admin recarga si quiere verlo en la tabla.
+    if (window.MammaTomatoRealtime && window.MammaTomatoAlert) {
+      window.MammaTomatoRealtime.on("pedido-nuevo", (d) => {
+        const cod = `PED-${String(d.idPedido).padStart(3, "0")}`;
+        window.MammaTomatoAlert.info("Nuevo pedido", `${cod} · ${d.cliente || "Cliente"}`, 6000);
+      });
+    }
+  </script>
 </th:block>
 </body>
 </html>
