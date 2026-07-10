@@ -46,6 +46,15 @@ class PedidoServiceIntegrationTest {
         return insumoRepository.findById(idInsumo).map(Insumo::getStock).orElseThrow();
     }
 
+    private PedidoDTO pedidoDe(int cantidad, String observacion) {
+        PedidoDTO dto = new PedidoDTO();
+        dto.setClienteNombre("Cliente Test");
+        dto.setClienteTelefono("999000111");
+        dto.setIdMetodoPago(ID_EFECTIVO);
+        dto.setItems(List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, cantidad, observacion)));
+        return dto;
+    }
+
     @Test
     void crearPedido_descuentaStockYGeneraBoleta() {
         BigDecimal quesoAntes = stock(1);
@@ -53,17 +62,18 @@ class PedidoServiceIntegrationTest {
         BigDecimal masaAntes = stock(3);
         long boletasAntes = boletaRepository.count();
 
-        PedidoDTO dto = new PedidoDTO("Cliente Test", "999000111", ID_EFECTIVO,
-                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 1, "Sin aceitunas")), null);
+        PedidoDTO dto = pedidoDe(1, "Sin aceitunas");
 
         BoletaDTO boleta = pedidoService.crearPedido(dto, ID_CAJERO);
 
-        // Totales derivados del precio vigente del producto: subtotal + IGV 18%
+        // Precios con IGV INCLUIDO: el total es el precio vigente del producto y el
+        // impuesto se extrae del total (igv = total x 18/118, redondeo HALF_UP).
         BigDecimal precio = catalogService.getProducto(ID_PIZZA_AMERICANA).getPrecio();
-        BigDecimal igv = precio.multiply(new BigDecimal("0.18")).setScale(2, RoundingMode.HALF_UP);
-        assertThat(boleta.getSubtotal()).isEqualByComparingTo(precio);
+        BigDecimal igv = precio.multiply(new BigDecimal("0.18"))
+                .divide(new BigDecimal("1.18"), 2, RoundingMode.HALF_UP);
+        assertThat(boleta.getTotal()).isEqualByComparingTo(precio);
         assertThat(boleta.getIgv()).isEqualByComparingTo(igv);
-        assertThat(boleta.getTotal()).isEqualByComparingTo(precio.add(igv));
+        assertThat(boleta.getSubtotal()).isEqualByComparingTo(precio.subtract(igv));
         assertThat(boleta.getNumeroBoleta()).startsWith("B001-");
         assertThat(boletaRepository.count()).isEqualTo(boletasAntes + 1);
 
@@ -82,8 +92,7 @@ class PedidoServiceIntegrationTest {
         BigDecimal quesoAntes = stock(1);
 
         // 100 pizzas requieren mucho mas queso/masa del disponible
-        PedidoDTO dto = new PedidoDTO("Cliente Test", "999000111", ID_EFECTIVO,
-                List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 100, null)), null);
+        PedidoDTO dto = pedidoDe(100, null);
 
         assertThatThrownBy(() -> pedidoService.crearPedido(dto, ID_CAJERO))
                 .isInstanceOf(StockInsuficienteException.class)
