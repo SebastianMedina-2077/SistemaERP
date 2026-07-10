@@ -411,6 +411,11 @@ public class PedidoService {
     @Audit(accion = "ESTADO", entidad = "Pedido")
     @Transactional
     public Pedido actualizarEstado(Integer idPedido, EstadoPedido estado) {
+        // Anular tiene su propia operacion (exige motivo y revierte el stock);
+        // no se permite llegar a ANULADO por un cambio de estado generico.
+        if (estado == EstadoPedido.ANULADO) {
+            throw new IllegalArgumentException("Para anular el pedido usa la opcion Anular (requiere motivo y revierte stock)");
+        }
         Pedido pedido = getPedido(idPedido);
         if (pedido.getEstado() == EstadoPedido.ANULADO) {
             throw new IllegalArgumentException("El pedido #" + idPedido + " esta anulado y no admite cambios de estado");
