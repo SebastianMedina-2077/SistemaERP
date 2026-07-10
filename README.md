@@ -66,3 +66,9 @@ Requisitos: **JDK 17+** y **MySQL 8** en marcha.
 > El envío de la boleta electrónica por correo queda desactivado hasta configurar un
 > SMTP (`spring.mail.*`); mientras tanto el comprobante se genera igual y el envío se
 > marca como pendiente.
+
+## Documentación
+
+El manual del desarrollador (arquitectura, módulos, flujos y convenciones) está en
+[`doc/manual-del-programador.md`](doc/manual-del-programador.md), y el informe de la
+última revisión de código en [`doc/revision-de-codigo.md`](doc/revision-de-codigo.md).
