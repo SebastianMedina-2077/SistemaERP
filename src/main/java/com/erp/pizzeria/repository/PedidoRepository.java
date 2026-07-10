@@ -58,6 +58,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     @Query("select count(p) from Pedido p where p.fecha >= :desde and p.fecha < :hasta")
     long contarPorRango(@Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta);
 
-    @Query("select coalesce(sum(b.total), 0) from Boleta b where b.pedido.fecha >= :desde and b.pedido.fecha < :hasta")
-    BigDecimal sumarVentasPorRango(@Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta);
+    /** Ventas del rango sin contar pedidos anulados (consistente con el desglose por metodo de pago). */
+    @Query("select coalesce(sum(b.total), 0) from Boleta b "
+            + "where b.pedido.fecha >= :desde and b.pedido.fecha < :hasta and b.pedido.estado <> :anulado")
+    BigDecimal sumarVentasPorRango(@Param("desde") LocalDateTime desde,
+                                   @Param("hasta") LocalDateTime hasta,
+                                   @Param("anulado") EstadoPedido anulado);
 }

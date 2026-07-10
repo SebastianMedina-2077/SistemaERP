@@ -54,7 +54,7 @@ public class CajaController {
         LocalDateTime desde = hoy.atStartOfDay();
         LocalDateTime hasta = hoy.plusDays(1).atStartOfDay();
 
-        BigDecimal ventas = pedidoRepository.sumarVentasPorRango(desde, hasta);
+        BigDecimal ventas = pedidoRepository.sumarVentasPorRango(desde, hasta, EstadoPedido.ANULADO);
         ventas = ventas != null ? ventas : BigDecimal.ZERO;
 
         List<Map<String, Object>> porMetodo = new ArrayList<>();
