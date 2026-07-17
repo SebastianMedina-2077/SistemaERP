@@ -50,9 +50,10 @@ MySQL 8 · ZXing (QR) · OpenPDF y Apache POI (reportes).
 
 Requisitos: **JDK 17+** y **MySQL 8** en marcha.
 
-1. Crea la base de datos y su esquema:
+1. Crea la base de datos con su estructura y carga los datos iniciales:
    ```bash
-   mysql -u root -p < bd/schema.sql
+   mysql -u root -p < bd/MamaTomato_V0.21.sql        # estructura (crea la base y las tablas)
+   mysql -u root -p erp_mamatomato < bd/data.sql     # datos iniciales
    ```
 2. Ajusta credenciales si hace falta (por defecto `root` / `12345`,
    base `erp_mamatomato`) en `src/main/resources/application.properties` o vía las

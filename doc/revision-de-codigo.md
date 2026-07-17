@@ -197,7 +197,7 @@ Para el volumen actual no es problema; si se toca el esquema por otra razón, un
 
 - **Backend**: 100 % de services, controllers, seguridad, excepciones, aspecto de
   auditoría, repositorios con consultas propias y entidades con lógica (`Boleta`,
-  `Insumo`), contra el esquema real de `bd/schema.sql` y el `seed.sql`.
+  `Insumo`), contra el esquema real de `bd/MamaTomato_V0.21.sql` y el `data.sql`.
 - **Frontend**: `cajero.js` completo (el más grande y crítico), `realtime.js`, y revisión
   dirigida (CSRF, endpoints, estados) del resto.
 - **Verificación**: `mvnw compile` limpio tras los arreglos; `mvnw test` compila y los

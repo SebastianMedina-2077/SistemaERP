@@ -1,13 +1,22 @@
 -- =====================================================================
---  ERP "Mamma Tomato" (pizzeria-erp) - Estructura completa de la base de datos
---  Esquema oficial del proyecto (v0.02). Contrastado por ddl-auto=validate.
+--  ERP "Mamma Tomato" (pizzeria-erp) - Estructura de la base de datos
+--  Estructura consolidada v0.21 (schema v0.02 + migracion de comprobantes
+--  integrada).
+--
+--  Consolida la antigua estructura base con la migracion de comprobantes:
+--  las columnas y tablas que anadia esa migracion
+--  (tipo_comprobante, serie, correlativo, cliente_documento,
+--  cliente_razon_social, cliente_email, mesa, email_estado en `boleta`,
+--  mas las tablas `comprobante_correlativo` y `cliente_empresa`) quedan
+--  ya definidas dentro de sus CREATE TABLE. No hay ALTER sueltos: es un
+--  unico script de estructura coherente y al dia.
 --
 --  Script autocontenido: crea la base, todas las tablas y las relaciones.
---  Ejecutar directo en MySQL 8. NO incluye datos (ver bd/seed.sql para los
---  datos iniciales: roles, metodos de pago, medidas, usuarios, etc.).
+--  Ejecutar directo en MySQL 8. NO incluye datos (ver bd/data.sql para los
+--  datos iniciales: roles, metodos de pago, medidas, usuarios, catalogo,
+--  correlativos, etc.).
 --
---  Novedad v0.02: tabla `pago` para pago mixto (1 fila = pago simple,
---  2+ filas = efectivo + tarjeta/yape/plin sobre un mismo pedido).
+--  Contrastado por ddl-auto=validate contra las entidades JPA.
 -- =====================================================================
 
 CREATE DATABASE IF NOT EXISTS `erp_mamatomato`
@@ -209,6 +218,10 @@ CREATE TABLE `detalle_pedido` (
   PRIMARY KEY (`id_detallepedido`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Comprobante de la venta. Los campos de comprobante electronico
+-- (tipo_comprobante, serie, correlativo, datos del cliente, mesa y estado
+-- de envio por correo) proceden de la migracion de comprobantes, ya
+-- integrados aqui como columnas de la tabla.
 CREATE TABLE `boleta` (
   `id_boleta` int NOT NULL AUTO_INCREMENT,
   `subtotal` decimal(6,2) NOT NULL,
@@ -230,16 +243,16 @@ CREATE TABLE `boleta` (
 
 -- Contador de correlativos por serie de comprobante: numeracion de negocio
 -- secuencial y SIN HUECOS (el AUTO_INCREMENT de id_boleta es solo clave tecnica).
+-- Tabla incorporada por la migracion de comprobantes. Las filas semilla de
+-- las series (B001, F001) se cargan en bd/data.sql.
 CREATE TABLE `comprobante_correlativo` (
   `serie` varchar(4) NOT NULL,
   `ultimo_numero` int NOT NULL DEFAULT 0,
   PRIMARY KEY (`serie`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `comprobante_correlativo` (`serie`, `ultimo_numero`) VALUES
-  ('B001', 0), ('F001', 0);
-
 -- Clientes con RUC (empresas) para facturacion: permite autocompletar la razon social.
+-- Tabla incorporada por la migracion de comprobantes.
 CREATE TABLE `cliente_empresa` (
   `id_cliente_empresa` int NOT NULL AUTO_INCREMENT,
   `ruc` char(11) NOT NULL,
@@ -379,5 +392,5 @@ ALTER TABLE `detalle_movimiento`
   ADD CONSTRAINT `fk_detallemovimiento_movimiento` FOREIGN KEY (`id_movimiento`) REFERENCES `movimiento` (`id_movimiento`);
 
 -- =====================================================================
---  Fin del script de estructura (v0.02)
+--  Fin del script de estructura consolidada (v0.21)
 -- =====================================================================

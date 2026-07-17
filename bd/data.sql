@@ -1,9 +1,14 @@
 -- =====================================================================
 --  ERP "Mamma Tomato" (pizzeria-erp) - Datos iniciales (seed)
---  Version: 0.02
 --
---  Requisito: ejecutar despues de la estructura (bd_mamatomtatoV0.02.sql)
---             sobre la base erp_mamatomato.
+--  Requisito: ejecutar DESPUES de la estructura (bd/MamaTomato_V0.21.sql)
+--             sobre la base erp_mamatomato. Solo datos, sin DDL.
+--
+--  Incluye todos los datos semilla del proyecto mas las filas de
+--  arranque de `comprobante_correlativo` (series B001/F001) que antes
+--  vivian en la estructura. Los INSERT respetan el
+--  orden por dependencias de claves foraneas.
+--
 --  Credenciales: admin/admin123 - cajero/cajero123 - cocina/cocina123
 -- =====================================================================
 
@@ -177,7 +182,8 @@ INSERT INTO `detalle_pedido` (`id_detallepedido`, `cantidad`, `precio_unitario`,
   (4, 1, 45.00, 45.00, 0.00, NULL,            3, 5),
   (5, 1, 35.00, 35.00, 0.00, NULL,            4, 1);
 
--- Boletas
+-- Boletas (los campos de comprobante electronico toman sus valores por
+-- defecto: tipo_comprobante='BOLETA', serie='B001', correlativo=0).
 INSERT INTO `boleta` (`id_boleta`, `subtotal`, `igv`, `total`, `id_metodopago`, `id_pedido`) VALUES
   (1, 42.20, 7.60, 49.80, 1, 1),
   (2, 38.00, 6.84, 44.84, 3, 2),
@@ -210,3 +216,16 @@ INSERT INTO `detalle_movimiento` (`id_detallemovimiento`, `cantidad`, `stock_res
   (3,  0.500,  4.500, 1, 2),
   (4,  0.250,  6.000, 2, 2),
   (5,  0.500,  5.500, 2, 3);
+
+-- ---------------------------------------------------------------------
+--  Correlativos de comprobante (numeracion oficial sin huecos).
+--  Filas de arranque de las series de boleta (B001) y factura (F001),
+--  provenientes de la estructura/migracion de comprobantes.
+-- ---------------------------------------------------------------------
+INSERT INTO `comprobante_correlativo` (`serie`, `ultimo_numero`) VALUES
+  ('B001', 0),
+  ('F001', 0);
+
+-- =====================================================================
+--  Fin de los datos iniciales
+-- =====================================================================

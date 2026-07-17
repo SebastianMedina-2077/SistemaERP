@@ -45,14 +45,14 @@ Reglas de negocio transversales que hay que tener grabadas antes de tocar códig
 Requisitos: JDK 17+ y MySQL 8 corriendo.
 
 ```bash
-mysql -u root -p < bd/schema.sql   # estructura (borra y recrea las tablas)
-mysql -u root -p < bd/seed.sql     # datos iniciales: roles, usuarios, catálogo, recetas
-./mvnw spring-boot:run             # levanta en http://localhost:8080
+mysql -u root -p < bd/MamaTomato_V0.21.sql        # estructura (crea la base y las tablas)
+mysql -u root -p erp_mamatomato < bd/data.sql     # datos iniciales: roles, usuarios, catálogo, recetas
+./mvnw spring-boot:run                             # levanta en http://localhost:8080
 ```
 
 Credenciales de BD en `src/main/resources/application.properties`, sobreescribibles con
 las variables de entorno `DB_USER` y `DB_PASSWORD`. Usuarios del seed: `admin`, `cajero`
-y `cocina` (contraseñas BCrypt en `bd/seed.sql`).
+y `cocina` (contraseñas BCrypt en `bd/data.sql`).
 
 Para tener las tres pantallas abiertas en una misma máquina basta con separar cookies:
 cada navegador (o ventana de incógnito) guarda su propio `JSESSIONID`.
@@ -95,7 +95,7 @@ src/main/resources/
 ├── static/css/   Estilos por módulo
 └── templates/    Vistas Thymeleaf: admin/, ventas/, cocina/, auth/, layout/, error/
 
-bd/               schema.sql (estructura), seed.sql (datos), scripts de migración
+bd/               MamaTomato_V0.21.sql (estructura), data.sql (datos), reset_pedidos.sql (utilidad)
 ```
 
 Convención de capas: el **controller** valida entrada y arma el modelo/respuesta; el
@@ -140,7 +140,7 @@ Reglas de protección adicionales en código:
 
 ## 6. Modelo de datos
 
-Esquema oficial en `bd/schema.sql` (Hibernate solo lo **valida**). Vista de conjunto:
+Esquema oficial en `bd/MamaTomato_V0.21.sql` (Hibernate solo lo **valida**). Vista de conjunto:
 
 ```
 rol ─< usuario >─ empleado                    proveedor ─< compra >─ usuario
@@ -413,7 +413,7 @@ usuario a propósito: conserva el rastro aunque el usuario se elimine.
 - Dinero: `BigDecimal`, escala 2, `HALF_UP`, siempre calculado en backend.
 - Los commits siguen `tipo(ámbito): descripción` en español e imperativo.
 - El esquema de BD es la fuente de verdad (`ddl-auto=validate`); todo cambio de esquema
-  se hace en `bd/schema.sql` (+ script de migración en `bd/` si hay datos que conservar)
+  se hace en `bd/MamaTomato_V0.21.sql` (versionando la estructura; sube el número de versión)
   y después se ajustan las entidades.
 
 ## 21. Limitaciones conocidas y decisiones asumidas
