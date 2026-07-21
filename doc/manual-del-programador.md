@@ -4,7 +4,9 @@ Mini ERP comercial para **Mamma Tomato** (STARFOOD PERU S.A.C.), una pizzería e
 Este documento explica cómo está construido el sistema por dentro: arquitectura, módulos,
 flujos de negocio y convenciones. Es la referencia para cualquier desarrollador que entre
 al proyecto. El informe de la última revisión de código está en
-[revision-de-codigo.md](revision-de-codigo.md).
+[revision-de-codigo.md](revision-de-codigo.md). El diseño propuesto para enviar el recibo al
+cliente de la tienda web (correo de marca y PDF por WhatsApp) está en
+[recibos-cliente.md](recibos-cliente.md).
 
 ---
 
@@ -95,7 +97,8 @@ src/main/resources/
 ├── static/css/   Estilos por módulo
 └── templates/    Vistas Thymeleaf: admin/, ventas/, cocina/, auth/, layout/, error/
 
-bd/               MamaTomato_V0.21.sql (estructura), data.sql (datos), reset_pedidos.sql (utilidad)
+bd/               MamaTomato_V0.21.sql (estructura), data.sql (datos), migracion_tienda.sql
+                  (incremental tienda web), reset_pedidos.sql (utilidad)
 ```
 
 Convención de capas: el **controller** valida entrada y arma el modelo/respuesta; el
