@@ -63,7 +63,7 @@ public class PersonasController {
             return "admin/empleado-form";
         }
         personaService.crearEmpleado(form);
-        ra.addFlashAttribute("flash", "Empleado '" + form.getNombre() + " " + form.getApellido() + "' registrado.");
+        ra.addFlashAttribute("flash", "Empleado '" + form.getNombre() + " " + form.getApellidoPaterno() + " " + form.getApellidoMaterno() + "' registrado.");
         return "redirect:/admin/empleados";
     }
 
@@ -89,7 +89,7 @@ public class PersonasController {
             return "admin/empleado-form";
         }
         personaService.actualizarEmpleado(id, form);
-        ra.addFlashAttribute("flash", "Empleado '" + form.getNombre() + " " + form.getApellido() + "' actualizado.");
+        ra.addFlashAttribute("flash", "Empleado '" + form.getNombre() + " " + form.getApellidoPaterno() + " " + form.getApellidoMaterno() + "' actualizado.");
         return "redirect:/admin/empleados";
     }
 
@@ -98,7 +98,7 @@ public class PersonasController {
         Empleado empleado = personaService.getEmpleado(id);
         try {
             personaService.eliminarEmpleado(id);
-            ra.addFlashAttribute("flash", "Empleado '" + empleado.getNombre() + " " + empleado.getApellido() + "' eliminado.");
+            ra.addFlashAttribute("flash", "Empleado '" + empleado.getNombre() + " " + empleado.getApellidoPaterno() + " " + empleado.getApellidoMaterno() + "' eliminado.");
         } catch (IllegalStateException | DataIntegrityViolationException ex) {
             ra.addFlashAttribute("flashError", ex instanceof IllegalStateException ? ex.getMessage()
                     : "El empleado tiene registros asociados y no puede eliminarse.");

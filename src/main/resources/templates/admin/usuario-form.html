@@ -43,7 +43,7 @@
         <select th:field="*{idEmpleado}">
           <option value="">Sin vincular</option>
           <option th:each="e : ${empleados}" th:value="${e.idEmpleado}"
-                  th:text="${e.nombre} + ' ' + ${e.apellido} + ' (' + ${e.cargo} + ')'">Empleado</option>
+                  th:text="${e.nombre} + ' ' + ${e.apellidoPaterno} + ' ' + ${e.apellidoMaterno} + ' (' + ${e.cargo} + ')'">Empleado</option>
         </select>
       </label>
 

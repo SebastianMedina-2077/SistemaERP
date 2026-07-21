@@ -24,8 +24,11 @@ public class Empleado {
     @Column(name = "nombre", length = 20, nullable = false)
     private String nombre;
 
-    @Column(name = "apellido", length = 20, nullable = false)
-    private String apellido;
+    @Column(name = "apellido_paterno", length = 30, nullable = false)
+    private String apellidoPaterno;
+
+    @Column(name = "apellido_materno", length = 30, nullable = false)
+    private String apellidoMaterno;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "dni", length = 8, nullable = false, unique = true)

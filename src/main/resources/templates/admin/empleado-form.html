@@ -21,10 +21,16 @@
         <span class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
       </label>
 
-      <label class="field">Apellido
-        <input type="text" th:field="*{apellido}" placeholder="Ramos" maxlength="20"
-               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
-        <span class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}"></span>
+      <label class="field">Apellido Paterno
+        <input type="text" th:field="*{apellidoPaterno}" placeholder="Ramos" maxlength="30"
+               th:classappend="${#fields.hasErrors('apellidoPaterno')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('apellidoPaterno')}" th:errors="*{apellidoPaterno}"></span>
+      </label>
+
+      <label class="field">Apellido Materno
+        <input type="text" th:field="*{apellidoMaterno}" placeholder="Quispe" maxlength="30"
+               th:classappend="${#fields.hasErrors('apellidoMaterno')} ? 'is-invalid'">
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('apellidoMaterno')}" th:errors="*{apellidoMaterno}"></span>
       </label>
 
       <label class="field">DNI

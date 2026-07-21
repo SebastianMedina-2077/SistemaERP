@@ -29,7 +29,7 @@ public class CurrentUserAdvice {
 
     private CurrentUserView toView(Usuario u) {
         String nombre = u.getEmpleado() != null
-                ? u.getEmpleado().getNombre() + " " + u.getEmpleado().getApellido()
+                ? u.getEmpleado().getNombre() + " " + u.getEmpleado().getApellidoPaterno() + " " + u.getEmpleado().getApellidoMaterno()
                 : u.getUsername();
         String rol = u.getRol() != null ? u.getRol().getNombre() : "";
         return new CurrentUserView(nombre, rol);

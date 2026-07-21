@@ -26,7 +26,7 @@
         <tr th:each="u, uStat : ${usuarios}">
           <td th:text="${uStat.count}">1</td>
           <td th:text="${u.username}">usuario</td>
-          <td th:text="${u.empleado != null ? u.empleado.nombre + ' ' + u.empleado.apellido : '-'}">Empleado</td>
+          <td th:text="${u.empleado != null ? u.empleado.nombre + ' ' + u.empleado.apellidoPaterno + ' ' + u.empleado.apellidoMaterno : '-'}">Empleado</td>
           <td th:text="${u.rol.nombre}">Rol</td>
           <td>
             <span th:if="${u.esAdminSupremo}" class="estado-badge estado-on">Activo</span>

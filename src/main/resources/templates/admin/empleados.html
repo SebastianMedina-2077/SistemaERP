@@ -25,7 +25,7 @@
       <tbody>
         <tr th:each="e, eStat : ${empleados}">
           <td th:text="${eStat.count}">1</td>
-          <td th:text="${e.nombre} + ' ' + ${e.apellido}">Nombre</td>
+          <td th:text="${e.nombre} + ' ' + ${e.apellidoPaterno} + ' ' + ${e.apellidoMaterno}">Nombre</td>
           <td th:text="${e.dni}">00000000</td>
           <td th:text="${e.telefono}">999999999</td>
           <td th:text="${e.cargo}">Cargo</td>
@@ -44,7 +44,7 @@
                 <li>
                   <button class="dropdown-item text-danger" type="button"
                           data-bs-toggle="modal" data-bs-target="#confirmarEliminar"
-                          th:attr="data-action=@{/admin/empleados/{id}/eliminar(id=${e.idEmpleado})},data-nombre=${e.nombre + ' ' + e.apellido}">
+                          th:attr="data-action=@{/admin/empleados/{id}/eliminar(id=${e.idEmpleado})},data-nombre=${e.nombre + ' ' + e.apellidoPaterno + ' ' + e.apellidoMaterno}">
                     <i class="bi bi-trash"></i> Eliminar
                   </button>
                 </li>

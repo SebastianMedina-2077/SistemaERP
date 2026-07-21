@@ -141,7 +141,7 @@ public class PersonaService {
     public void eliminarEmpleado(Integer idEmpleado) {
         Empleado empleado = getEmpleado(idEmpleado);
         if (usuarioRepository.existsByEmpleado_IdEmpleado(idEmpleado)) {
-            throw new IllegalStateException("'" + empleado.getNombre() + " " + empleado.getApellido()
+            throw new IllegalStateException("'" + empleado.getNombre() + " " + empleado.getApellidoPaterno() + " " + empleado.getApellidoMaterno()
                     + "' tiene un usuario de sistema vinculado. Elimina o desvincula el usuario primero.");
         }
         empleadoRepository.delete(empleado);

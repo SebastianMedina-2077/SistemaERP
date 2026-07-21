@@ -17,9 +17,13 @@ public class EmpleadoFormDTO {
     @Size(max = 20, message = "Maximo 20 caracteres")
     private String nombre;
 
-    @NotBlank(message = "El apellido es obligatorio")
-    @Size(max = 20, message = "Maximo 20 caracteres")
-    private String apellido;
+    @NotBlank(message = "El apellido paterno es obligatorio")
+    @Size(max = 30, message = "Maximo 30 caracteres")
+    private String apellidoPaterno;
+
+    @NotBlank(message = "El apellido materno es obligatorio")
+    @Size(max = 30, message = "Maximo 30 caracteres")
+    private String apellidoMaterno;
 
     @NotBlank(message = "El DNI es obligatorio")
     @Pattern(regexp = "\\d{8}", message = "El DNI debe tener 8 digitos")
@@ -36,7 +40,8 @@ public class EmpleadoFormDTO {
     public static EmpleadoFormDTO from(Empleado e) {
         EmpleadoFormDTO f = new EmpleadoFormDTO();
         f.nombre = e.getNombre();
-        f.apellido = e.getApellido();
+        f.apellidoPaterno = e.getApellidoPaterno();
+        f.apellidoMaterno = e.getApellidoMaterno();
         f.dni = e.getDni();
         f.telefono = e.getTelefono();
         f.cargo = e.getCargo();
@@ -45,7 +50,8 @@ public class EmpleadoFormDTO {
 
     public void applyTo(Empleado e) {
         e.setNombre(nombre.trim());
-        e.setApellido(apellido.trim());
+        e.setApellidoPaterno(apellidoPaterno.trim());
+        e.setApellidoMaterno(apellidoMaterno.trim());
         e.setDni(dni);
         e.setTelefono(telefono);
         e.setCargo(cargo.trim());
