@@ -56,6 +56,14 @@
         <span class="invalid-feedback" th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></span>
       </label>
 
+      <label class="field field-wide">URL de imagen
+        <input type="text" th:field="*{imagenUrl}" maxlength="500"
+               placeholder="/img/tienda/productos/... o URL"
+               th:classappend="${#fields.hasErrors('imagenUrl')} ? 'is-invalid'">
+        <small class="muted">Opcional. Sin foto se usa una ilustracion segun la categoria.</small>
+        <span class="invalid-feedback" th:if="${#fields.hasErrors('imagenUrl')}" th:errors="*{imagenUrl}"></span>
+      </label>
+
       <div class="field field-wide">
         <span>Disponibilidad</span>
         <div class="switch-row">

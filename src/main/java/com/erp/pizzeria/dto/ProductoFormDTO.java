@@ -42,6 +42,9 @@ public class ProductoFormDTO {
     @NotNull(message = "Seleccione una categoria")
     private Integer idCategoria;
 
+    @Size(max = 500, message = "La URL de la imagen admite hasta 500 caracteres")
+    private String imagenUrl;
+
     public static ProductoFormDTO from(Producto p) {
         ProductoFormDTO f = new ProductoFormDTO();
         f.codigo = p.getCodigo();
@@ -51,6 +54,7 @@ public class ProductoFormDTO {
         f.tamanio = p.getTamanio() != null ? p.getTamanio().name() : null;
         f.disponible = Boolean.TRUE.equals(p.getDisponible());
         f.idCategoria = p.getCategoria() != null ? p.getCategoria().getIdCategoria() : null;
+        f.imagenUrl = p.getImagenUrl();
         return f;
     }
 }

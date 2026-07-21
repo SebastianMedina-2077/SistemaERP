@@ -24,6 +24,7 @@ public class ProductoDTO {
     private Integer idCategoria;
     private String categoria;
     private boolean preparado;
+    private String imagenUrl;
 
     public static ProductoDTO from(Producto p) {
         return ProductoDTO.builder()
@@ -36,6 +37,7 @@ public class ProductoDTO {
                 .idCategoria(p.getCategoria() != null ? p.getCategoria().getIdCategoria() : null)
                 .categoria(p.getCategoria() != null ? p.getCategoria().getNombre() : null)
                 .preparado(p.getStock() == null)
+                .imagenUrl(p.getImagenUrl())
                 .build();
     }
 }

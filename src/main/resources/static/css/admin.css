@@ -3,6 +3,22 @@
   gap: 16px;
 }
 
+.celda-producto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.producto-miniatura {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fbfdfc;
+}
+
 .detail-box {
   border: 1px solid var(--border);
   border-radius: var(--radius);

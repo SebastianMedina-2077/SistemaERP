@@ -44,6 +44,9 @@ public class Producto {
     @Column(name = "disponible", nullable = false)
     private Boolean disponible;
 
+    @Column(name = "imagen_url", length = 500)
+    private String imagenUrl;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;

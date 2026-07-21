@@ -129,11 +129,33 @@ function updatePager(totalPages) {
   pageNext.disabled = currentPage >= totalPages - 1;
 }
 
+// Ilustración de respaldo por categoría cuando el producto no tiene foto (o falla al cargar).
+function ilustracionCategoria(nombre) {
+  const n = (nombre || "").toLowerCase();
+  if (n.includes("pizza")) return "/img/tienda/pizza.svg";
+  if (n.includes("combo") || n.includes("promo")) return "/img/tienda/combo.svg";
+  if (n.includes("bebida") || n.includes("gaseosa") || n.includes("refresco") || n.includes("jugo")) return "/img/tienda/bebida.svg";
+  if (n.includes("postre") || n.includes("dulce") || n.includes("helado")) return "/img/tienda/postre.svg";
+  if (n.includes("adicional") || n.includes("complemento") || n.includes("entrada") || n.includes("extra")) return "/img/tienda/adicional.svg";
+  return "/img/tienda/generico.svg";
+}
+
 function renderProductButton(product) {
   const stockText = product.preparado ? "Preparado" : `Stock ${product.stock}`;
   const button = document.createElement("button");
   button.type = "button";
   button.className = "product-btn";
+
+  const respaldo = ilustracionCategoria(product.categoria);
+  const imagen = document.createElement("img");
+  imagen.className = "product-btn__img";
+  imagen.loading = "lazy";
+  imagen.alt = "";
+  imagen.src = product.imagenUrl || respaldo;
+  imagen.addEventListener("error", () => {
+    if (imagen.src.endsWith(respaldo)) return; // evita bucle si el propio respaldo falla
+    imagen.src = respaldo;
+  });
 
   const nombre = document.createElement("strong");
   nombre.className = "product-btn__name";
@@ -147,7 +169,7 @@ function renderProductButton(product) {
   stock.className = "product-btn__stock";
   stock.textContent = stockText;
 
-  button.append(nombre, precio, stock);
+  button.append(imagen, nombre, precio, stock);
   button.addEventListener("click", () => addProduct(product));
   return button;
 }
