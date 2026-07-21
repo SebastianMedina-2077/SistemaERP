@@ -1,18 +1,25 @@
 package com.erp.pizzeria.config;
 
+import com.erp.pizzeria.security.JwtAuthFilter;
+import com.erp.pizzeria.security.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import java.util.Set;
@@ -27,12 +34,51 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Cadena de la tienda web (clientes): stateless con JWT, separada de la sesion
+     * con cookie del personal. Solo aplica a /api/tienda/**.
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain tiendaFilterChain(HttpSecurity http, JwtService jwtService) throws Exception {
+        http
+                .securityMatcher("/api/tienda/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Publicos: registro/login, catalogo y cotizacion del carrito.
+                        .requestMatchers(HttpMethod.POST, "/api/tienda/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tienda/catalogo", "/api/tienda/catalogo/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tienda/producto/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tienda/cotizar").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tienda/promo/validar").permitAll()
+                        .anyRequest().hasAuthority("ROLE_CLIENTE_WEB"))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, e) ->
+                                escribirErrorJson(response, HttpStatus.UNAUTHORIZED, "No autenticado"))
+                        .accessDeniedHandler((request, response, e) ->
+                                escribirErrorJson(response, HttpStatus.FORBIDDEN, "Acceso denegado")))
+                .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    private void escribirErrorJson(HttpServletResponse response, HttpStatus status, String mensaje)
+            throws java.io.IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"error\":\"" + mensaje + "\"}");
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    AuthenticationSuccessHandler successHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
+                        // Pagina publica de la tienda en linea (la API va aparte en /api/tienda/**).
+                        .requestMatchers("/tienda", "/tienda/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/cajero/**").hasRole("CAJERO")
                         .requestMatchers("/cocina/**").hasRole("COCINA")

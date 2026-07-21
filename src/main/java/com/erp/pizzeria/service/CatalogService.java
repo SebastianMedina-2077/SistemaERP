@@ -138,6 +138,7 @@ public class CatalogService {
         producto.setTamanio(parseTamanio(form.getTamanio()));
         producto.setDisponible(form.isDisponible());
         producto.setCategoria(getCategoria(form.getIdCategoria()));
+        producto.setImagenUrl(form.getImagenUrl());
         return productoRepository.save(producto);
     }
 
@@ -243,27 +244,53 @@ public class CatalogService {
         promocionRepository.delete(promocion);
     }
 
+    /** Promocion automatica del producto: las que tienen codigo solo aplican como cupon. */
     public Promocion getPromocionActiva(Integer idProducto) {
         return promocionProductoRepository.findByProducto_IdProducto(idProducto).stream()
                 .map(PromocionProducto::getPromocion)
-                .filter(p -> Boolean.TRUE.equals(p.getActiva()))
+                .filter(p -> Boolean.TRUE.equals(p.getActiva()) && p.getCodigo() == null)
                 .findFirst()
                 .orElse(null);
     }
 
+    /** Cupon activo por codigo; null si el codigo viene vacio, no existe o esta inactivo. */
+    public Promocion getCuponActivo(String codigo) {
+        if (codigo == null || codigo.isBlank()) {
+            return null;
+        }
+        return promocionRepository.findByCodigoAndActivaTrue(codigo.trim()).orElse(null);
+    }
+
     public BigDecimal calcularDescuento(Producto producto, int cantidad) {
-        Promocion promo = getPromocionActiva(producto.getIdProducto());
-        if (promo == null) {
-            return BigDecimal.ZERO;
-        }
+        return calcularDescuento(producto, cantidad, null);
+    }
+
+    /**
+     * Descuento total de la linea: promocion automatica del producto mas el cupon
+     * (si esta vinculado al producto). Nunca supera el subtotal de la linea.
+     */
+    public BigDecimal calcularDescuento(Producto producto, int cantidad, Promocion cupon) {
         BigDecimal base = producto.getPrecio().multiply(BigDecimal.valueOf(cantidad));
-        BigDecimal descuento;
-        if ("Porcentaje".equalsIgnoreCase(promo.getTipoDescuento())) {
-            descuento = base.multiply(promo.getValorDescuento()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        } else {
-            descuento = promo.getValorDescuento().multiply(BigDecimal.valueOf(cantidad));
+        BigDecimal descuento = BigDecimal.ZERO;
+        Promocion automatica = getPromocionActiva(producto.getIdProducto());
+        if (automatica != null) {
+            descuento = descuento.add(descuentoDe(automatica, base, cantidad));
         }
-        // Un descuento de monto fijo no puede superar el subtotal de la linea.
+        if (cupon != null && cuponAplicaA(cupon, producto)) {
+            descuento = descuento.add(descuentoDe(cupon, base, cantidad));
+        }
         return descuento.min(base).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal descuentoDe(Promocion promo, BigDecimal base, int cantidad) {
+        if ("Porcentaje".equalsIgnoreCase(promo.getTipoDescuento())) {
+            return base.multiply(promo.getValorDescuento()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        }
+        return promo.getValorDescuento().multiply(BigDecimal.valueOf(cantidad));
+    }
+
+    private boolean cuponAplicaA(Promocion cupon, Producto producto) {
+        return promocionProductoRepository.existsById(
+                new PromocionProductoId(cupon.getIdPromocion(), producto.getIdProducto()));
     }
 }

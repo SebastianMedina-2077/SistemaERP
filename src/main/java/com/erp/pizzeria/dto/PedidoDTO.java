@@ -35,6 +35,10 @@ public class PedidoDTO {
     @Valid
     private List<PagoDTO> pagos;
 
+    /** Codigo de cupon (opcional): re-aplica el mismo descuento que la cotizacion. */
+    @Size(max = 20)
+    private String codigo;
+
     // ---- Comprobante ----
 
     /** BOLETA (defecto), FACTURA o BOLETA_ELECTRONICA. */

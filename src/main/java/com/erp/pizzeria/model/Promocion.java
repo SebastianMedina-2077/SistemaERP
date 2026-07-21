@@ -35,4 +35,7 @@ public class Promocion {
 
     @Column(name = "activa")
     private Boolean activa;
+
+    @Column(name = "codigo", length = 20, unique = true)
+    private String codigo;
 }
