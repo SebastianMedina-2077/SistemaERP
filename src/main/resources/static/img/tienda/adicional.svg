@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="Adicionales">
+  <g transform="rotate(-14 70 60)">
+    <rect x="34" y="30" width="16" height="66" rx="8" fill="#E8B04B"/>
+    <rect x="56" y="26" width="16" height="70" rx="8" fill="#D9A441"/>
+    <rect x="78" y="30" width="16" height="66" rx="8" fill="#E8B04B"/>
+    <g stroke="#C08A2E" stroke-width="2.4" stroke-linecap="round">
+      <line x1="38" y1="44" x2="46" y2="40"/><line x1="38" y1="60" x2="46" y2="56"/><line x1="38" y1="76" x2="46" y2="72"/>
+      <line x1="60" y1="42" x2="68" y2="38"/><line x1="60" y1="58" x2="68" y2="54"/><line x1="60" y1="74" x2="68" y2="70"/>
+      <line x1="82" y1="44" x2="90" y2="40"/><line x1="82" y1="60" x2="90" y2="56"/><line x1="82" y1="76" x2="90" y2="72"/>
+    </g>
+  </g>
+  <circle cx="120" cy="78" r="22" fill="#FAF3E7" stroke="#185C2C" stroke-width="3"/>
+  <circle cx="120" cy="78" r="14" fill="#C0392B"/>
+  <ellipse cx="116" cy="74" rx="4" ry="2" fill="#F5C963" opacity=".8"/>
+</svg>

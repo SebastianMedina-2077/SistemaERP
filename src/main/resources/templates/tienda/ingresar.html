@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Ingresar</title>
+  <meta name="description" content="Ingresa o crea tu cuenta para pedir en Mamma Tomato.">
+  <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Rubik:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" th:href="@{/css/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/tienda.css}">
+</head>
+<body>
+
+<!-- Iconos SVG mínimos de la página (mismo trazo que la tienda) -->
+<svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="icono-usuario" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="icono-ojo" viewBox="0 0 24 24"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="icono-izquierda" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-ubicacion" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="icono-trigo" viewBox="0 0 24 24"><path d="M12 21V9M12 9c-3 0-5-2-5-5 3 0 5 2 5 5zm0 0c3 0 5-2 5-5-3 0-5 2-5 5zm0 6c-3 0-5-2-5-5 3 0 5 2 5 5zm0 0c3 0 5-2 5-5-3 0-5 2-5 5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-hoja" viewBox="0 0 24 24"><path d="M5 19C5 9 12 4 20 4c0 8-5 15-15 15zm0 0c2-4 5-7 9-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-semillas" viewBox="0 0 24 24"><ellipse cx="8" cy="8" rx="2.2" ry="3" transform="rotate(-20 8 8)" fill="currentColor"/><ellipse cx="16" cy="7.5" rx="2.2" ry="3" transform="rotate(18 16 7.5)" fill="currentColor"/><ellipse cx="7.5" cy="16.5" rx="2.2" ry="3" transform="rotate(22 7.5 16.5)" fill="currentColor"/><ellipse cx="15.5" cy="16" rx="2.2" ry="3" transform="rotate(-16 15.5 16)" fill="currentColor"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18 19.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-x-circulo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ CABECERA (misma marca que la tienda) ============ -->
+<header class="cabecera">
+  <div class="cabecera-contenido">
+    <a class="marca" th:href="@{/tienda}">
+      <img th:src="@{/img/logo.png}" alt="" width="40" height="40">
+      <span class="marca-texto">Mamma <em>Tomato</em></span>
+    </a>
+    <a class="enlace-volver" th:href="@{/tienda}">
+      <svg class="icono" aria-hidden="true"><use href="#icono-izquierda"/></svg> Volver a la carta
+    </a>
+  </div>
+</header>
+
+<!-- ============ CUERPO: dos columnas ============ -->
+<main class="pagina-ingreso contenedor">
+
+  <!-- Columna izquierda: ingresar / registrarme -->
+  <section class="ingreso-panel" aria-label="Acceso de clientes">
+    <div class="pestanas" role="tablist" aria-label="Acceso">
+      <button type="button" class="pestana activa" id="pestanaIngresar" role="tab" aria-selected="true" aria-controls="formularioIngreso">Ingresar</button>
+      <button type="button" class="pestana" id="pestanaRegistrar" role="tab" aria-selected="false" aria-controls="formularioRegistro">Registrarme</button>
+    </div>
+
+    <form class="formulario" id="formularioIngreso" role="tabpanel" aria-labelledby="pestanaIngresar" novalidate>
+      <h1 class="ingreso-titulo">Qué gusto verte otra vez</h1>
+      <p class="ingreso-subtitulo">Ingresa para pedir más rápido.</p>
+      <label class="campo">Email
+        <input type="email" name="email" data-campo="email" autocomplete="email" required>
+        <span class="error-campo" data-error="email"></span>
+      </label>
+      <label class="campo">Contraseña
+        <span class="campo-clave">
+          <input type="password" name="password" data-campo="password" autocomplete="current-password" required>
+          <button type="button" class="boton-icono alternar-clave" aria-label="Mostrar contraseña" aria-pressed="false">
+            <svg class="icono" aria-hidden="true"><use href="#icono-ojo"/></svg>
+          </button>
+        </span>
+        <span class="error-campo" data-error="password"></span>
+      </label>
+      <label class="casilla">
+        <input type="checkbox" name="recordar" id="casillaRecordar" checked>
+        Recordarme en este dispositivo
+      </label>
+      <p class="error-general" data-error="general" role="alert"></p>
+      <button type="submit" class="boton boton-verde boton-lleno">Ingresar</button>
+    </form>
+
+    <form class="formulario" id="formularioRegistro" role="tabpanel" aria-labelledby="pestanaRegistrar" novalidate hidden>
+      <h1 class="ingreso-titulo">Crea tu cuenta</h1>
+      <p class="ingreso-subtitulo">Guarda tus datos para tus próximas pizzas y pastas.</p>
+
+      <label class="campo">Nombres
+        <input type="text" name="nombres" data-campo="nombres" autocomplete="given-name" maxlength="40" required>
+        <span class="error-campo" data-error="nombres"></span>
+      </label>
+      <div class="fila-doble">
+        <label class="campo">Apellido Paterno
+          <input type="text" name="apellidoPaterno" data-campo="apellidoPaterno" autocomplete="family-name" maxlength="40" required>
+          <span class="error-campo" data-error="apellidoPaterno"></span>
+        </label>
+        <label class="campo">Apellido Materno
+          <input type="text" name="apellidoMaterno" data-campo="apellidoMaterno" maxlength="40" required>
+          <span class="error-campo" data-error="apellidoMaterno"></span>
+        </label>
+      </div>
+      <label class="campo">Email
+        <input type="email" name="email" data-campo="email" autocomplete="email" required>
+        <span class="error-campo" data-error="email"></span>
+      </label>
+      <label class="campo">Teléfono
+        <input type="tel" name="telefono" data-campo="telefono" inputmode="numeric" maxlength="9" placeholder="9 dígitos" autocomplete="tel-national" required>
+        <span class="error-campo" data-error="telefono"></span>
+      </label>
+      <label class="campo">Contraseña <span class="ayuda">(mínimo 8 caracteres)</span>
+        <span class="campo-clave">
+          <input type="password" name="password" data-campo="password" minlength="8" autocomplete="new-password" required
+                 aria-describedby="alertaClave">
+          <button type="button" class="boton-icono alternar-clave" aria-label="Mostrar contraseña" aria-pressed="false">
+            <svg class="icono" aria-hidden="true"><use href="#icono-ojo"/></svg>
+          </button>
+        </span>
+        <span class="error-campo" data-error="password"></span>
+      </label>
+
+      <!-- Alerta de contraseña débil: solo lista los requisitos que faltan -->
+      <div class="alerta-clave" id="alertaClave" role="alert" aria-live="polite" hidden>
+        <svg class="alerta-clave-icono" aria-hidden="true"><use href="#icono-x-circulo"/></svg>
+        <div class="alerta-clave-cuerpo">
+          <p class="alerta-clave-titulo">Tu contraseña aún no es segura</p>
+          <ul class="alerta-clave-lista" id="alertaClaveLista"></ul>
+        </div>
+      </div>
+
+      <fieldset class="grupo-ubicacion">
+        <legend><svg class="icono" aria-hidden="true"><use href="#icono-ubicacion"/></svg> ¿Dónde te llevamos el pedido?</legend>
+        <div class="fila-triple">
+          <label class="campo">Departamento
+            <select name="departamento" data-campo="departamento" id="comboDepartamento" required>
+              <option value="">Selecciona</option>
+            </select>
+            <span class="error-campo" data-error="departamento"></span>
+          </label>
+          <label class="campo">Provincia
+            <select name="provincia" data-campo="provincia" id="comboProvincia" required disabled>
+              <option value="">Selecciona</option>
+            </select>
+            <span class="error-campo" data-error="provincia"></span>
+          </label>
+          <label class="campo">Distrito
+            <select name="distrito" data-campo="distrito" id="comboDistrito" required disabled>
+              <option value="">Selecciona</option>
+            </select>
+            <span class="error-campo" data-error="distrito"></span>
+          </label>
+        </div>
+        <label class="campo">Dirección exacta <span class="ayuda">(máx. 50 caracteres)</span>
+          <input type="text" name="direccionExacta" data-campo="direccionExacta" maxlength="50"
+                 placeholder="Calle, número, urbanización" autocomplete="street-address" required>
+          <span class="error-campo" data-error="direccionExacta"></span>
+        </label>
+        <label class="campo">Referencia <span class="ayuda">(opcional, máx. 50 caracteres)</span>
+          <input type="text" name="referencia" data-campo="referencia" maxlength="50"
+                 placeholder="Frente al parque, portón verde...">
+          <span class="error-campo" data-error="referencia"></span>
+        </label>
+      </fieldset>
+
+      <p class="error-general" data-error="general" role="alert"></p>
+      <button type="submit" class="boton boton-verde boton-lleno">Crear cuenta</button>
+    </form>
+  </section>
+
+  <!-- Columna derecha: la marca -->
+  <aside class="ingreso-marca" aria-label="Sobre Mamma Tomato">
+    <img class="ingreso-logo" th:src="@{/img/marca/logo-mammatomato.webp}" alt="Mamma Tomato" width="220" height="220">
+    <p class="ingreso-lema">Pastas y pizzas artesanales de alta calidad, hechas con <strong>masa madre</strong>.</p>
+    <ul class="ingreso-virtudes">
+      <li><svg class="icono" aria-hidden="true"><use href="#icono-trigo"/></svg> Masa madre de fermentación lenta, horneada a la piedra</li>
+      <li><svg class="icono" aria-hidden="true"><use href="#icono-hoja"/></svg> Productos saludables con ingredientes frescos</li>
+      <li><svg class="icono" aria-hidden="true"><use href="#icono-semillas"/></svg> Nuestras pastas van envueltas en base a chía</li>
+    </ul>
+  </aside>
+</main>
+
+<!-- ============ PIE (mismo de la tienda) ============ -->
+<footer class="pie">
+  <div class="contenedor pie-columnas">
+    <div class="pie-marca">
+      <a class="marca marca-clara" th:href="@{/tienda}">
+        <img th:src="@{/img/logo.png}" alt="" width="40" height="40">
+        <span class="marca-texto">Mamma <em>Tomato</em></span>
+      </a>
+      <p>STARFOOD PERU S.A.C. — Mamma Tomato</p>
+      <p>RUC 20552277482</p>
+      <p><svg class="icono" aria-hidden="true"><use href="#icono-ubicacion"/></svg> Av. Los Olivos 123 - Lima</p>
+    </div>
+    <nav class="pie-enlaces" aria-label="Enlaces">
+      <h3>Tienda</h3>
+      <a th:href="@{/tienda}">Menú</a>
+      <a th:href="@{/tienda}">Promociones</a>
+      <a th:href="@{/login}">Acceso al ERP</a>
+    </nav>
+    <div class="pie-pagos">
+      <h3>Tu cuenta</h3>
+      <p class="nota-pagos">Con tu cuenta guardas tu dirección, ves tus pedidos y pagas más rápido. Tus tarjetas se guardan solo como marca y últimos 4 dígitos.</p>
+    </div>
+  </div>
+  <div class="pie-legal">© 2026 STARFOOD PERU S.A.C. Todos los derechos reservados.</div>
+</footer>
+
+<div class="zona-avisos" id="zonaAvisos" aria-live="polite"></div>
+
+<script type="module" th:src="@{/js/tienda-ingresar.js}"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="Bebida">
+  <path d="M58 34h44l-6 72H64z" fill="#217A3A"/>
+  <path d="M58 34h44l-1.6 20H59.6z" fill="#185C2C"/>
+  <path d="M60 58h40l-1 14H61z" fill="#FAF3E7" opacity=".25"/>
+  <rect x="52" y="26" width="56" height="10" rx="4" fill="#FAF3E7" stroke="#185C2C" stroke-width="2.5"/>
+  <line x1="86" y1="28" x2="98" y2="4" stroke="#C0392B" stroke-width="6" stroke-linecap="round"/>
+  <g fill="#FAF3E7" opacity=".6">
+    <circle cx="72" cy="84" r="3"/><circle cx="84" cy="92" r="2.4"/><circle cx="90" cy="78" r="2.8"/>
+  </g>
+  <circle cx="118" cy="52" r="4" fill="#F5A623"/>
+  <circle cx="42" cy="66" r="3" fill="#F5A623"/>
+</svg>

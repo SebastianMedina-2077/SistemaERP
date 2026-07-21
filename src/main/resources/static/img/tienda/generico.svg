@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="Producto">
+  <ellipse cx="80" cy="92" rx="52" ry="10" fill="#E8DAC3"/>
+  <path d="M34 88a46 30 0 0 1 92 0z" fill="#217A3A"/>
+  <path d="M40 88a40 25 0 0 1 80 0z" fill="#185C2C" opacity=".45"/>
+  <circle cx="80" cy="58" r="6" fill="#FAF3E7"/>
+  <rect x="76" y="58" width="8" height="10" rx="3" fill="#FAF3E7"/>
+  <g stroke="#2B2119" stroke-width="4" stroke-linecap="round">
+    <line x1="18" y1="52" x2="18" y2="92"/>
+    <line x1="142" y1="52" x2="142" y2="92"/>
+    <path d="M14 52v10m8-10v10" stroke-width="2.6"/>
+  </g>
+</svg>

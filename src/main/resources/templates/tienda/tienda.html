@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamma Tomato | Pizzas a domicilio</title>
+  <meta name="description" content="Pide pizzas, combos y bebidas de Mamma Tomato con delivery o recojo en tienda.">
+  <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Rubik:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" th:href="@{/css/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/tienda.css}">
+  <!-- Iconos extra como mejora progresiva: la UI núcleo funciona con el sprite SVG propio -->
+  <script src="https://kit.fontawesome.com/bab633ba89.js" crossorigin="anonymous" defer></script>
+</head>
+<body>
+
+<a class="salto-contenido" href="#catalogo">Ir al catálogo</a>
+
+<!-- Biblioteca de iconos SVG (trazo uniforme) y logos de pago oficiales inline (sin CDNs en runtime) -->
+<svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="icono-lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="15.8" y1="15.8" x2="21" y2="21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="icono-carrito" viewBox="0 0 24 24"><path d="M3 4h2.4l2.2 11.4h10.8L21 7.6H6.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.6" fill="currentColor"/><circle cx="17" cy="20" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="icono-usuario" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="icono-cerrar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="icono-izquierda" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-derecha" viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-mas" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="icono-menos" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="icono-basura" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7M10 10.5v5.5M14 10.5v5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-moto" viewBox="0 0 24 24"><circle cx="5.5" cy="17" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18.5" cy="17" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 17h6l2.6-6H13m3.5-3H19l1.5 4M5.5 17l2-6h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-bolsa" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1 12h-11zM9 8.5V7a3 3 0 0 1 6 0v1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-ubicacion" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="icono-candado" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="icono-ojo" viewBox="0 0 24 24"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="icono-alerta" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20h-19z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="12" y1="10" x2="12" y2="14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18 19.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icono-pausa" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="icono-reproducir" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor"/></symbol>
+    <symbol id="icono-recibo" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8.5h6M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+
+    <!-- Logos de marca (viewBox propio de cada arte) -->
+    <symbol id="logo-visa" viewBox="9 17 49 15.8"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2505 32.5165H17.0099L13.8299 20.3847C13.679 19.8267 13.3585 19.3333 12.8871 19.1008C11.7106 18.5165 10.4142 18.0514 9 17.8169V17.3498H15.8313C16.7742 17.3498 17.4813 18.0514 17.5991 18.8663L19.2491 27.6173L23.4877 17.3498H27.6104L21.2505 32.5165ZM29.9675 32.5165H25.9626L29.2604 17.3498H33.2653L29.9675 32.5165ZM38.4467 21.5514C38.5646 20.7346 39.2717 20.2675 40.0967 20.2675C41.3931 20.1502 42.8052 20.3848 43.9838 20.9671L44.6909 17.7016C43.5123 17.2345 42.216 17 41.0395 17C37.1524 17 34.3239 19.1008 34.3239 22.0165C34.3239 24.2346 36.3274 25.3992 37.7417 26.1008C39.2717 26.8004 39.861 27.2675 39.7431 27.9671C39.7431 29.0165 38.5646 29.4836 37.3881 29.4836C35.9739 29.4836 34.5596 29.1338 33.2653 28.5494L32.5582 31.8169C33.9724 32.3992 35.5025 32.6338 36.9167 32.6338C41.2752 32.749 43.9838 30.6502 43.9838 27.5C43.9838 23.5329 38.4467 23.3004 38.4467 21.5514ZM58 32.5165L54.82 17.3498H51.4044C50.6972 17.3498 49.9901 17.8169 49.7544 18.5165L43.8659 32.5165H47.9887L48.8116 30.3004H53.8772L54.3486 32.5165H58ZM51.9936 21.4342L53.1701 27.1502H49.8723L51.9936 21.4342Z" fill="#172B85"/></symbol>
+    <symbol id="logo-mastercard" viewBox="33 -2 452 302"><rect x="169.81" y="31.89" width="143.72" height="234.42" fill="#ff5f00"/><path d="M317.05,197.6A149.5,149.5,0,0,1,373.79,80.39a149.1,149.1,0,1,0,0,234.42A149.5,149.5,0,0,1,317.05,197.6Z" transform="translate(-132.74 -48.5)" fill="#eb001b"/><path d="M615.26,197.6a148.95,148.95,0,0,1-241,117.21,149.43,149.43,0,0,0,0-234.42,148.95,148.95,0,0,1,241,117.21Z" transform="translate(-132.74 -48.5)" fill="#f79e1b"/></symbol>
+    <symbol id="logo-paypal" viewBox="0 0 124 33"><path fill="#253B80" d="M46.211,6.749h-6.839c-0.468,0-0.866,0.34-0.939,0.802l-2.766,17.537c-0.055,0.346,0.213,0.658,0.564,0.658h3.265c0.468,0,0.866-0.34,0.939-0.803l0.746-4.73c0.072-0.463,0.471-0.803,0.938-0.803h2.165c4.505,0,7.105-2.18,7.784-6.5c0.306-1.89,0.013-3.375-0.872-4.415C50.224,7.353,48.5,6.749,46.211,6.749z M47,13.154c-0.374,2.454-2.249,2.454-4.062,2.454h-1.032l0.724-4.583c0.043-0.277,0.283-0.481,0.563-0.481h0.473c1.235,0,2.4,0,3.002,0.704C47.027,11.668,47.137,12.292,47,13.154z"/><path fill="#253B80" d="M66.654,13.075h-3.275c-0.279,0-0.52,0.204-0.563,0.481l-0.145,0.916l-0.229-0.332c-0.709-1.029-2.29-1.373-3.868-1.373c-3.619,0-6.71,2.741-7.312,6.586c-0.313,1.918,0.132,3.752,1.22,5.031c0.998,1.176,2.426,1.666,4.125,1.666c2.916,0,4.533-1.875,4.533-1.875l-0.146,0.91c-0.055,0.348,0.213,0.66,0.562,0.66h2.95c0.469,0,0.865-0.34,0.939-0.803l1.77-11.209C67.271,13.388,67.004,13.075,66.654,13.075z M62.089,19.449c-0.316,1.871-1.801,3.127-3.695,3.127c-0.951,0-1.711-0.305-2.199-0.883c-0.484-0.574-0.668-1.391-0.514-2.301c0.295-1.855,1.805-3.152,3.67-3.152c0.93,0,1.686,0.309,2.184,0.892C62.034,17.721,62.232,18.543,62.089,19.449z"/><path fill="#253B80" d="M84.096,13.075h-3.291c-0.314,0-0.609,0.156-0.787,0.417l-4.539,6.686l-1.924-6.425c-0.121-0.402-0.492-0.678-0.912-0.678h-3.234c-0.393,0-0.666,0.384-0.541,0.754l3.625,10.638l-3.408,4.811c-0.268,0.379,0.002,0.9,0.465,0.9h3.287c0.312,0,0.604-0.152,0.781-0.408L84.564,13.97C84.826,13.592,84.557,13.075,84.096,13.075z"/><path fill="#179BD7" d="M94.992,6.749h-6.84c-0.467,0-0.865,0.34-0.938,0.802l-2.766,17.537c-0.055,0.346,0.213,0.658,0.562,0.658h3.51c0.326,0,0.605-0.238,0.656-0.562l0.785-4.971c0.072-0.463,0.471-0.803,0.938-0.803h2.164c4.506,0,7.105-2.18,7.785-6.5c0.307-1.89,0.012-3.375-0.873-4.415C99.004,7.353,97.281,6.749,94.992,6.749z M95.781,13.154c-0.373,2.454-2.248,2.454-4.062,2.454h-1.031l0.725-4.583c0.043-0.277,0.281-0.481,0.562-0.481h0.473c1.234,0,2.4,0,3.002,0.704C95.809,11.668,95.918,12.292,95.781,13.154z"/><path fill="#179BD7" d="M115.434,13.075h-3.273c-0.281,0-0.52,0.204-0.562,0.481l-0.145,0.916l-0.23-0.332c-0.709-1.029-2.289-1.373-3.867-1.373c-3.619,0-6.709,2.741-7.311,6.586c-0.312,1.918,0.131,3.752,1.219,5.031c1,1.176,2.426,1.666,4.125,1.666c2.916,0,4.533-1.875,4.533-1.875l-0.146,0.91c-0.055,0.348,0.213,0.66,0.564,0.66h2.949c0.467,0,0.865-0.34,0.938-0.803l1.771-11.209C116.053,13.388,115.785,13.075,115.434,13.075z M110.869,19.449c-0.314,1.871-1.801,3.127-3.695,3.127c-0.949,0-1.711-0.305-2.199-0.883c-0.484-0.574-0.666-1.391-0.514-2.301c0.297-1.855,1.805-3.152,3.67-3.152c0.93,0,1.686,0.309,2.184,0.892C110.816,17.721,111.014,18.543,110.869,19.449z"/><path fill="#179BD7" d="M119.295,7.23l-2.807,17.858c-0.055,0.346,0.213,0.658,0.562,0.658h2.822c0.469,0,0.867-0.34,0.939-0.803l2.768-17.536c0.055-0.346-0.213-0.659-0.562-0.659h-3.16C119.578,6.749,119.338,6.953,119.295,7.23z"/><path fill="#253B80" d="M7.266,29.154l0.523-3.322l-1.165-0.027H1.061L4.927,1.292C4.939,1.218,4.978,1.149,5.035,1.1c0.057-0.049,0.13-0.076,0.206-0.076h9.38c3.114,0,5.263,0.648,6.385,1.927c0.526,0.6,0.861,1.227,1.023,1.917c0.17,0.724,0.173,1.589,0.007,2.644l-0.012,0.077v0.676l0.526,0.298c0.443,0.235,0.795,0.504,1.065,0.812c0.45,0.513,0.741,1.165,0.864,1.938c0.127,0.795,0.085,1.741-0.123,2.812c-0.24,1.232-0.628,2.305-1.152,3.183c-0.482,0.809-1.096,1.48-1.825,2c-0.696,0.494-1.523,0.869-2.458,1.109c-0.906,0.236-1.939,0.355-3.072,0.355h-0.73c-0.522,0-1.029,0.188-1.427,0.525c-0.399,0.344-0.663,0.814-0.744,1.328l-0.055,0.299l-0.924,5.855l-0.042,0.215c-0.011,0.068-0.03,0.102-0.058,0.125c-0.025,0.021-0.061,0.035-0.096,0.035H7.266z"/><path fill="#179BD7" d="M23.048,7.667c-0.028,0.179-0.06,0.362-0.096,0.55c-1.237,6.351-5.469,8.545-10.874,8.545H9.326c-0.661,0-1.218,0.48-1.321,1.132L6.596,26.83l-0.399,2.533c-0.067,0.428,0.263,0.814,0.695,0.814h4.881c0.578,0,1.069-0.42,1.16-0.99l0.048-0.248l0.919-5.832l0.059-0.32c0.09-0.572,0.582-0.992,1.16-0.992h0.73c4.729,0,8.431-1.92,9.513-7.476c0.452-2.321,0.218-4.259-0.978-5.622C24.022,8.286,23.573,7.945,23.048,7.667z"/><path fill="#222D65" d="M21.754,7.151c-0.189-0.055-0.384-0.105-0.584-0.15c-0.201-0.044-0.407-0.083-0.619-0.117c-0.742-0.12-1.555-0.177-2.426-0.177h-7.352c-0.181,0-0.353,0.041-0.507,0.115C9.927,6.985,9.675,7.306,9.614,7.699L8.05,17.605l-0.045,0.289c0.103-0.652,0.66-1.132,1.321-1.132h2.752c5.405,0,9.637-2.195,10.874-8.545c0.037-0.188,0.068-0.371,0.096-0.55c-0.313-0.166-0.652-0.308-1.017-0.429C21.941,7.208,21.848,7.179,21.754,7.151z"/><path fill="#253B80" d="M9.614,7.699c0.061-0.393,0.313-0.714,0.652-0.876c0.155-0.074,0.326-0.115,0.507-0.115h7.352c0.871,0,1.684,0.057,2.426,0.177c0.212,0.034,0.418,0.073,0.619,0.117c0.2,0.045,0.395,0.095,0.584,0.15c0.094,0.028,0.187,0.057,0.278,0.086c0.365,0.121,0.704,0.264,1.017,0.429c0.368-2.347-0.003-3.945-1.272-5.392C20.378,0.682,17.853,0,14.622,0h-9.38c-0.66,0-1.223,0.48-1.325,1.133L0.01,25.898c-0.077,0.49,0.301,0.932,0.795,0.932h5.791l1.454-9.225L9.614,7.699z"/></symbol>
+    <symbol id="logo-applepay" viewBox="0 0 512 210.2"><path d="M93.6,27.1C87.6,34.2,78,39.8,68.4,39c-1.2-9.6,3.5-19.8,9-26.1c6-7.3,16.5-12.5,25-12.9C103.4,10,99.5,19.8,93.6,27.1 M102.3,40.9c-13.9-0.8-25.8,7.9-32.4,7.9c-6.7,0-16.8-7.5-27.8-7.3c-14.3,0.2-27.6,8.3-34.9,21.2c-15,25.8-3.9,64,10.6,85c7.1,10.4,15.6,21.8,26.8,21.4c10.6-0.4,14.8-6.9,27.6-6.9c12.9,0,16.6,6.9,27.8,6.7c11.6-0.2,18.9-10.4,26-20.8c8.1-11.8,11.4-23.3,11.6-23.9c-0.2-0.2-22.4-8.7-22.6-34.3c-0.2-21.4,17.5-31.6,18.3-32.2C123.3,42.9,107.7,41.3,102.3,40.9 M182.6,11.9v155.9h24.2v-53.3h33.5c30.6,0,52.1-21,52.1-51.4c0-30.4-21.1-51.2-51.3-51.2H182.6z M206.8,32.3h27.9c21,0,33,11.2,33,30.9c0,19.7-12,31-33.1,31h-27.8V32.3z M336.6,169c15.2,0,29.3-7.7,35.7-19.9h0.5v18.7h22.4V90.2c0-22.5-18-37-45.7-37c-25.7,0-44.7,14.7-45.4,34.9h21.8c1.8-9.6,10.7-15.9,22.9-15.9c14.8,0,23.1,6.9,23.1,19.6v8.6l-30.2,1.8c-28.1,1.7-43.3,13.2-43.3,33.2C298.4,155.6,314.1,169,336.6,169z M343.1,150.5c-12.9,0-21.1-6.2-21.1-15.7c0-9.8,7.9-15.5,23-16.4l26.9-1.7v8.8C371.9,140.1,359.5,150.5,343.1,150.5z M425.1,210.2c23.6,0,34.7-9,44.4-36.3L512,54.7h-24.6l-28.5,92.1h-0.5l-28.5-92.1h-25.3l41,113.5l-2.2,6.9c-3.7,11.7-9.7,16.2-20.4,16.2c-1.9,0-5.6-0.2-7.1-0.4v18.7C417.3,210,423.3,210.2,425.1,210.2z"/></symbol>
+    <symbol id="logo-googlepay" viewBox="0 0 80 39"><g clip-path="url(#recorteGPay)"><path d="M37.8 19.7V29H34.8V6H42.6C44.5 6 46.3001 6.7 47.7001 8C49.1001 9.2 49.8 11 49.8 12.9C49.8 14.8 49.1001 16.5 47.7001 17.8C46.3001 19.1 44.6 19.8 42.6 19.8L37.8 19.7ZM37.8 8.8V16.8H42.8C43.9 16.8 45.0001 16.4 45.7001 15.6C47.3001 14.1 47.3 11.6 45.8 10.1L45.7001 10C44.9001 9.2 43.9 8.7 42.8 8.8H37.8Z" fill="#5F6368"/><path d="M56.7001 12.8C58.9001 12.8 60.6001 13.4 61.9001 14.6C63.2001 15.8 63.8 17.4 63.8 19.4V29H61V26.8H60.9001C59.7001 28.6 58 29.5 56 29.5C54.3 29.5 52.8 29 51.6 28C50.5 27 49.8 25.6 49.8 24.1C49.8 22.5 50.4 21.2 51.6 20.2C52.8 19.2 54.5 18.8 56.5 18.8C58.3 18.8 59.7 19.1 60.8 19.8V19.1C60.8 18.1 60.4 17.1 59.6 16.5C58.8 15.8 57.8001 15.4 56.7001 15.4C55.0001 15.4 53.7 16.1 52.8 17.5L50.2001 15.9C51.8001 13.8 53.9001 12.8 56.7001 12.8ZM52.9001 24.2C52.9001 25 53.3001 25.7 53.9001 26.1C54.6001 26.6 55.4001 26.9 56.2001 26.9C57.4001 26.9 58.6 26.4 59.5 25.5C60.5 24.6 61 23.5 61 22.3C60.1 21.6 58.8 21.2 57.1 21.2C55.9 21.2 54.9 21.5 54.1 22.1C53.3 22.6 52.9001 23.3 52.9001 24.2Z" fill="#5F6368"/><path d="M80 13.3L70.1 36H67.1L70.8 28.1L64.3 13.4H67.5L72.2 24.7H72.3L76.9 13.4H80V13.3Z" fill="#5F6368"/><path d="M25.9 17.7C25.9 16.8 25.8 15.9 25.7 15H13.2V20.1H20.3C20 21.7 19.1 23.2 17.7 24.1V27.4H22C24.5 25.1 25.9 21.7 25.9 17.7Z" fill="#4285F4"/><path d="M13.1999 30.5999C16.7999 30.5999 19.7999 29.3999 21.9999 27.3999L17.6999 24.0999C16.4999 24.8999 14.9999 25.3999 13.1999 25.3999C9.7999 25.3999 6.7999 23.0999 5.7999 19.8999H1.3999V23.2999C3.6999 27.7999 8.1999 30.5999 13.1999 30.5999Z" fill="#34A853"/><path d="M5.8001 19.8999C5.2001 18.2999 5.2001 16.4999 5.8001 14.7999V11.3999H1.4001C-0.499902 15.0999 -0.499902 19.4999 1.4001 23.2999L5.8001 19.8999Z" fill="#FBBC04"/><path d="M13.2 9.39996C15.1 9.39996 16.9 10.1 18.3 11.4L22.1 7.59996C19.7 5.39996 16.5 4.09996 13.3 4.19996C8.3 4.19996 3.7 6.99996 1.5 11.5L5.9 14.9C6.8 11.7 9.8 9.39996 13.2 9.39996Z" fill="#EA4335"/></g><defs><clipPath id="recorteGPay"><rect width="80" height="38.1" fill="white"/></clipPath></defs></symbol>
+
+    <!-- Badges uniformes de 48×30 para las filas "Aceptamos" -->
+    <symbol id="marca-visa" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#fff" stroke="#D8CFC0" stroke-width="1.2"/><use href="#logo-visa" x="6" y="9.4" width="36" height="11.6"/></symbol>
+    <symbol id="marca-mastercard" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#fff" stroke="#D8CFC0" stroke-width="1.2"/><use href="#logo-mastercard" x="9" y="5" width="30" height="20"/></symbol>
+    <symbol id="marca-amex" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#006FCF"/><text x="24" y="19.3" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" font-weight="800" letter-spacing="1" fill="#fff">AMEX</text></symbol>
+    <symbol id="marca-paypal" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#fff" stroke="#D8CFC0" stroke-width="1.2"/><use href="#logo-paypal" x="4.5" y="9.8" width="39" height="10.4"/></symbol>
+    <symbol id="marca-applepay" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#fff" stroke="#D8CFC0" stroke-width="1.2"/><use href="#logo-applepay" x="7" y="8" width="34" height="14"/></symbol>
+    <symbol id="marca-googlepay" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#fff" stroke="#D8CFC0" stroke-width="1.2"/><use href="#logo-googlepay" x="9" y="7.3" width="30" height="15.4"/></symbol>
+    <symbol id="marca-yape" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="6" fill="#742284"/><text x="24" y="19.5" text-anchor="middle" font-family="Rubik, sans-serif" font-size="13" font-weight="800" letter-spacing="0.5" fill="#fff">yape</text></symbol>
+    <symbol id="marca-plin" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="6" fill="#0BB5B0"/><text x="24" y="20" text-anchor="middle" font-family="Rubik, sans-serif" font-size="12" font-weight="700" fill="#fff">plin</text></symbol>
+    <symbol id="marca-efectivo" viewBox="0 0 48 30"><rect x=".8" y=".8" width="46.4" height="28.4" rx="4" fill="#217A3A"/><rect x="5" y="5" width="38" height="20" rx="2.5" fill="none" stroke="#FAF3E7" stroke-width="1.4"/><circle cx="24" cy="15" r="7" fill="#FAF3E7" opacity=".25"/><text x="24" y="19" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10" font-weight="700" fill="#fff">S/</text></symbol>
+  </defs>
+</svg>
+
+<!-- ============ CABECERA ============ -->
+<header class="cabecera">
+  <div class="cabecera-contenido">
+    <a class="marca" th:href="@{/tienda}">
+      <img th:src="@{/img/logo.png}" alt="" width="40" height="40">
+      <span class="marca-texto">Mamma <em>Tomato</em></span>
+    </a>
+
+    <div class="buscador solo-escritorio" role="search">
+      <svg class="icono" aria-hidden="true"><use href="#icono-lupa"/></svg>
+      <input id="buscador" type="search" placeholder="Busca pizzas, combos, bebidas..."
+             autocomplete="off" aria-label="Buscar productos">
+    </div>
+
+    <div class="cabecera-acciones">
+      <button type="button" class="boton-icono solo-movil" id="btnBuscarMovil"
+              aria-label="Buscar" aria-expanded="false" aria-controls="filaBuscadorMovil">
+        <svg class="icono" aria-hidden="true"><use href="#icono-lupa"/></svg>
+      </button>
+
+      <div class="cuenta-zona">
+        <button type="button" class="boton-cuenta" id="btnCuenta">
+          <svg class="icono" aria-hidden="true"><use href="#icono-usuario"/></svg>
+          <span id="etiquetaCuenta">Iniciar sesión</span>
+        </button>
+        <div class="menu-cuenta" id="menuCuenta" hidden>
+          <p class="menu-cuenta-nombre" id="menuCuentaNombre"></p>
+          <p class="menu-cuenta-email" id="menuCuentaEmail"></p>
+          <button type="button" class="menu-cuenta-opcion" id="btnMisPedidos">
+            <svg class="icono" aria-hidden="true"><use href="#icono-recibo"/></svg> Mis pedidos
+          </button>
+          <button type="button" class="menu-cuenta-salir" id="btnCerrarSesion">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <button type="button" class="boton-carrito" id="btnCarrito" aria-label="Abrir carrito">
+        <svg class="icono" aria-hidden="true"><use href="#icono-carrito"/></svg>
+        <span class="carrito-contador" id="contadorCarrito" aria-hidden="true">0</span>
+        <span class="carrito-total" id="totalCabecera">S/ 0.00</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Buscador desplegable en móvil -->
+  <div class="fila-buscador-movil" id="filaBuscadorMovil" hidden>
+    <div class="buscador" role="search">
+      <svg class="icono" aria-hidden="true"><use href="#icono-lupa"/></svg>
+      <input id="buscadorMovil" type="search" placeholder="Buscar productos..."
+             autocomplete="off" aria-label="Buscar productos">
+    </div>
+  </div>
+</header>
+
+<!-- ============ MODALIDAD ============ -->
+<div class="barra-modalidad">
+  <div class="contenedor barra-modalidad-fila">
+    <span class="barra-modalidad-texto">¿Cómo quieres tu pedido?</span>
+    <div class="tabs-modalidad" id="tabsModalidad" role="group" aria-label="Modalidad de entrega">
+      <button type="button" class="tab-modalidad activa" data-modalidad="DELIVERY" aria-pressed="true">
+        <svg class="icono" aria-hidden="true"><use href="#icono-moto"/></svg> Delivery
+      </button>
+      <button type="button" class="tab-modalidad" data-modalidad="RECOJO" aria-pressed="false">
+        <svg class="icono" aria-hidden="true"><use href="#icono-bolsa"/></svg> Recojo en tienda
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HERO: banner oficial + promociones reales del catálogo ============ -->
+<section class="hero contenedor" aria-label="Promociones">
+  <div class="carrusel" id="carrusel" aria-roledescription="carrusel">
+    <div class="carrusel-pista" id="carruselPista">
+
+      <article class="diapositiva diapositiva-banner" role="group" aria-label="Promoción 1 de 7">
+        <a href="#catalogo" aria-label="No todas las pizzas son iguales: masa madre, horneado a la piedra y las mejores carnes. Ir al catálogo">
+          <img th:src="@{/img/banner.jpg}"
+               alt="No todas las pizzas son iguales — elige lo bueno, vive mejor: masa madre, horneado a la piedra y las mejores carnes">
+        </a>
+      </article>
+
+      <!-- Fotos oficiales de la marca (mammatomato.com.pe) -->
+      <article class="diapositiva diapositiva-banner" role="group" aria-label="Promoción 2 de 7">
+        <a href="#catalogo" aria-label="Nuestra carta: pizzas artesanales de masa madre. Ir al catálogo">
+          <img th:src="@{/img/tienda/banners/carta-1.jpg}" loading="lazy"
+               alt="Nuestra carta — pizzas artesanales de masa madre horneadas a la piedra">
+        </a>
+      </article>
+
+      <article class="diapositiva diapositiva-banner" role="group" aria-label="Promoción 3 de 7">
+        <a href="#catalogo" aria-label="Las favoritas de la casa. Ir al catálogo">
+          <img th:src="@{/img/tienda/banners/local-miraflores.jpg}" loading="lazy"
+               alt="Nuestra tienda en Miraflores te espera con el horno encendido">
+        </a>
+      </article>
+
+      <article class="diapositiva diapositiva-banner" role="group" aria-label="Promoción 4 de 7">
+        <a href="#catalogo" aria-label="La historia de Mamma Tomato. Ir al catálogo">
+          <img th:src="@{/img/tienda/banners/historia.jpg}" loading="lazy"
+               alt="Mamma Tomato — una receta de familia hecha con masa madre">
+        </a>
+      </article>
+
+      <!-- Las siguientes diapositivas son plantillas: su texto se reemplaza con las promociones reales -->
+      <article class="diapositiva diapositiva-2" role="group" aria-label="Promoción 5 de 7" data-plantilla-promo>
+        <div class="diapositiva-texto">
+          <span class="insignia-promo">Solo martes</span>
+          <h2>Martes de <strong>2×1</strong> en pizzas clásicas</h2>
+          <p>Pide una clásica y llévate la segunda por cuenta de la casa.</p>
+          <button type="button" class="boton boton-crema accion-catalogo">Pedir ahora</button>
+        </div>
+        <div class="diapositiva-arte diapositiva-arte-foto" aria-hidden="true">
+          <img th:src="@{/img/tienda/banners/favoritas-1.jpg}" alt="" loading="lazy">
+        </div>
+      </article>
+
+      <article class="diapositiva diapositiva-3" role="group" aria-label="Promoción 6 de 7" data-plantilla-promo>
+        <div class="diapositiva-texto">
+          <span class="insignia-promo">Para compartir</span>
+          <h2>Combo familiar <strong>S/ 59.90</strong></h2>
+          <p>Pizza familiar, pan al ajo y dos bebidas heladas.</p>
+          <button type="button" class="boton boton-verde accion-catalogo">Pedir ahora</button>
+        </div>
+        <div class="diapositiva-arte diapositiva-arte-foto" aria-hidden="true">
+          <img th:src="@{/img/tienda/banners/favoritas-3.jpg}" alt="" loading="lazy">
+        </div>
+      </article>
+
+      <article class="diapositiva diapositiva-4" role="group" aria-label="Promoción 7 de 7" data-plantilla-promo>
+        <div class="diapositiva-texto">
+          <span class="insignia-promo">Delivery</span>
+          <h2>Envío <strong>gratis</strong> desde S/ 79</h2>
+          <p>Llegamos calientito a tu puerta en toda nuestra zona de reparto.</p>
+          <button type="button" class="boton boton-crema accion-catalogo">Pedir ahora</button>
+        </div>
+        <div class="diapositiva-arte diapositiva-arte-foto" aria-hidden="true">
+          <img th:src="@{/img/tienda/banners/favoritas-2.jpg}" alt="" loading="lazy">
+        </div>
+      </article>
+    </div>
+
+    <button type="button" class="carrusel-flecha anterior" id="carruselAnterior" aria-label="Promoción anterior">
+      <svg class="icono" aria-hidden="true"><use href="#icono-izquierda"/></svg>
+    </button>
+    <button type="button" class="carrusel-flecha siguiente" id="carruselSiguiente" aria-label="Promoción siguiente">
+      <svg class="icono" aria-hidden="true"><use href="#icono-derecha"/></svg>
+    </button>
+
+    <div class="carrusel-pie" id="carruselPie">
+      <div class="carrusel-puntos" id="carruselPuntos" role="tablist" aria-label="Ir a promoción"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NAV DE CATEGORÍAS ============ -->
+<nav class="nav-categorias" aria-label="Categorías del menú">
+  <div class="contenedor chips-fila" id="chipsCategorias">
+    <button type="button" class="chip activa" data-categoria="">Todo</button>
+    <!-- El resto de chips se llena con el catálogo real -->
+  </div>
+</nav>
+
+<!-- ============ CATÁLOGO ============ -->
+<main id="catalogo" class="contenedor catalogo" aria-live="polite">
+  <div class="estado-catalogo" id="estadoCatalogo">
+    <div class="girador" aria-hidden="true"></div>
+    <p>Cargando el menú...</p>
+  </div>
+  <div id="seccionesCatalogo"></div>
+</main>
+
+<!-- ============ PIE ============ -->
+<footer class="pie">
+  <div class="contenedor pie-columnas">
+    <div class="pie-marca">
+      <a class="marca marca-clara" th:href="@{/tienda}">
+        <img th:src="@{/img/logo.png}" alt="" width="40" height="40">
+        <span class="marca-texto">Mamma <em>Tomato</em></span>
+      </a>
+      <p>STARFOOD PERU S.A.C. — Mamma Tomato</p>
+      <p>RUC 20552277482</p>
+      <p><svg class="icono" aria-hidden="true"><use href="#icono-ubicacion"/></svg> Av. Los Olivos 123 - Lima</p>
+    </div>
+    <nav class="pie-enlaces" aria-label="Enlaces">
+      <h3>Tienda</h3>
+      <a href="#catalogo">Menú</a>
+      <a href="#catalogo">Promociones</a>
+      <a th:href="@{/login}">Acceso al ERP</a>
+    </nav>
+    <div class="pie-pagos">
+      <h3>Aceptamos</h3>
+      <div class="fila-marcas">
+        <svg class="marca-pago" role="img" aria-label="Visa"><use href="#marca-visa"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Mastercard"><use href="#marca-mastercard"/></svg>
+        <svg class="marca-pago" role="img" aria-label="American Express"><use href="#marca-amex"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Yape"><use href="#marca-yape"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Plin"><use href="#marca-plin"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Efectivo"><use href="#marca-efectivo"/></svg>
+        <svg class="marca-pago" role="img" aria-label="PayPal"><use href="#marca-paypal"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Apple Pay"><use href="#marca-applepay"/></svg>
+        <svg class="marca-pago" role="img" aria-label="Google Pay"><use href="#marca-googlepay"/></svg>
+      </div>
+      <p class="nota-pagos">Billeteras digitales en modo demostración: sin cobros reales.</p>
+    </div>
+  </div>
+  <div class="pie-legal">© 2026 STARFOOD PERU S.A.C. Todos los derechos reservados.</div>
+</footer>
+
+<!-- ============ CARRITO (drawer / bottom sheet) ============ -->
+<div class="fondo-oscuro" id="fondoCarrito" hidden></div>
+<aside class="panel-carrito" id="panelCarrito" role="dialog" aria-modal="true" aria-labelledby="tituloCarrito" hidden>
+  <header class="panel-carrito-cabecera">
+    <h2 id="tituloCarrito">Tu pedido</h2>
+    <button type="button" class="boton-icono" id="btnCerrarCarrito" aria-label="Cerrar carrito">
+      <svg class="icono" aria-hidden="true"><use href="#icono-cerrar"/></svg>
+    </button>
+  </header>
+
+  <div class="panel-carrito-cuerpo">
+    <div class="carrito-vacio" id="carritoVacio">
+      <svg class="icono icono-grande" aria-hidden="true"><use href="#icono-carrito"/></svg>
+      <p>Tu carrito está vacío.</p>
+      <button type="button" class="boton boton-secundario accion-catalogo">Ver el menú</button>
+    </div>
+    <ul class="lineas-carrito" id="lineasCarrito"></ul>
+  </div>
+
+  <footer class="panel-carrito-pie" id="piePanelCarrito" hidden>
+    <p class="nota-cotizacion" id="notaCotizacion" role="status"></p>
+    <div class="carrito-descuento" id="filaDescuento" hidden>
+      <span>Descuentos aplicados</span><strong id="descuentoCarrito">- S/ 0.00</strong>
+    </div>
+    <div class="carrito-total-fila">
+      <span>Total</span><strong class="precio-grande" id="totalCarrito">S/ 0.00</strong>
+    </div>
+    <button type="button" class="boton boton-primario boton-lleno" id="btnPagar" disabled>
+      <svg class="icono" aria-hidden="true"><use href="#icono-candado"/></svg> Ir a pagar
+    </button>
+  </footer>
+</aside>
+
+<!-- El ingreso/registro vive en su propia página: /tienda/ingresar -->
+
+<!-- ============ MODAL CHECKOUT ============ -->
+<div class="fondo-oscuro" id="fondoPago" hidden></div>
+<div class="modal modal-pago" id="modalPago" role="dialog" aria-modal="true" aria-labelledby="tituloPago" hidden>
+  <button type="button" class="boton-icono modal-cerrar" data-cerrar="modalPago" aria-label="Cerrar">
+    <svg class="icono" aria-hidden="true"><use href="#icono-cerrar"/></svg>
+  </button>
+  <h2 class="modal-titulo" id="tituloPago">Finalizar pedido</h2>
+
+  <!-- Stepper del proceso: círculo con número o check, título y estado -->
+  <ol class="stepper-pedido" id="indicadorPasos">
+    <li class="paso-punto activo" data-paso="1">
+      <span class="paso-circulo" aria-hidden="true">
+        <span class="paso-numero">1</span>
+        <svg class="icono paso-check"><use href="#icono-check"/></svg>
+      </span>
+      <span class="paso-detalle">
+        <span class="paso-titulo">Entrega</span>
+        <span class="paso-estado"></span>
+      </span>
+    </li>
+    <li class="paso-punto" data-paso="2">
+      <span class="paso-circulo" aria-hidden="true">
+        <span class="paso-numero">2</span>
+        <svg class="icono paso-check"><use href="#icono-check"/></svg>
+      </span>
+      <span class="paso-detalle">
+        <span class="paso-titulo">Pago</span>
+        <span class="paso-estado"></span>
+      </span>
+    </li>
+    <li class="paso-punto" data-paso="3">
+      <span class="paso-circulo" aria-hidden="true">
+        <span class="paso-numero">3</span>
+        <svg class="icono paso-check"><use href="#icono-check"/></svg>
+      </span>
+      <span class="paso-detalle">
+        <span class="paso-titulo">Listo</span>
+        <span class="paso-estado"></span>
+      </span>
+    </li>
+  </ol>
+
+  <!-- Paso 1: entrega -->
+  <section class="paso" id="pasoEntrega">
+    <div class="tabs-modalidad tabs-modalidad-pago" id="tabsModalidadPago" role="group" aria-label="Modalidad de entrega">
+      <button type="button" class="tab-modalidad activa" data-modalidad="DELIVERY" aria-pressed="true">
+        <svg class="icono" aria-hidden="true"><use href="#icono-moto"/></svg> Delivery
+      </button>
+      <button type="button" class="tab-modalidad" data-modalidad="RECOJO" aria-pressed="false">
+        <svg class="icono" aria-hidden="true"><use href="#icono-bolsa"/></svg> Recojo en tienda
+      </button>
+    </div>
+
+    <div id="bloqueDireccion">
+      <label class="campo">Dirección de entrega
+        <input type="text" id="campoDireccion" data-campo="direccion" maxlength="160"
+               placeholder="Calle, número, distrito y referencia" autocomplete="street-address">
+        <span class="error-campo" data-error="direccion"></span>
+      </label>
+    </div>
+    <p class="nota-recojo" id="notaRecojo" hidden>
+      <svg class="icono" aria-hidden="true"><use href="#icono-ubicacion"/></svg>
+      Recoge tu pedido en Av. Los Olivos 123 - Lima. Te avisamos cuando esté listo.
+    </p>
+
+    <div class="paso-acciones">
+      <button type="button" class="boton boton-verde boton-lleno" id="btnIrAPago">Continuar al pago</button>
+    </div>
+  </section>
+
+  <!-- Paso 2: pago con layout de tarjeta (soporta pago mixto) -->
+  <section class="paso" id="pasoPago" hidden>
+    <div class="tarjeta-checkout">
+
+      <section class="bloque-checkout">
+        <div class="bloque-checkout-cabecera">
+          <h3 class="titulo-bloque">Envío</h3>
+          <button type="button" class="enlace-cambiar" id="btnVolverEntrega">Cambiar</button>
+        </div>
+        <div class="resumen-envio">
+          <p class="resumen-envio-modalidad" id="resumenEnvioModalidad"></p>
+          <p class="resumen-envio-direccion" id="resumenEnvioDireccion"></p>
+        </div>
+      </section>
+
+      <hr class="separador-checkout">
+
+      <section class="bloque-checkout">
+        <h3 class="titulo-bloque">Tu pedido</h3>
+        <ul class="resumen-pedido" id="resumenPedido"></ul>
+      </section>
+
+      <hr class="separador-checkout">
+
+      <section class="bloque-checkout">
+        <h3 class="titulo-bloque">Método de pago</h3>
+        <div id="lineasPago"></div>
+        <button type="button" class="boton boton-secundario" id="btnAgregarPago">
+          <svg class="icono" aria-hidden="true"><use href="#icono-mas"/></svg> Dividir en otro método
+        </button>
+        <p class="resumen-pagos" id="resumenPagos" role="status"></p>
+        <div class="fila-marcas fila-marcas-checkout" role="img" aria-label="Aceptamos Visa, Mastercard, American Express, Yape, Plin, PayPal, Apple Pay y Google Pay">
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-visa"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-mastercard"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-amex"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-yape"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-plin"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-paypal"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-applepay"/></svg>
+          <svg class="marca-pago" aria-hidden="true"><use href="#marca-googlepay"/></svg>
+        </div>
+      </section>
+
+      <hr class="separador-checkout">
+
+      <section class="bloque-checkout bloque-promo">
+        <h3 class="titulo-bloque" id="tituloCupon">¿Tienes un cupón?</h3>
+        <label class="visualmente-oculto" for="campoCodigoPromo">Código promocional</label>
+        <span class="fila-promo">
+          <input type="text" id="campoCodigoPromo" name="codigoPromo" placeholder="Código promocional" autocomplete="off" maxlength="40">
+          <button type="button" class="boton boton-secundario" id="btnAplicarPromo">Aplicar</button>
+        </span>
+        <p class="feedback-promo" id="feedbackPromo" role="status"></p>
+      </section>
+
+      <hr class="separador-checkout">
+
+      <section class="bloque-checkout">
+        <h3 class="titulo-bloque">Pago</h3>
+        <div class="desglose-costos" id="desgloseCostos">
+          <div class="desglose-fila"><span>Subtotal</span><span id="desgloseSubtotal">S/ 0.00</span></div>
+          <div class="desglose-fila desglose-fila-ahorro" id="desgloseFilaAhorro" hidden><span>Descuentos</span><span id="desgloseAhorro">- S/ 0.00</span></div>
+          <div class="desglose-fila desglose-fila-igv"><span>IGV incluido (18/118)</span><span id="desgloseIgv">S/ 0.00</span></div>
+          <div class="desglose-fila" id="desgloseFilaDelivery"><span>Delivery</span><span>Gratis</span></div>
+          <div class="desglose-fila desglose-fila-total"><span>Total</span><strong class="precio-grande" id="desgloseTotal">S/ 0.00</strong></div>
+        </div>
+      </section>
+
+      <footer class="pie-checkout">
+        <div class="pie-checkout-total">
+          <span class="pie-checkout-etiqueta">Total a pagar</span>
+          <strong class="precio-footer" id="precioFooter">S/ 0.00</strong>
+        </div>
+        <button type="button" class="boton boton-primario boton-confirmar" id="btnConfirmarPedido" disabled>Confirmar pedido</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- Paso 3: confirmación -->
+  <section class="paso paso-confirmacion" id="pasoConfirmacion" hidden>
+    <div class="sello-exito" aria-hidden="true">
+      <svg class="icono" ><use href="#icono-check"/></svg>
+    </div>
+    <h3>¡Pedido recibido!</h3>
+    <p class="confirmacion-numero">Pedido <strong id="numeroPedido">—</strong></p>
+    <p class="confirmacion-detalle" id="detalleConfirmacion"></p>
+    <button type="button" class="boton boton-verde boton-lleno" id="btnSeguirComprando">Seguir comprando</button>
+  </section>
+
+  <!-- Capa de envío: el hámster corre mientras el pedido viaja a la cocina (mínimo 7 s) -->
+  <div class="capa-enviando" id="capaEnviando" role="status" aria-live="polite" hidden>
+    <p class="texto-enviando" id="textoEnviando">Enviando tu pedido a la cocina...</p>
+  </div>
+</div>
+
+<!-- ============ MODAL MIS PEDIDOS ============ -->
+<div class="fondo-oscuro" id="fondoPedidos" hidden></div>
+<div class="modal modal-pedidos" id="modalPedidos" role="dialog" aria-modal="true" aria-labelledby="tituloPedidos" tabindex="-1" hidden>
+  <button type="button" class="boton-icono modal-cerrar" data-cerrar="modalPedidos" aria-label="Cerrar">
+    <svg class="icono" aria-hidden="true"><use href="#icono-cerrar"/></svg>
+  </button>
+  <h2 class="modal-titulo" id="tituloPedidos">Mis pedidos</h2>
+  <div class="lista-pedidos" id="listaPedidos" aria-live="polite"></div>
+</div>
+
+<!-- Plantilla de una línea de pago (se clona por método) -->
+<template id="plantillaLineaPago">
+  <fieldset class="linea-pago">
+    <legend class="visualmente-oculto">Método de pago</legend>
+    <div class="linea-pago-fila">
+      <select class="selector-metodo" aria-label="Método de pago">
+        <option value="TARJETA">Tarjeta</option>
+        <option value="YAPE">Yape</option>
+        <option value="PLIN">Plin</option>
+        <option value="BILLETERA">Billetera digital</option>
+        <option value="EFECTIVO">Efectivo contra entrega</option>
+      </select>
+      <div class="monto-envoltura">
+        <span aria-hidden="true">S/</span>
+        <input type="number" class="monto-pago" min="0" step="0.10" placeholder="0.00" aria-label="Monto de este método">
+      </div>
+      <button type="button" class="boton-icono usar-restante" title="Completar con el monto restante">Restante</button>
+      <button type="button" class="boton-icono quitar-pago" aria-label="Quitar este método" hidden>
+        <svg class="icono" aria-hidden="true"><use href="#icono-basura"/></svg>
+      </button>
+    </div>
+
+    <!-- Subformulario de tarjeta: solo visible cuando el método es TARJETA -->
+    <div class="bloque-tarjeta">
+      <!-- Tarjetas guardadas como flip-cards; el JS las inyecta si la cuenta tiene alguna -->
+      <div class="tarjetas-guardadas" role="radiogroup" aria-label="Elige una tarjeta guardada" hidden></div>
+      <div class="tarjeta-nueva">
+        <label class="campo campo-compacto">Titular
+          <input type="text" class="titular-tarjeta" autocomplete="cc-name" maxlength="60" placeholder="Como figura en la tarjeta">
+          <span class="error-campo" data-error="titular"></span>
+        </label>
+        <label class="campo campo-compacto">Número
+          <span class="campo-numero-tarjeta">
+            <input type="text" class="numero-tarjeta" inputmode="numeric" autocomplete="cc-number"
+                   maxlength="19" placeholder="0000 0000 0000 0000">
+            <svg class="marca-pago marca-detectada" hidden><use href="#marca-visa"/></svg>
+          </span>
+          <span class="error-campo" data-error="numero"></span>
+        </label>
+        <div class="fila-doble">
+          <label class="campo campo-compacto">Vencimiento
+            <input type="text" class="vencimiento-tarjeta" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA">
+            <span class="error-campo" data-error="vencimiento"></span>
+          </label>
+          <label class="campo campo-compacto">CVV
+            <input type="password" class="cvv-tarjeta" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123">
+            <span class="error-campo" data-error="cvv"></span>
+          </label>
+        </div>
+        <label class="casilla">
+          <input type="checkbox" class="guardar-tarjeta"> Guardar esta tarjeta para próximas compras
+        </label>
+      </div>
+    </div>
+
+    <!-- QR simulado para Yape / Plin -->
+    <div class="bloque-qr" hidden>
+      <img class="imagen-qr" alt="" width="170" height="170">
+      <p class="leyenda-qr">QR de demostración — cobro simulado</p>
+      <a class="enlace-billetera" target="_blank" rel="noopener" hidden>Ver cómo pagar</a>
+    </div>
+
+    <!-- Billeteras digitales simuladas -->
+    <div class="bloque-billeteras" hidden>
+      <p class="titulo-billeteras">Elige tu billetera</p>
+      <div class="opciones-billetera">
+        <button type="button" class="boton-billetera" data-billetera="PAYPAL" aria-pressed="false" aria-label="Pagar con PayPal (demostración)">
+          <svg class="logo-billetera" viewBox="0 0 124 33" aria-hidden="true"><use href="#logo-paypal"/></svg>
+        </button>
+        <button type="button" class="boton-billetera" data-billetera="APPLE_PAY" aria-pressed="false" aria-label="Pagar con Apple Pay (demostración)">
+          <svg class="logo-billetera" viewBox="0 0 512 210.2" aria-hidden="true"><use href="#logo-applepay"/></svg>
+        </button>
+        <button type="button" class="boton-billetera" data-billetera="GOOGLE_PAY" aria-pressed="false" aria-label="Pagar con Google Pay (demostración)">
+          <svg class="logo-billetera" viewBox="0 0 80 39" aria-hidden="true"><use href="#logo-googlepay"/></svg>
+        </button>
+      </div>
+      <span class="error-campo" data-error="billetera"></span>
+    </div>
+
+    <!-- Aviso para métodos simulados -->
+    <p class="nota-billetera" hidden>
+      Demo académica: al confirmar se simula la solicitud de cobro; no se realiza ningún pago real.
+    </p>
+  </fieldset>
+</template>
+
+<!-- Plantilla de tarjeta de producto -->
+<template id="plantillaProducto">
+  <article class="tarjeta-producto">
+    <div class="tarjeta-brillo" aria-hidden="true"></div>
+    <div class="tarjeta-aura" aria-hidden="true"></div>
+    <div class="producto-arte">
+      <span class="insignia-producto" hidden></span>
+      <img alt="" loading="lazy" width="160" height="120">
+    </div>
+    <div class="producto-info">
+      <h3 class="producto-nombre"></h3>
+      <p class="producto-categoria"></p>
+    </div>
+    <div class="producto-accion">
+      <p class="producto-precio precio"></p>
+      <button type="button" class="boton-agregar" aria-label="Agregar al carrito">
+        <svg class="icono" aria-hidden="true"><use href="#icono-mas"/></svg>
+      </button>
+      <div class="paso-cantidad" hidden>
+        <button type="button" class="boton-icono menos" aria-label="Quitar uno">
+          <svg class="icono" aria-hidden="true"><use href="#icono-menos"/></svg>
+        </button>
+        <span class="cantidad" aria-live="polite">1</span>
+        <button type="button" class="boton-icono mas" aria-label="Agregar uno">
+          <svg class="icono" aria-hidden="true"><use href="#icono-mas"/></svg>
+        </button>
+      </div>
+    </div>
+  </article>
+</template>
+
+<!-- Plantilla de línea del carrito -->
+<template id="plantillaLineaCarrito">
+  <li class="linea-carrito">
+    <div class="linea-info">
+      <p class="linea-nombre"></p>
+      <p class="linea-unitario"></p>
+      <p class="linea-descuento" hidden></p>
+    </div>
+    <div class="linea-controles">
+      <div class="paso-cantidad">
+        <button type="button" class="boton-icono menos" aria-label="Quitar uno">
+          <svg class="icono" aria-hidden="true"><use href="#icono-menos"/></svg>
+        </button>
+        <span class="cantidad"></span>
+        <button type="button" class="boton-icono mas" aria-label="Agregar uno">
+          <svg class="icono" aria-hidden="true"><use href="#icono-mas"/></svg>
+        </button>
+      </div>
+      <strong class="linea-subtotal precio"></strong>
+      <button type="button" class="boton-icono quitar" aria-label="Quitar del carrito">
+        <svg class="icono" aria-hidden="true"><use href="#icono-basura"/></svg>
+      </button>
+    </div>
+  </li>
+</template>
+
+<!-- Plantilla del cargador "hámster en la rueda": pelaje horneado + rueda de gris cálido.
+     Reutilizable en la carga del catálogo y en el envío del pedido. -->
+<template id="plantillaRuedaHamster">
+  <div class="rueda-hamster" role="img" aria-label="Preparando tu pedido">
+    <div class="rueda"></div>
+    <div class="roedor">
+      <div class="roedor-cuerpo">
+        <div class="roedor-cabeza">
+          <div class="roedor-oreja"></div>
+          <div class="roedor-ojo"></div>
+          <div class="roedor-nariz"></div>
+        </div>
+        <div class="roedor-pata roedor-pata--dd"></div>
+        <div class="roedor-pata roedor-pata--di"></div>
+        <div class="roedor-pata roedor-pata--td"></div>
+        <div class="roedor-pata roedor-pata--ti"></div>
+        <div class="roedor-cola"></div>
+      </div>
+    </div>
+    <div class="rayo"></div>
+  </div>
+</template>
+
+<!-- Avisos flotantes -->
+<div class="zona-avisos" id="zonaAvisos" aria-live="polite"></div>
+
+<script type="module" th:src="@{/js/tienda.js}"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+/* Tokens de color de la tienda — fuente única de la paleta de marca Mamma Tomato.
+   Se enlaza antes de tienda.css: todo color usado en la página vive aquí, nada
+   de valores sueltos en el resto de las hojas de estilo. */
+
+:root {
+  --verde: #217A3A;
+  --verde-banner: #267440;
+  --verde-profundo: #185C2C;
+  --verde-tinte: #E7F3EC;
+  --tomate: #C0392B;
+  --tomate-oscuro: #8E2820;
+  --crema: #FAF3E7;
+  --crema-oscura: #F0E4D0;
+  --carbon: #2B2119;
+  --carbon-suave: #5C5148;
+  --horno: #F5A623;
+  --horno-claro: #F9C97A;
+  --horno-oscuro: #8A5A00;
+  --blanco: #FFFFFF;
+  --borde: #E4D9C6;
+  --rojo-error: #B3261E;
+  --sombra: 0 1px 3px rgba(43, 33, 25, 0.08), 0 6px 18px rgba(43, 33, 25, 0.08);
+  --sombra-alta: 0 10px 32px rgba(43, 33, 25, 0.22);
+  --sombra-flotante: 0 24px 64px rgba(43, 33, 25, 0.28), 0 10px 24px rgba(43, 33, 25, 0.14);
+}

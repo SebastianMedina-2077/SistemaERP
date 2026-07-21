@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="Pizza">
+  <circle cx="80" cy="62" r="50" fill="#E8B04B"/>
+  <circle cx="80" cy="62" r="42" fill="#F5C963"/>
+  <g stroke="#FAF3E7" stroke-width="2.5" opacity=".55">
+    <line x1="80" y1="20" x2="80" y2="104"/>
+    <line x1="38" y1="62" x2="122" y2="62"/>
+    <line x1="51" y1="33" x2="109" y2="91"/>
+    <line x1="109" y1="33" x2="51" y2="91"/>
+  </g>
+  <g fill="#C0392B">
+    <circle cx="66" cy="46" r="7"/>
+    <circle cx="97" cy="52" r="7"/>
+    <circle cx="60" cy="76" r="7"/>
+    <circle cx="92" cy="80" r="7"/>
+    <circle cx="80" cy="62" r="6"/>
+  </g>
+  <g fill="#8E2820" opacity=".35">
+    <circle cx="64" cy="44" r="1.6"/><circle cx="99" cy="50" r="1.6"/>
+    <circle cx="58" cy="74" r="1.6"/><circle cx="94" cy="78" r="1.6"/>
+  </g>
+  <g fill="#217A3A">
+    <ellipse cx="74" cy="34" rx="5" ry="2.6" transform="rotate(-20 74 34)"/>
+    <ellipse cx="106" cy="68" rx="5" ry="2.6" transform="rotate(30 106 68)"/>
+    <ellipse cx="72" cy="92" rx="5" ry="2.6" transform="rotate(12 72 92)"/>
+  </g>
+</svg>

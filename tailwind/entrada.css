@@ -1,0 +1,2 @@
+/* Entrada de Tailwind para la tienda: solo utilidades (sin base/components para no resetear el CSS propio). */
+@tailwind utilities;

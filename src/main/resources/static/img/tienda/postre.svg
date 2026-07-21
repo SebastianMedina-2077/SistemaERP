@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="Postre">
+  <path d="M40 96h80l-6-38a34 34 0 0 0-68 0z" fill="#D9A441"/>
+  <path d="M46 58a34 34 0 0 1 68 0l1 6c-6 6-12-4-18 2s-12-4-18 2-12-4-18 2-10-2-16-2z" fill="#F5C963"/>
+  <path d="M45 64c6 0 10 8 16 2s12 4 18-2 12 4 18-2 12-4 18-2l.8 5c-6 6-12-4-18 2s-12-4-18 2-12-4-18 2-10.8-2-16.8-2z" fill="#C0392B"/>
+  <circle cx="80" cy="18" r="8" fill="#C0392B"/>
+  <path d="M80 12c2-4 6-5 8-4" fill="none" stroke="#217A3A" stroke-width="3" stroke-linecap="round"/>
+  <rect x="34" y="94" width="92" height="8" rx="4" fill="#185C2C"/>
+</svg>
