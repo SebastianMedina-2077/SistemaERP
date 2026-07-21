@@ -21,22 +21,25 @@ INSERT INTO `rol` (`id_rol`, `nombre`) VALUES
   (3, 'Cocina');
 
 -- Empleados
-INSERT INTO `empleado` (`id_empleado`, `nombre`, `apellido`, `dni`, `telefono`, `cargo`) VALUES
-  (1, 'Lucia', 'Ramos', '72814391', '987654321', 'Administrador'),
-  (2, 'Mario', 'Salas', '73451298', '976431258', 'Cajero'),
-  (3, 'Rosa',  'Vega',  '70234511', '965214783', 'Cocina');
+INSERT INTO `empleado` (`id_empleado`, `nombre`, `apellido_paterno`, `apellido_materno`, `dni`, `telefono`, `cargo`) VALUES
+  (1, 'Lucia', 'Ramos', 'Delgado',  '72814391', '987654321', 'Administrador'),
+  (2, 'Mario', 'Salas', 'Huaman',   '73451298', '976431258', 'Cajero'),
+  (3, 'Rosa',  'Vega',  'Paredes',  '70234511', '965214783', 'Cocina');
 
 -- Usuarios (password con hash BCrypt)
 INSERT INTO `usuario` (`id_usuario`, `username`, `password`, `estado`, `es_admin_supremo`, `id_rol`, `id_empleado`) VALUES
   (1, 'admin',  '$2a$10$bvPfaGRFA8sLyulWsWQBf.4ZW4HFNekKTQICG/gzYw35HVcraEJPC', 1, 1, 1, 1),
   (2, 'cajero', '$2a$10$v2Gy1f/fkwyWtIzzPSeFEumyO1CjJveWNrkAgf83yfllPiuozKa4O', 1, 0, 2, 2),
-  (3, 'cocina', '$2a$10$pm8rF5t7SJjE14mPoso6xO0GlhB4OmzILmnAlCi2lqL5D8B4wGqGe', 1, 0, 3, 3);
+  (3, 'cocina', '$2a$10$pm8rF5t7SJjE14mPoso6xO0GlhB4OmzILmnAlCi2lqL5D8B4wGqGe', 1, 0, 3, 3),
+  -- Usuario sistema de la tienda web: firma los pedidos online. Deshabilitado
+  -- (estado 0) y con hash de una clave aleatoria descartada: no permite login.
+  (4, 'tienda', '$2a$10$Yhd8dS/fyMgOXmM3UljBmuX7ZEzmiIhSxhGOm.05UJad3lK1pXbqu', 0, 0, 2, NULL);
 
 -- Clientes
-INSERT INTO `cliente` (`id_cliente`, `nombre`, `telefono`) VALUES
-  (1, 'Carlos', '999111222'),
-  (2, 'Andrea', '988222333'),
-  (3, 'Miguel', '977333444');
+INSERT INTO `cliente` (`id_cliente`, `nombre`, `apellido_paterno`, `apellido_materno`, `telefono`) VALUES
+  (1, 'Carlos', 'Mendoza', 'Rojas',    '999111222'),
+  (2, 'Andrea', 'Castro',  'Flores',   '988222333'),
+  (3, 'Miguel', 'Torres',  'Guzman',   '977333444');
 
 -- Categorias
 INSERT INTO `categoria` (`id_categoria`, `nombre`) VALUES
@@ -113,6 +116,17 @@ INSERT INTO `producto` (`id_producto`, `codigo`, `nombre`, `precio`, `stock`, `t
   (57, 'CB0011', 'Mamma Mia Diavola Pepperoni',        29.90, NULL, NULL, 1, 3),
   (58, 'CB0012', 'Mamma Mia Americana Prosciutto',     39.90, NULL, NULL, 1, 3);
 
+-- Fotos reales de la carta (prototipo); el resto conserva su ilustracion SVG por categoria.
+UPDATE `producto` SET `imagen_url` = CONCAT('/img/tienda/productos/', `codigo`, '.webp')
+WHERE `codigo` IN (
+  'PZ0001','PZ0002','BB0001','CB0001','PZ0003','PZ0004','PZ0005','PZ0006',
+  'PZ0007','PZ0008','PZ0009','PZ0010','PZ0011','PZ0012','PZ0013','PZ0014',
+  'PZ0016','PZ0017','PZ0018','PZ0019','PZ0020','PZ0021','PZ0022','PZ0023',
+  'PZ0024','PZ0025','PZ0026','PZ0028','MN0001','MN0002','MN0004','PA0001',
+  'PA0002','PA0003','BB0003','BB0004','BB0005','CP0001','CP0005','CP0006',
+  'CB0002','CB0003','CB0004','CB0005','CB0006','CB0007','CB0008','CB0009',
+  'CB0010','CB0011','CB0012');
+
 -- Insumos
 INSERT INTO `insumo` (`id_insumo`, `codigo`, `nombre`, `precio`, `estado`, `stock`, `cantidad_minima`, `id_medida`) VALUES
   (1, 'IN0001', 'Queso mozzarella', 18.00, 'normal',  4.500, 3.000, 1),
@@ -122,12 +136,13 @@ INSERT INTO `insumo` (`id_insumo`, `codigo`, `nombre`, `precio`, `estado`, `stoc
   (5, 'IN0005', 'Gaseosa 500ml',     2.20, 'normal', 24.000, 8.000, 3),
   (6, 'IN0006', 'Agua mineral',      1.60, 'normal', 18.000, 6.000, 3);
 
--- Metodos de pago
+-- Metodos de pago ("Billetera" cubre las billeteras simuladas del checkout web)
 INSERT INTO `metodo_pago` (`id_metodopago`, `descripcion`, `activo`) VALUES
   (1, 'Efectivo', 1),
   (2, 'Tarjeta', 1),
   (3, 'Yape', 1),
-  (4, 'Plin', 1);
+  (4, 'Plin', 1),
+  (5, 'Billetera', 1);
 
 -- Tipos de movimiento
 INSERT INTO `tipo_movimiento` (`id_tipomovimiento`, `descripcion`, `operacion`) VALUES
@@ -158,10 +173,11 @@ INSERT INTO `combo_producto` (`cantidad`, `id_producto`, `id_combo`) VALUES
   (1, 1, 5),
   (2, 3, 5);
 
--- Promociones
-INSERT INTO `promocion` (`id_promocion`, `nombre`, `descripcion`, `tipo_descuento`, `valor_descuento`, `activa`) VALUES
-  (1, 'Bebida promo', '10% en gaseosa', 'Porcentaje', 10.00, 1),
-  (2, 'Pizza lunes',  'S/ 5 menos',     'Monto',       5.00, 0);
+-- Promociones. Las que tienen `codigo` son cupones: NO se aplican solas,
+-- solo cuando la cotizacion recibe ese codigo (BEBIDA10 descuenta en gaseosa).
+INSERT INTO `promocion` (`id_promocion`, `nombre`, `descripcion`, `tipo_descuento`, `valor_descuento`, `activa`, `codigo`) VALUES
+  (1, 'Bebida promo', '10% en gaseosa', 'Porcentaje', 10.00, 1, 'BEBIDA10'),
+  (2, 'Pizza lunes',  'S/ 5 menos',     'Monto',       5.00, 0, NULL);
 
 INSERT INTO `promocion_producto` (`id_promocion`, `id_producto`, `cantidad_minima`) VALUES
   (1, 3, 1),
@@ -225,6 +241,23 @@ INSERT INTO `detalle_movimiento` (`id_detallemovimiento`, `cantidad`, `stock_res
 INSERT INTO `comprobante_correlativo` (`serie`, `ultimo_numero`) VALUES
   ('B001', 0),
   ('F001', 0);
+
+-- ---------------------------------------------------------------------
+--  Adicionales (prototipo, a validar con la tienda): extras y salsas
+--  vinculados a todas las pizzas (categoria 1). Suman precio al cotizar.
+-- ---------------------------------------------------------------------
+INSERT INTO `adicional` (`id_adicional`, `nombre`, `precio`, `disponible`, `grupo`) VALUES
+  (1, 'Extra queso',        4.00, 1, 'Extra'),
+  (2, 'Doble pepperoni',    5.00, 1, 'Extra'),
+  (3, 'Extra champinones',  3.50, 1, 'Extra'),
+  (4, 'Crema Alioli',       2.90, 1, 'Salsa'),
+  (5, 'Crema Mediterranea', 2.90, 1, 'Salsa'),
+  (6, 'Salsa Arandano',     5.90, 1, 'Salsa');
+
+INSERT INTO `producto_adicional` (`id_producto`, `id_adicional`)
+SELECT p.`id_producto`, a.`id_adicional`
+FROM `producto` p CROSS JOIN `adicional` a
+WHERE p.`id_categoria` = 1;
 
 -- =====================================================================
 --  Fin de los datos iniciales

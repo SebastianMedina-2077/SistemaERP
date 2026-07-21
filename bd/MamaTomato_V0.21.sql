@@ -26,6 +26,12 @@ USE `erp_mamatomato`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `auditoria`;
+DROP TABLE IF EXISTS `detalle_pedido_adicional`;
+DROP TABLE IF EXISTS `producto_adicional`;
+DROP TABLE IF EXISTS `adicional`;
+DROP TABLE IF EXISTS `pedido_web`;
+DROP TABLE IF EXISTS `cliente_tarjeta`;
+DROP TABLE IF EXISTS `cliente_cuenta`;
 DROP TABLE IF EXISTS `detalle_movimiento`;
 DROP TABLE IF EXISTS `movimiento`;
 DROP TABLE IF EXISTS `detalle_compra`;
@@ -67,7 +73,8 @@ CREATE TABLE `rol` (
 CREATE TABLE `empleado` (
   `id_empleado` int NOT NULL AUTO_INCREMENT,
   `nombre` varchar(20) NOT NULL,
-  `apellido` varchar(20) NOT NULL,
+  `apellido_paterno` varchar(30) NOT NULL,
+  `apellido_materno` varchar(30) NOT NULL,
   `dni` char(8) NOT NULL,
   `telefono` char(9) NOT NULL,
   `cargo` varchar(15) NOT NULL,
@@ -86,11 +93,43 @@ CREATE TABLE `usuario` (
   PRIMARY KEY (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Apellidos y ubicacion los registra la tienda web; los clientes del POS pueden no tenerlos.
 CREATE TABLE `cliente` (
   `id_cliente` int NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(15) NOT NULL,
+  `nombre` varchar(40) NOT NULL,
+  `apellido_paterno` varchar(40) DEFAULT NULL,
+  `apellido_materno` varchar(40) DEFAULT NULL,
   `telefono` char(9) DEFAULT NULL,
+  `departamento` varchar(60) DEFAULT NULL,
+  `provincia` varchar(60) DEFAULT NULL,
+  `distrito` varchar(60) DEFAULT NULL,
+  `direccion_exacta` varchar(50) DEFAULT NULL,
+  `referencia` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id_cliente`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Cuenta de acceso de un cliente a la tienda en linea (login con email + JWT).
+CREATE TABLE `cliente_cuenta` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_cliente` int NOT NULL,
+  `email` varchar(120) NOT NULL,
+  `password_hash` varchar(60) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `fecha_registro` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_clientecuenta_cliente` (`id_cliente`),
+  UNIQUE KEY `uk_clientecuenta_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Tarjetas guardadas del cliente web: solo marca + ultimos 4 + titular; JAMAS el numero completo ni el CVV.
+CREATE TABLE `cliente_tarjeta` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_cuenta` int NOT NULL,
+  `marca` varchar(20) NOT NULL,
+  `ultimos4` char(4) NOT NULL,
+  `titular` varchar(80) NOT NULL,
+  `fecha_registro` datetime NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `proveedor` (
@@ -154,6 +193,7 @@ CREATE TABLE `producto` (
   `stock` int DEFAULT NULL,
   `tamanio` enum('personal','mediano','familiar') DEFAULT NULL,
   `disponible` tinyint(1) NOT NULL,
+  `imagen_url` varchar(500) DEFAULT NULL,
   `id_categoria` int NOT NULL,
   PRIMARY KEY (`id_producto`),
   UNIQUE KEY `uk_producto_codigo` (`codigo`)
@@ -175,6 +215,23 @@ CREATE TABLE `combo_producto` (
   PRIMARY KEY (`id_producto`,`id_combo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Adicionales cobrables al cliente (extra queso, salsas, etc.). Suman precio al cotizar.
+CREATE TABLE `adicional` (
+  `id_adicional` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(40) NOT NULL,
+  `precio` decimal(6,2) NOT NULL,
+  `disponible` tinyint(1) NOT NULL DEFAULT 1,
+  `grupo` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id_adicional`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Adicionales que admite cada producto.
+CREATE TABLE `producto_adicional` (
+  `id_producto` int NOT NULL,
+  `id_adicional` int NOT NULL,
+  PRIMARY KEY (`id_producto`,`id_adicional`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE `promocion` (
   `id_promocion` int NOT NULL AUTO_INCREMENT,
   `nombre` varchar(25) DEFAULT NULL,
@@ -182,7 +239,9 @@ CREATE TABLE `promocion` (
   `tipo_descuento` varchar(20) DEFAULT NULL,
   `valor_descuento` decimal(8,2) DEFAULT NULL,
   `activa` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id_promocion`)
+  `codigo` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id_promocion`),
+  UNIQUE KEY `uk_promocion_codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `promocion_producto` (
@@ -216,6 +275,16 @@ CREATE TABLE `detalle_pedido` (
   `id_pedido` int NOT NULL,
   `id_producto` int NOT NULL,
   PRIMARY KEY (`id_detallepedido`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Adicionales elegidos en una linea del pedido; precio_unitario congela el precio al vender.
+CREATE TABLE `detalle_pedido_adicional` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cantidad` int NOT NULL,
+  `precio_unitario` decimal(6,2) NOT NULL,
+  `id_detallepedido` int NOT NULL,
+  `id_adicional` int NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Comprobante de la venta. Los campos de comprobante electronico
@@ -269,6 +338,20 @@ CREATE TABLE `pago` (
   `id_pedido` int NOT NULL,
   `id_metodopago` int NOT NULL,
   PRIMARY KEY (`id_pago`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Detalle web de un pedido hecho desde la tienda en linea: cuenta que lo
+-- genero y modalidad de entrega. La venta en si vive en `pedido` (mismo
+-- flujo del POS: detalle, boleta, pagos y kardex).
+CREATE TABLE `pedido_web` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_pedido` int NOT NULL,
+  `id_cuenta` int NOT NULL,
+  `modalidad` enum('DELIVERY','RECOJO') NOT NULL,
+  `direccion` varchar(150) DEFAULT NULL,
+  `fecha` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pedidoweb_pedido` (`id_pedido`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---------------------------------------------------------------------
@@ -340,6 +423,12 @@ ALTER TABLE `usuario`
   ADD CONSTRAINT `fk_usuario_rol` FOREIGN KEY (`id_rol`) REFERENCES `rol` (`id_rol`),
   ADD CONSTRAINT `fk_usuario_empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleado` (`id_empleado`);
 
+ALTER TABLE `cliente_cuenta`
+  ADD CONSTRAINT `fk_clientecuenta_cliente` FOREIGN KEY (`id_cliente`) REFERENCES `cliente` (`id_cliente`);
+
+ALTER TABLE `cliente_tarjeta`
+  ADD CONSTRAINT `fk_clientetarjeta_cuenta` FOREIGN KEY (`id_cuenta`) REFERENCES `cliente_cuenta` (`id`);
+
 ALTER TABLE `insumo`
   ADD CONSTRAINT `fk_insumo_medida` FOREIGN KEY (`id_medida`) REFERENCES `medida` (`id_medida`);
 
@@ -366,6 +455,14 @@ ALTER TABLE `detalle_pedido`
   ADD CONSTRAINT `fk_detallepedido_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`),
   ADD CONSTRAINT `fk_detallepedido_producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`);
 
+ALTER TABLE `producto_adicional`
+  ADD CONSTRAINT `fk_prodadic_producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`),
+  ADD CONSTRAINT `fk_prodadic_adicional` FOREIGN KEY (`id_adicional`) REFERENCES `adicional` (`id_adicional`);
+
+ALTER TABLE `detalle_pedido_adicional`
+  ADD CONSTRAINT `fk_detadic_detalle` FOREIGN KEY (`id_detallepedido`) REFERENCES `detalle_pedido` (`id_detallepedido`),
+  ADD CONSTRAINT `fk_detadic_adicional` FOREIGN KEY (`id_adicional`) REFERENCES `adicional` (`id_adicional`);
+
 ALTER TABLE `boleta`
   ADD CONSTRAINT `fk_boleta_metodopago` FOREIGN KEY (`id_metodopago`) REFERENCES `metodo_pago` (`id_metodopago`),
   ADD CONSTRAINT `fk_boleta_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`);
@@ -373,6 +470,10 @@ ALTER TABLE `boleta`
 ALTER TABLE `pago`
   ADD CONSTRAINT `fk_pago_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`),
   ADD CONSTRAINT `fk_pago_metodopago` FOREIGN KEY (`id_metodopago`) REFERENCES `metodo_pago` (`id_metodopago`);
+
+ALTER TABLE `pedido_web`
+  ADD CONSTRAINT `fk_pedidoweb_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`),
+  ADD CONSTRAINT `fk_pedidoweb_cuenta` FOREIGN KEY (`id_cuenta`) REFERENCES `cliente_cuenta` (`id`);
 
 ALTER TABLE `compra`
   ADD CONSTRAINT `fk_compra_proveedor` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedor` (`id_proveedor`),
