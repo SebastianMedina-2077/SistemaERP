@@ -40,5 +40,18 @@ public class CotizacionDTO {
         private BigDecimal precioUnitario;
         private BigDecimal descuento;
         private BigDecimal subtotalLinea;
+        private List<LineaAdicional> adicionales;
+    }
+
+    /** Adicional resuelto en una linea (precio puesto por el servidor). */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LineaAdicional {
+        private Integer idAdicional;
+        private String nombre;
+        private BigDecimal precioUnitario;
+        private Integer cantidad;
     }
 }

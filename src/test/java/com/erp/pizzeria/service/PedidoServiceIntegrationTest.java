@@ -32,6 +32,7 @@ class PedidoServiceIntegrationTest {
     private static final Integer ID_CAJERO = 2;
     private static final Integer ID_EFECTIVO = 1;
     private static final Integer ID_PIZZA_AMERICANA = 1; // receta: queso 0.5, salsa 0.25, masa 1.0
+    private static final Integer ID_GASEOSA = 3; // vinculada a la promo-cupon BEBIDA10 (10%)
 
     @Autowired
     private PedidoService pedidoService;
@@ -51,7 +52,7 @@ class PedidoServiceIntegrationTest {
         dto.setClienteNombre("Cliente Test");
         dto.setClienteTelefono("999000111");
         dto.setIdMetodoPago(ID_EFECTIVO);
-        dto.setItems(List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, cantidad, observacion)));
+        dto.setItems(List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, cantidad, observacion, null)));
         return dto;
     }
 
@@ -100,5 +101,37 @@ class PedidoServiceIntegrationTest {
 
         // La verificacion ocurre antes de cualquier escritura: stock intacto
         assertThat(stock(1)).isEqualByComparingTo(quesoAntes);
+    }
+
+    @Test
+    void cotizar_adicionalSumaPrecioEnServidor() {
+        // Adicional 1 (Extra queso, 4.00) vinculado a las pizzas (cat 1).
+        var conAdicional = List.of(new DetallePedidoDTO(
+                ID_PIZZA_AMERICANA, 1, null,
+                List.of(new com.erp.pizzeria.dto.AdicionalSeleccionadoDTO(1, 1))));
+        var sinAdicional = List.of(new DetallePedidoDTO(ID_PIZZA_AMERICANA, 1, null, null));
+
+        BigDecimal totalSin = pedidoService.cotizar(sinAdicional).getTotal();
+        BigDecimal totalCon = pedidoService.cotizar(conAdicional).getTotal();
+
+        // El total sube exactamente el precio del adicional (resuelto en servidor).
+        assertThat(totalCon).isEqualByComparingTo(totalSin.add(new BigDecimal("4.00")));
+    }
+
+    @Test
+    void cotizar_cuponAplicaSoloConCodigo() {
+        List<DetallePedidoDTO> items = List.of(new DetallePedidoDTO(ID_GASEOSA, 1, null, null));
+        BigDecimal precio = catalogService.getProducto(ID_GASEOSA).getPrecio();
+
+        // Una promocion con codigo NO se auto-aplica: sin cupon el total es el precio pleno.
+        assertThat(pedidoService.cotizar(items).getTotal()).isEqualByComparingTo(precio);
+
+        // Con el cupon valido se aplica su 10% sobre la linea.
+        BigDecimal descuento = precio.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
+        assertThat(pedidoService.cotizar(items, "BEBIDA10").getTotal())
+                .isEqualByComparingTo(precio.subtract(descuento));
+
+        // Un codigo inexistente se ignora sin error.
+        assertThat(pedidoService.cotizar(items, "NOEXISTE").getTotal()).isEqualByComparingTo(precio);
     }
 }

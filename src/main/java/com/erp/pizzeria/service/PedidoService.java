@@ -1,5 +1,6 @@
 package com.erp.pizzeria.service;
 
+import com.erp.pizzeria.dto.AdicionalSeleccionadoDTO;
 import com.erp.pizzeria.dto.BoletaDTO;
 import com.erp.pizzeria.dto.CajeroOpcion;
 import com.erp.pizzeria.dto.CotizacionDTO;
@@ -8,21 +9,27 @@ import com.erp.pizzeria.dto.PagoDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
 import com.erp.pizzeria.dto.PedidoDTO;
 import com.erp.pizzeria.exception.ResourceNotFoundException;
+import com.erp.pizzeria.model.Adicional;
 import com.erp.pizzeria.model.Boleta;
 import com.erp.pizzeria.model.Cliente;
 import com.erp.pizzeria.model.DetallePedido;
+import com.erp.pizzeria.model.DetallePedidoAdicional;
 import com.erp.pizzeria.model.Insumo;
 import com.erp.pizzeria.model.MetodoPago;
 import com.erp.pizzeria.model.Pago;
 import com.erp.pizzeria.model.Pedido;
 import com.erp.pizzeria.model.Producto;
+import com.erp.pizzeria.model.Promocion;
 import com.erp.pizzeria.model.Usuario;
 import com.erp.pizzeria.model.enums.EstadoPedido;
 import com.erp.pizzeria.model.enums.TipoComprobante;
+import com.erp.pizzeria.repository.AdicionalRepository;
 import com.erp.pizzeria.repository.BoletaRepository;
 import com.erp.pizzeria.repository.ClienteRepository;
+import com.erp.pizzeria.repository.DetallePedidoAdicionalRepository;
 import com.erp.pizzeria.repository.DetallePedidoRepository;
 import com.erp.pizzeria.repository.MetodoPagoRepository;
+import com.erp.pizzeria.repository.ProductoAdicionalRepository;
 import com.erp.pizzeria.repository.PagoRepository;
 import com.erp.pizzeria.repository.PedidoRepository;
 import com.erp.pizzeria.repository.UsuarioRepository;
@@ -40,6 +47,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -63,6 +72,9 @@ public class PedidoService {
     private final ClienteEmpresaService clienteEmpresaService;
     private final EmailComprobanteService emailComprobanteService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AdicionalRepository adicionalRepository;
+    private final ProductoAdicionalRepository productoAdicionalRepository;
+    private final DetallePedidoAdicionalRepository detallePedidoAdicionalRepository;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          DetallePedidoRepository detallePedidoRepository,
@@ -76,7 +88,10 @@ public class PedidoService {
                          CorrelativoService correlativoService,
                          ClienteEmpresaService clienteEmpresaService,
                          EmailComprobanteService emailComprobanteService,
-                         ApplicationEventPublisher eventPublisher) {
+                         ApplicationEventPublisher eventPublisher,
+                         AdicionalRepository adicionalRepository,
+                         ProductoAdicionalRepository productoAdicionalRepository,
+                         DetallePedidoAdicionalRepository detallePedidoAdicionalRepository) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
         this.boletaRepository = boletaRepository;
@@ -90,6 +105,9 @@ public class PedidoService {
         this.clienteEmpresaService = clienteEmpresaService;
         this.emailComprobanteService = emailComprobanteService;
         this.eventPublisher = eventPublisher;
+        this.adicionalRepository = adicionalRepository;
+        this.productoAdicionalRepository = productoAdicionalRepository;
+        this.detallePedidoAdicionalRepository = detallePedidoAdicionalRepository;
     }
 
     // ---- Lecturas --------------------------------------------------
@@ -112,7 +130,7 @@ public class PedidoService {
 
     private String nombreCajero(Usuario u) {
         return u.getEmpleado() != null
-                ? u.getEmpleado().getNombre() + " " + u.getEmpleado().getApellido()
+                ? u.getEmpleado().getNombre() + " " + u.getEmpleado().getApellidoPaterno() + " " + u.getEmpleado().getApellidoMaterno()
                 : u.getUsername();
     }
 
@@ -176,11 +194,18 @@ public class PedidoService {
      */
     @Transactional(readOnly = true)
     public CotizacionDTO cotizar(List<DetallePedidoDTO> items) {
+        return cotizar(items, null);
+    }
+
+    /** Cotizacion con cupon opcional: un codigo invalido o inactivo simplemente se ignora. */
+    @Transactional(readOnly = true)
+    public CotizacionDTO cotizar(List<DetallePedidoDTO> items, String codigoCupon) {
+        Promocion cupon = catalogService.getCuponActivo(codigoCupon);
         List<CotizacionDTO.Linea> lineas = new java.util.ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
         for (DetallePedidoDTO item : items) {
             Producto producto = catalogService.getProducto(item.getIdProducto());
-            CotizacionDTO.Linea linea = calcularLinea(producto, item.getCantidad());
+            CotizacionDTO.Linea linea = calcularLinea(producto, item, cupon);
             lineas.add(linea);
             total = total.add(linea.getSubtotalLinea());
         }
@@ -200,12 +225,19 @@ public class PedidoService {
      * Calculo de una linea (unico punto de verdad, reutilizado por crearPedido y cotizar):
      * subtotalLinea = precio x cantidad - descuento, redondeado a 2 (HALF_UP).
      */
-    private CotizacionDTO.Linea calcularLinea(Producto producto, int cantidad) {
+    private CotizacionDTO.Linea calcularLinea(Producto producto, DetallePedidoDTO item, Promocion cupon) {
+        int cantidad = item.getCantidad();
         BigDecimal precioUnitario = producto.getPrecio();
-        BigDecimal descuento = catalogService.calcularDescuento(producto, cantidad);
+        BigDecimal descuento = catalogService.calcularDescuento(producto, cantidad, cupon);
+        List<CotizacionDTO.LineaAdicional> adicionales = resolverAdicionales(producto, item.getAdicionales());
+        // Los adicionales suman por encima del producto y aplican a cada unidad de la linea.
+        BigDecimal adicionalPorUnidad = adicionales.stream()
+                .map(a -> a.getPrecioUnitario().multiply(BigDecimal.valueOf(a.getCantidad())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal subtotalLinea = precioUnitario
                 .multiply(BigDecimal.valueOf(cantidad))
                 .subtract(descuento)
+                .add(adicionalPorUnidad.multiply(BigDecimal.valueOf(cantidad)))
                 .setScale(2, RoundingMode.HALF_UP);
         return CotizacionDTO.Linea.builder()
                 .idProducto(producto.getIdProducto())
@@ -213,7 +245,39 @@ public class PedidoService {
                 .precioUnitario(precioUnitario)
                 .descuento(descuento)
                 .subtotalLinea(subtotalLinea)
+                .adicionales(adicionales)
                 .build();
+    }
+
+    /** Resuelve en servidor los adicionales elegidos: valida vinculo con el producto y disponibilidad. */
+    private List<CotizacionDTO.LineaAdicional> resolverAdicionales(Producto producto, List<AdicionalSeleccionadoDTO> seleccion) {
+        if (seleccion == null || seleccion.isEmpty()) return List.of();
+        Set<Integer> permitidos = productoAdicionalRepository.findByProducto_IdProducto(producto.getIdProducto())
+                .stream().map(pa -> pa.getAdicional().getIdAdicional()).collect(Collectors.toSet());
+        List<CotizacionDTO.LineaAdicional> resultado = new java.util.ArrayList<>();
+        for (AdicionalSeleccionadoDTO sel : seleccion) {
+            Adicional adicional = adicionalRepository.findById(sel.getIdAdicional())
+                    .orElseThrow(() -> new ResourceNotFoundException("Adicional no encontrado: " + sel.getIdAdicional()));
+            if (!permitidos.contains(adicional.getIdAdicional()) || !Boolean.TRUE.equals(adicional.getDisponible())) {
+                throw new IllegalArgumentException("El adicional '" + adicional.getNombre() + "' no esta disponible para este producto");
+            }
+            resultado.add(new CotizacionDTO.LineaAdicional(adicional.getIdAdicional(), adicional.getNombre(),
+                    adicional.getPrecio(), sel.getCantidad()));
+        }
+        return resultado;
+    }
+
+    /** Persiste los adicionales elegidos en una linea, congelando el precio de venta. */
+    private void guardarAdicionales(DetallePedido detalle, List<CotizacionDTO.LineaAdicional> adicionales) {
+        if (adicionales == null) return;
+        for (CotizacionDTO.LineaAdicional adic : adicionales) {
+            DetallePedidoAdicional dpa = new DetallePedidoAdicional();
+            dpa.setDetallePedido(detalle);
+            dpa.setAdicional(adicionalRepository.getReferenceById(adic.getIdAdicional()));
+            dpa.setCantidad(adic.getCantidad());
+            dpa.setPrecioUnitario(adic.getPrecioUnitario());
+            detallePedidoAdicionalRepository.save(dpa);
+        }
     }
 
     /** Extrae el IGV incluido en un total: igv = total x 18/118, redondeado a 2 (HALF_UP). */
@@ -250,12 +314,15 @@ public class PedidoService {
         pedido.setCliente(cliente);
         pedido = pedidoRepository.save(pedido);
 
+        // Mismo cupon que la cotizacion previa: el total persistido cuadra con el cotizado.
+        Promocion cupon = catalogService.getCuponActivo(dto.getCodigo());
+
         BigDecimal total = BigDecimal.ZERO;
         List<DetallePedido> detalles = new java.util.ArrayList<>();
         for (DetallePedidoDTO item : dto.getItems()) {
             Producto producto = productos.get(item.getIdProducto());
             // MISMO calculo por linea que usa la cotizacion (preview de precios).
-            CotizacionDTO.Linea linea = calcularLinea(producto, item.getCantidad());
+            CotizacionDTO.Linea linea = calcularLinea(producto, item, cupon);
 
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedido);
@@ -267,6 +334,7 @@ public class PedidoService {
             detalle.setObservacion(item.getObservacion());
             detallePedidoRepository.save(detalle);
             detalles.add(detalle);
+            guardarAdicionales(detalle, linea.getAdicionales());
 
             total = total.add(linea.getSubtotalLinea());
         }
