@@ -165,6 +165,8 @@ public class PersonaService {
     public Usuario crearUsuario(UsuarioFormDTO form) {
         Usuario usuario = new Usuario();
         usuario.setPassword(passwordEncoder.encode(form.getPassword()));
+        // Una cuenta nueva nace activa; el estado se administra despues desde el listado.
+        usuario.setEstado(true);
         return guardarUsuario(usuario, form);
     }
 
@@ -181,9 +183,13 @@ public class PersonaService {
         return guardarUsuario(usuario, form);
     }
 
+    /**
+     * Datos editables del usuario. El estado NO se toca aqui: se administra solo con el
+     * switch del listado ({@link #cambiarEstadoUsuario}), asi editar no reactiva por error
+     * una cuenta desactivada.
+     */
     private Usuario guardarUsuario(Usuario usuario, UsuarioFormDTO form) {
         usuario.setUsername(form.getUsername().trim());
-        usuario.setEstado(form.isEstado());
         usuario.setRol(rolRepository.findById(form.getIdRol())
                 .orElseThrow(() -> ResourceNotFoundException.of("Rol", form.getIdRol())));
         usuario.setEmpleado(form.getIdEmpleado() != null ? getEmpleado(form.getIdEmpleado()) : null);

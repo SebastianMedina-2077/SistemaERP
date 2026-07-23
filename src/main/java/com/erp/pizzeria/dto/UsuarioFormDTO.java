@@ -26,14 +26,12 @@ public class UsuarioFormDTO {
 
     private Integer idEmpleado;
 
-    private boolean estado = true;
-
+    // El estado no viaja en este formulario: se cambia con el switch del listado.
     public static UsuarioFormDTO from(Usuario u) {
         UsuarioFormDTO f = new UsuarioFormDTO();
         f.username = u.getUsername();
         f.idRol = u.getRol() != null ? u.getRol().getIdRol() : null;
         f.idEmpleado = u.getEmpleado() != null ? u.getEmpleado().getIdEmpleado() : null;
-        f.estado = Boolean.TRUE.equals(u.getEstado());
         return f;
     }
 }
