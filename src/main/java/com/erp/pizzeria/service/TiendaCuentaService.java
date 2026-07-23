@@ -43,17 +43,20 @@ public class TiendaCuentaService {
     private final ClienteTarjetaRepository tarjetaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final VerificacionCorreoService verificacionCorreoService;
 
     public TiendaCuentaService(ClienteCuentaRepository cuentaRepository,
                                ClienteRepository clienteRepository,
                                ClienteTarjetaRepository tarjetaRepository,
                                PasswordEncoder passwordEncoder,
-                               JwtService jwtService) {
+                               JwtService jwtService,
+                               VerificacionCorreoService verificacionCorreoService) {
         this.cuentaRepository = cuentaRepository;
         this.clienteRepository = clienteRepository;
         this.tarjetaRepository = tarjetaRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.verificacionCorreoService = verificacionCorreoService;
     }
 
     /** Crea el Cliente y su cuenta web; devuelve la sesion con el JWT emitido. */
@@ -80,8 +83,12 @@ public class TiendaCuentaService {
         cuenta.setEmail(email);
         cuenta.setPasswordHash(passwordEncoder.encode(datos.getPassword()));
         cuenta.setActivo(true);
+        cuenta.setEmailVerificado(false);
         cuenta.setFechaRegistro(LocalDateTime.now());
         cuentaRepository.save(cuenta);
+
+        // Verificacion blanda: se envia el codigo pero no bloquea el login ni el JWT.
+        verificacionCorreoService.generarYEnviar(email);
 
         return emitirSesion(cuenta);
     }
@@ -131,10 +138,35 @@ public class TiendaCuentaService {
                 cuenta.getCliente().getTelefono(), tarjetas);
     }
 
+    /**
+     * Confirma el correo de la cuenta autenticada con el codigo recibido. Si ya estaba
+     * verificado, es idempotente (devuelve ok). Un codigo incorrecto o vencido lanza
+     * IllegalArgumentException (el controlador lo traduce a 400).
+     */
+    @Transactional
+    public void verificarCorreo(String codigo) {
+        ClienteCuenta cuenta = cuentaActual();
+        if (Boolean.TRUE.equals(cuenta.getEmailVerificado())) {
+            return;
+        }
+        if (!verificacionCorreoService.validar(cuenta.getEmail(), codigo)) {
+            throw new IllegalArgumentException("El codigo es incorrecto o ha vencido");
+        }
+        cuenta.setEmailVerificado(true);
+        cuentaRepository.save(cuenta);
+    }
+
+    /** Reenvia un codigo nuevo a la cuenta autenticada. */
+    public void reenviarCodigo() {
+        ClienteCuenta cuenta = cuentaActual();
+        verificacionCorreoService.generarYEnviar(cuenta.getEmail());
+    }
+
     private SesionTiendaDTO emitirSesion(ClienteCuenta cuenta) {
         String nombre = cuenta.getCliente().getNombre();
         String token = jwtService.emitir(cuenta.getId(), cuenta.getEmail(), nombre);
-        return new SesionTiendaDTO(token, nombre, cuenta.getEmail());
+        return new SesionTiendaDTO(token, nombre, cuenta.getEmail(),
+                Boolean.TRUE.equals(cuenta.getEmailVerificado()));
     }
 
     private String normalizarEmail(String email) {

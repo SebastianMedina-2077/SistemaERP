@@ -35,6 +35,13 @@ public class ClienteCuenta {
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
+    /**
+     * Correo verificado por codigo (verificacion blanda): no bloquea el login ni la
+     * emision del JWT; solo marca que el cliente confirmo su correo.
+     */
+    @Column(name = "email_verificado", nullable = false)
+    private Boolean emailVerificado = false;
+
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 }

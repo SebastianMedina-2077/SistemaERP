@@ -7,15 +7,20 @@ import { UBIGEO } from "./ubigeo.js";
 const API = {
   registro: "/api/tienda/auth/registro",
   ingreso: "/api/tienda/auth/login",
+  verificar: "/api/tienda/cuenta/verificar",
+  reenviar: "/api/tienda/cuenta/reenviar",
 };
 const CLAVE_SESION = "tienda.sesion";
 
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-async function peticion(metodo, url, cuerpo) {
+// El chain de /api/tienda es JWT stateless; las llamadas autenticadas viajan con
+// Authorization: Bearer <token>. El CSRF se manda por compatibilidad si existe.
+async function peticion(metodo, url, cuerpo, token) {
   const headers = { Accept: "application/json", "Content-Type": "application/json" };
   if (csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+  if (token) headers.Authorization = `Bearer ${token}`;
   let res;
   try {
     res = await fetch(url, { method: metodo, headers, body: JSON.stringify(cuerpo) });
@@ -219,13 +224,138 @@ formularioRegistro.addEventListener("submit", async (ev) => {
   try {
     const sesion = await peticion("POST", API.registro, datos);
     guardarSesion(sesion, true); // cuenta nueva: se recuerda en este dispositivo
-    volverALaTienda();
+    // La cuenta ya quedó creada y con sesión; el correo se verifica en el paso siguiente.
+    if (sesion.emailVerificado) volverALaTienda();
+    else mostrarVerificacion(sesion);
   } catch (err) {
     if (err.status === 409) pintarErrores(formularioRegistro, { email: err.datos?.error || "Este email ya está registrado." });
     else if (err.status === 400) pintarErrores(formularioRegistro, err.datos?.campos || {}, err.datos?.error);
     else mostrarAviso(err.message, "error");
     boton.disabled = false;
   }
+});
+
+// ---------- Paso de verificación de correo (tras el registro) ----------
+const pestanas = document.querySelector(".pestanas");
+const pasoVerificacion = document.querySelector("#pasoVerificacion");
+const verificacionEmail = document.querySelector("#verificacionEmail");
+const verificacionContador = document.querySelector("#verificacionContador");
+const verificacionTiempo = document.querySelector("#verificacionTiempo");
+const campoCodigo = document.querySelector("#campoCodigo");
+const errorCodigo = document.querySelector("#errorCodigo");
+const botonVerificar = document.querySelector("#botonVerificar");
+const botonReenviar = document.querySelector("#botonReenviar");
+const enlaceVerificarLuego = document.querySelector("#enlaceVerificarLuego");
+
+const DURACION_CODIGO = 600; // 10 minutos, igual que el backend
+const ESPERA_REENVIO = 30;   // segundos antes de poder reenviar
+let tokenVerificacion = null;
+let idContador = null;
+let segundosRestantes = 0;
+
+function formatearTiempo(seg) {
+  const s = Math.max(seg, 0);
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function detenerContador() {
+  if (idContador) { clearInterval(idContador); idContador = null; }
+}
+
+function iniciarContador() {
+  detenerContador();
+  segundosRestantes = DURACION_CODIGO;
+  verificacionContador.classList.remove("vencido");
+  verificacionTiempo.textContent = formatearTiempo(segundosRestantes);
+  botonReenviar.disabled = true;
+  idContador = setInterval(() => {
+    segundosRestantes -= 1;
+    verificacionTiempo.textContent = formatearTiempo(segundosRestantes);
+    // El reenvío se habilita tras una breve espera y sigue disponible al vencer
+    if (segundosRestantes <= DURACION_CODIGO - ESPERA_REENVIO) botonReenviar.disabled = false;
+    if (segundosRestantes <= 0) {
+      detenerContador();
+      verificacionContador.classList.add("vencido");
+      botonReenviar.disabled = false;
+    }
+  }, 1000);
+}
+
+function limpiarErrorCodigo() {
+  errorCodigo.textContent = "";
+  errorCodigo.classList.remove("visible");
+  campoCodigo.removeAttribute("aria-invalid");
+}
+
+function pintarErrorCodigo(mensaje) {
+  errorCodigo.textContent = mensaje;
+  errorCodigo.classList.add("visible");
+  campoCodigo.setAttribute("aria-invalid", "true");
+}
+
+function mostrarVerificacion(sesion) {
+  tokenVerificacion = sesion.token;
+  verificacionEmail.textContent = sesion.email || "tu correo";
+  pestanas.hidden = true;
+  formularioIngreso.hidden = true;
+  formularioRegistro.hidden = true;
+  pasoVerificacion.hidden = false;
+  limpiarErrorCodigo();
+  campoCodigo.value = "";
+  iniciarContador();
+  campoCodigo.focus();
+}
+
+// Solo dígitos en el input del código
+campoCodigo.addEventListener("input", () => {
+  campoCodigo.value = campoCodigo.value.replace(/\D/g, "").slice(0, 6);
+  limpiarErrorCodigo();
+});
+campoCodigo.addEventListener("keydown", (ev) => {
+  if (ev.key === "Enter") { ev.preventDefault(); botonVerificar.click(); }
+});
+
+botonVerificar.addEventListener("click", async () => {
+  const codigo = campoCodigo.value.trim();
+  limpiarErrorCodigo();
+  if (!/^\d{6}$/.test(codigo)) {
+    pintarErrorCodigo("Ingresa el código de 6 dígitos.");
+    campoCodigo.focus();
+    return;
+  }
+  botonVerificar.disabled = true;
+  try {
+    await peticion("POST", API.verificar, { codigo }, tokenVerificacion);
+    detenerContador();
+    mostrarAviso("¡Correo verificado!", "exito");
+    setTimeout(volverALaTienda, 700);
+  } catch (err) {
+    if (err.status === 400) pintarErrorCodigo(err.datos?.error || "El código es incorrecto o ha vencido.");
+    else mostrarAviso(err.message, "error");
+    botonVerificar.disabled = false;
+    campoCodigo.focus();
+  }
+});
+
+botonReenviar.addEventListener("click", async () => {
+  botonReenviar.disabled = true;
+  try {
+    await peticion("POST", API.reenviar, {}, tokenVerificacion);
+    limpiarErrorCodigo();
+    campoCodigo.value = "";
+    iniciarContador();
+    mostrarAviso("Código reenviado", "exito");
+    campoCodigo.focus();
+  } catch (err) {
+    mostrarAviso(err.message, "error");
+    botonReenviar.disabled = false;
+  }
+});
+
+// Verificación blanda: la cuenta ya existe y tiene sesión, se puede verificar luego
+enlaceVerificarLuego.addEventListener("click", () => {
+  detenerContador();
+  volverALaTienda();
 });
 
 // Si ya hay sesión, no tiene sentido quedarse aquí

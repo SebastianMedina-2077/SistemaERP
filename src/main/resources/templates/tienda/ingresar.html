@@ -160,6 +160,34 @@
       <p class="error-general" data-error="general" role="alert"></p>
       <button type="submit" class="boton boton-verde boton-lleno">Crear cuenta</button>
     </form>
+
+    <!-- Paso de verificación de correo: aparece tras un registro exitoso.
+         Verificación blanda — se puede omitir con "Verificar más tarde". -->
+    <section class="verificacion" id="pasoVerificacion" aria-labelledby="verificacionTitulo" hidden>
+      <h1 class="ingreso-titulo" id="verificacionTitulo">Confirma tu correo</h1>
+      <p class="ingreso-subtitulo">Te enviamos un código de 6 dígitos a
+        <strong id="verificacionEmail">tu correo</strong>. Ingrésalo para activar tu cuenta.</p>
+
+      <label class="campo" for="campoCodigo">Código de verificación
+        <input type="text" id="campoCodigo" name="codigo" class="entrada-codigo"
+               inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+               pattern="\d{6}" placeholder="000000" aria-describedby="errorCodigo">
+        <span class="error-campo" data-error="codigo" id="errorCodigo" role="alert"></span>
+      </label>
+
+      <p class="verificacion-contador" id="verificacionContador" aria-live="polite">
+        El código vence en <strong id="verificacionTiempo">10:00</strong>
+      </p>
+
+      <button type="button" class="boton boton-verde boton-lleno" id="botonVerificar">
+        <svg class="icono" aria-hidden="true"><use href="#icono-check"/></svg> Verificar
+      </button>
+      <button type="button" class="boton boton-secundario boton-lleno" id="botonReenviar" disabled>
+        Reenviar código
+      </button>
+
+      <button type="button" class="enlace-omitir" id="enlaceVerificarLuego">Verificar más tarde</button>
+    </section>
   </section>
 
   <!-- Columna derecha: la marca -->

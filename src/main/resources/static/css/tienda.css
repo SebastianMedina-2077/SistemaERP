@@ -1030,6 +1030,26 @@ input, select { font: inherit; color: inherit; }
 }
 .ingreso-virtudes .icono { flex: none; width: 22px; height: 22px; color: var(--verde); }
 
+/* ---------- Paso de verificación de correo (tras el registro) ---------- */
+.verificacion { display: grid; gap: 16px; animation: aparecer 0.2s ease; }
+.entrada-codigo {
+  font-family: var(--fuente-display); font-weight: 400;
+  font-size: 1.6rem; text-align: center;
+  letter-spacing: 0.4em; text-indent: 0.4em; /* compensa el espaciado final para centrar */
+}
+.verificacion-contador {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: -4px 0; font-size: 0.9rem; color: var(--carbon-suave);
+}
+.verificacion-contador strong { color: var(--verde-profundo); font-variant-numeric: tabular-nums; }
+.verificacion-contador.vencido strong { color: var(--rojo-error); }
+.enlace-omitir {
+  justify-self: center; background: none; border: none; cursor: pointer;
+  min-height: 44px; font-weight: 600; font-size: 0.9rem; color: var(--carbon-suave);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.enlace-omitir:hover { color: var(--verde-profundo); }
+
 @media (min-width: 900px) {
   .pagina-ingreso { grid-template-columns: minmax(380px, 520px) 1fr; gap: 36px; padding-top: 40px; }
   .ingreso-marca { position: sticky; top: 96px; min-height: 460px; align-content: center; }
@@ -1081,72 +1101,138 @@ input, select { font: inherit; color: inherit; }
 }
 
 /* ---------- Cargador "hámster en la rueda" ---------- */
-/* Se usa en la carga del catálogo (.cargando-hamster) y en el envío del pedido
-   (.capa-enviando). Pelaje horneado (--horno) y rueda de gris cálido (--crema-oscura). */
+/* Reproducción fiel del componente de Uiverse (misma geometría y animaciones),
+   con las subclases renombradas al español. El pelaje naranja/tan encaja con la
+   marca (horno). Se usa en la carga del catálogo (.cargando-hamster) y en el envío
+   del pedido (.capa-enviando). Mapeo con la referencia:
+   .wheel-and-hamster→.rueda-hamster · .wheel→.rueda · .hamster→.roedor ·
+   .hamster__body→.roedor-cuerpo · .hamster__head→.roedor-cabeza · __ear→-oreja ·
+   __eye→-ojo · __nose→-nariz · __tail→-cola · limb fr/fl/br/bl→pata dd/di/td/ti ·
+   .spoke→.rayo. */
 .cargando-hamster { display: grid; justify-items: center; gap: 14px; padding: 26px 0 10px; }
 .texto-cargando { color: var(--carbon-suave); font-weight: 600; }
 
-.rueda-hamster { position: relative; width: 104px; height: 104px; }
-
-.rueda-hamster .rueda {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 6px solid var(--crema-oscura);
-  border-top-color: var(--horno);
-  border-right-color: var(--horno-claro);
-  animation: girar 0.9s linear infinite;
+.rueda-hamster {
+  --dur: 1s;
+  position: relative;
+  width: 12em; height: 12em;
+  font-size: 11px; /* referencia 14px; bajado para no desbordar el cargador */
 }
-
-/* El roedor corre en el interior de la rueda */
+.rueda, .roedor, .roedor div, .rayo { position: absolute; }
+.rueda, .rayo { border-radius: 50%; top: 0; left: 0; width: 100%; height: 100%; }
+.rueda {
+  background: radial-gradient(100% 100% at center, hsla(0, 0%, 60%, 0) 47.8%, hsl(0, 0%, 60%) 48%);
+  z-index: 2;
+}
 .roedor {
-  position: absolute; left: 50%; bottom: 16px; width: 46px; height: 32px;
-  transform: translateX(-50%);
-  animation: hamster-brincar 0.45s ease-in-out infinite;
-}
-.roedor-cuerpo {
-  position: absolute; inset: 0; border-radius: 60% 55% 50% 50%;
-  background: var(--horno); box-shadow: inset -4px -3px 0 rgba(43, 33, 25, 0.18);
+  animation: roedor var(--dur) ease-in-out infinite;
+  top: 50%; left: calc(50% - 3.5em);
+  width: 7em; height: 3.75em;
+  transform: rotate(4deg) translate(-0.8em, 1.85em);
+  transform-origin: 50% 0;
+  z-index: 1;
 }
 .roedor-cabeza {
-  position: absolute; right: -8px; top: 4px; width: 22px; height: 20px;
-  border-radius: 55% 60% 55% 50%; background: var(--horno-claro);
+  animation: roedorCabeza var(--dur) ease-in-out infinite;
+  background: hsl(30, 90%, 55%);
+  border-radius: 70% 30% 0 100% / 40% 25% 25% 60%;
+  box-shadow: 0 -0.25em 0 hsl(30, 90%, 80%) inset, 0.75em -1.55em 0 hsl(30, 90%, 90%) inset;
+  top: 0; left: -2em;
+  width: 2.75em; height: 2.5em;
+  transform-origin: 100% 50%;
 }
 .roedor-oreja {
-  position: absolute; right: 3px; top: -3px; width: 9px; height: 9px;
-  border-radius: 50%; background: var(--horno);
+  animation: roedorOreja var(--dur) ease-in-out infinite;
+  background: hsl(0, 90%, 85%);
+  border-radius: 50%;
+  box-shadow: -0.25em 0 hsl(30, 90%, 55%) inset;
+  top: -0.25em; right: -0.25em;
+  width: 0.75em; height: 0.75em;
+  transform-origin: 50% 75%;
 }
 .roedor-ojo {
-  position: absolute; right: 6px; top: 7px; width: 4px; height: 4px;
-  border-radius: 50%; background: var(--carbon);
+  animation: roedorOjo var(--dur) linear infinite;
+  background-color: hsl(0, 0%, 0%);
+  border-radius: 50%;
+  top: 0.375em; left: 1.25em;
+  width: 0.5em; height: 0.5em;
 }
 .roedor-nariz {
-  position: absolute; right: -2px; top: 11px; width: 4px; height: 4px;
-  border-radius: 50%; background: var(--tomate);
+  background: hsl(0, 90%, 75%);
+  border-radius: 35% 65% 85% 15% / 70% 50% 50% 30%;
+  top: 0.75em; left: 0;
+  width: 0.2em; height: 0.25em;
+}
+.roedor-cuerpo {
+  animation: roedorCuerpo var(--dur) ease-in-out infinite;
+  background: hsl(30, 90%, 90%);
+  border-radius: 50% 30% 50% 30% / 15% 60% 40% 40%;
+  box-shadow: 0.1em 0.75em 0 hsl(30, 90%, 55%) inset, 0.15em -0.5em 0 hsl(30, 90%, 80%) inset;
+  top: 0.25em; left: 2em;
+  width: 4.5em; height: 3em;
+  transform-origin: 17% 50%;
+  transform-style: preserve-3d;
+}
+.roedor-pata--dd, .roedor-pata--di {
+  clip-path: polygon(0 0, 100% 0, 70% 80%, 60% 100%, 0% 100%, 40% 80%);
+  top: 2em; left: 0.5em;
+  width: 1em; height: 1.5em;
+  transform-origin: 50% 0;
+}
+.roedor-pata--dd {
+  animation: roedorPataDD var(--dur) linear infinite;
+  background: linear-gradient(hsl(30, 90%, 80%) 80%, hsl(0, 90%, 75%) 80%);
+  transform: rotate(15deg) translateZ(-1px);
+}
+.roedor-pata--di {
+  animation: roedorPataDI var(--dur) linear infinite;
+  background: linear-gradient(hsl(30, 90%, 90%) 80%, hsl(0, 90%, 85%) 80%);
+  transform: rotate(15deg);
+}
+.roedor-pata--td, .roedor-pata--ti {
+  border-radius: 0.75em 0.75em 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 70% 90%, 70% 100%, 30% 100%, 40% 90%, 0% 30%);
+  top: 1em; left: 2.8em;
+  width: 1.5em; height: 2.5em;
+  transform-origin: 50% 30%;
+}
+.roedor-pata--td {
+  animation: roedorPataTD var(--dur) linear infinite;
+  background: linear-gradient(hsl(30, 90%, 80%) 90%, hsl(0, 90%, 75%) 90%);
+  transform: rotate(-25deg) translateZ(-1px);
+}
+.roedor-pata--ti {
+  animation: roedorPataTI var(--dur) linear infinite;
+  background: linear-gradient(hsl(30, 90%, 90%) 90%, hsl(0, 90%, 85%) 90%);
+  transform: rotate(-25deg);
 }
 .roedor-cola {
-  position: absolute; left: -9px; top: 11px; width: 12px; height: 4px;
-  border-radius: 4px; background: var(--horno-oscuro);
+  animation: roedorCola var(--dur) linear infinite;
+  background: hsl(0, 90%, 85%);
+  border-radius: 0.25em 50% 50% 0.25em;
+  box-shadow: 0 -0.2em 0 hsl(0, 90%, 75%) inset;
+  top: 1.5em; right: -0.5em;
+  width: 1em; height: 0.5em;
+  transform: rotate(30deg) translateZ(-1px);
+  transform-origin: 0.25em 0.25em;
 }
-.roedor-pata {
-  position: absolute; bottom: -6px; width: 6px; height: 8px;
-  border-radius: 3px; background: var(--horno-oscuro);
-  animation: hamster-patas 0.3s linear infinite;
-}
-.roedor-pata--dd { right: 8px; }
-.roedor-pata--di { right: 20px; animation-delay: 0.15s; }
-.roedor-pata--td { left: 8px; animation-delay: 0.15s; }
-.roedor-pata--ti { left: 20px; }
-
-/* Estela de velocidad bajo la rueda */
 .rayo {
-  position: absolute; left: 50%; bottom: -4px; width: 60px; height: 4px;
-  transform: translateX(-50%); border-radius: 4px;
-  background: linear-gradient(90deg, transparent, var(--horno-claro), transparent);
-  animation: hamster-rayo 0.6s ease-in-out infinite;
+  animation: rayo var(--dur) linear infinite;
+  background: radial-gradient(100% 100% at center, hsl(0, 0%, 60%) 4.8%, hsla(0, 0%, 60%, 0) 5%),
+    linear-gradient(hsla(0, 0%, 55%, 0) 46.9%, hsl(0, 0%, 65%) 47% 52.9%, hsla(0, 0%, 65%, 0) 53%) 50% 50% / 99% 99% no-repeat;
 }
 
-@keyframes hamster-brincar { 50% { transform: translateX(-50%) translateY(-3px); } }
-@keyframes hamster-patas { 50% { transform: translateY(-3px); } }
-@keyframes hamster-rayo { 50% { opacity: 0.4; width: 44px; } }
+@keyframes roedor { from, to { transform: rotate(4deg) translate(-0.8em, 1.85em); } 50% { transform: rotate(0) translate(-0.8em, 1.85em); } }
+@keyframes roedorCabeza { from, 25%, 50%, 75%, to { transform: rotate(0); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(8deg); } }
+@keyframes roedorOjo { from, 90%, to { transform: scaleY(1); } 95% { transform: scaleY(0); } }
+@keyframes roedorOreja { from, 25%, 50%, 75%, to { transform: rotate(0); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(12deg); } }
+@keyframes roedorCuerpo { from, 25%, 50%, 75%, to { transform: rotate(0); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(-2deg); } }
+@keyframes roedorPataDD { from, 25%, 50%, 75%, to { transform: rotate(50deg) translateZ(-1px); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(-30deg) translateZ(-1px); } }
+@keyframes roedorPataDI { from, 25%, 50%, 75%, to { transform: rotate(-30deg); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(50deg); } }
+@keyframes roedorPataTD { from, 25%, 50%, 75%, to { transform: rotate(-60deg) translateZ(-1px); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(20deg) translateZ(-1px); } }
+@keyframes roedorPataTI { from, 25%, 50%, 75%, to { transform: rotate(20deg); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(-60deg); } }
+@keyframes roedorCola { from, 25%, 50%, 75%, to { transform: rotate(30deg) translateZ(-1px); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(10deg) translateZ(-1px); } }
+@keyframes rayo { from { transform: rotate(0); } to { transform: rotate(-1turn); } }
 
 /* Capa a pantalla completa mientras el pedido viaja a la cocina */
 .capa-enviando {
