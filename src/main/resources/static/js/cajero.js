@@ -811,6 +811,10 @@ cobroConfirm.addEventListener("click", () => {
 
 // --- Atajos de teclado ----------------------------------------------
 document.addEventListener("keydown", (e) => {
+  if (mesasPanelAbierto()) {
+    if (e.key === "Escape") { e.preventDefault(); cerrarPanelMesas(); }
+    return;
+  }
   const ordenAbierto = ordenModal && !ordenModal.classList.contains("hidden");
   const pagoQrAbierto = pagoQrModal && !pagoQrModal.classList.contains("hidden");
   if (pagoQrAbierto) {
@@ -869,7 +873,10 @@ function limpiarEstado(input) {
 }
 
 function validarNombre() {
-  return setEstado(customerName, RE_NOMBRE.test(customerName.value.trim()));
+  const valor = customerName.value.trim();
+  // El nombre es OPCIONAL: si va vacio la boleta sale a "Cliente Generico" (el backend lo pone).
+  if (valor === "") { limpiarEstado(customerName); return true; }
+  return setEstado(customerName, RE_NOMBRE.test(valor));
 }
 
 // Telefono en crudo: solo digitos, maximo 9 (lo que se envia al backend; char(9)).
@@ -954,6 +961,7 @@ function renderMesas() {
     mesaPlano.append(btn);
   }
   mesasRenderizadas = true;
+  reflejarEstadoPlano();
 }
 
 function seleccionarMesa(valor, etiqueta) {
@@ -1080,6 +1088,8 @@ async function cargarNumeroOrden() {
 
 function abrirOrdenModal() {
   renderMesas();
+  // Refresca el estado real de las mesas antes de mostrar el plano (ocupa/deshabilita).
+  cargarMesas();
   ordenTotal.textContent = money(getTotals().total);
   actualizarCamposComprobante();
   ordenTiempo.textContent = "… min";
@@ -1138,11 +1148,196 @@ pagoQrConfirm.addEventListener("click", () => {
   if (pagoQrModo === "principal") enviarVenta(null, null);
 });
 
+// =====================================================================
+//  Gestion de mesas del salon (ciclo LIBRE -> OCUPADA -> POR_LIMPIAR)
+//  Estado autoritativo en el backend (/api/mesas); se sincroniza por SSE.
+// =====================================================================
+const btnMesas = document.querySelector("#btnMesas");
+const mesasBadge = document.querySelector("#mesasBadge");
+const mesasModal = document.querySelector("#mesasModal");
+const mesasClose = document.querySelector("#mesasClose");
+const mesasGrid = document.querySelector("#mesasGrid");
+
+// Estado local de las 4 mesas: [{ numero, capacidad, estado }]. BARRA y "para llevar"
+// no tienen ciclo y no aparecen aqui (siempre seleccionables en el plano).
+let mesasData = [];
+
+// Etiqueta, icono y tono por estado; el tono (mesa-estado--*) lo comparten panel y plano.
+const MESA_META = {
+  LIBRE:       { etiqueta: "Disponible",  icono: "bi-check-circle-fill", tono: "libre" },
+  OCUPADA:     { etiqueta: "Ocupada",     icono: "bi-people-fill",       tono: "ocupada" },
+  POR_LIMPIAR: { etiqueta: "Por limpiar", icono: "bi-stars",             tono: "limpiar" },
+};
+function metaMesa(estado) { return MESA_META[estado] || MESA_META.LIBRE; }
+
+function estadoMesaNum(numero) {
+  const m = mesasData.find((x) => x.numero === numero);
+  return m ? m.estado : "LIBRE";
+}
+
+// Mesas "en uso" = ocupadas + por limpiar (lo que el cajero debe atender).
+function contarMesasEnUso() {
+  return mesasData.filter((m) => m.estado === "OCUPADA" || m.estado === "POR_LIMPIAR").length;
+}
+
+function actualizarBadgeMesas() {
+  if (!mesasBadge) return;
+  const n = contarMesasEnUso();
+  mesasBadge.textContent = n;
+  mesasBadge.hidden = n === 0;
+}
+
+function mesasPanelAbierto() { return mesasModal && !mesasModal.classList.contains("hidden"); }
+
+// Trae el estado real de las mesas y refresca badge, panel y plano si estan visibles.
+async function cargarMesas() {
+  try {
+    const lista = await getJson("/api/mesas");
+    mesasData = Array.isArray(lista) ? lista : [];
+  } catch {
+    /* silencioso: si falla, conservamos el ultimo estado conocido */
+  }
+  actualizarBadgeMesas();
+  if (mesasPanelAbierto()) renderPanelMesas();
+  reflejarEstadoPlano();
+}
+
+// --- Panel de estado (topbar) ---
+function renderPanelMesas() {
+  if (!mesasGrid) return;
+  mesasGrid.replaceChildren(...mesasData.map(construirTarjetaMesa));
+}
+
+function construirTarjetaMesa(mesa) {
+  const meta = metaMesa(mesa.estado);
+  const card = document.createElement("div");
+  card.className = `mesa-card is-${meta.tono}`;
+  card.setAttribute("role", "listitem");
+
+  const top = document.createElement("div");
+  top.className = "mesa-card__top";
+
+  const num = document.createElement("div");
+  num.className = "mesa-card__num";
+  const icono = document.createElement("span");
+  icono.className = "mesa-card__icono";
+  icono.innerHTML = `<i class="bi ${meta.icono}"></i>`;
+  const texto = document.createElement("div");
+  const titulo = document.createElement("strong");
+  titulo.textContent = `Mesa ${mesa.numero}`;
+  const cap = document.createElement("small");
+  cap.textContent = `${mesa.capacidad} asientos`;
+  texto.append(titulo, cap);
+  num.append(icono, texto);
+
+  const estado = document.createElement("span");
+  estado.className = `mesa-card__estado mesa-estado--${meta.tono}`;
+  estado.innerHTML = `<i class="bi ${meta.icono}"></i> ${meta.etiqueta}`;
+
+  top.append(num, estado);
+  card.append(top, construirAccionMesa(mesa));
+  return card;
+}
+
+// Boton de accion segun el estado: OCUPADA -> limpiar, POR_LIMPIAR -> liberar, LIBRE -> sin accion.
+function construirAccionMesa(mesa) {
+  if (mesa.estado === "OCUPADA") {
+    return botonAccionMesa(mesa.numero, "limpiar", "mesa-card__accion--limpiar", "bi-droplet", "Mandar a limpiar");
+  }
+  if (mesa.estado === "POR_LIMPIAR") {
+    return botonAccionMesa(mesa.numero, "liberar", "mesa-card__accion--liberar", "bi-check2-circle", "Marcar limpia");
+  }
+  const libre = document.createElement("span");
+  libre.className = "mesa-card__disponible";
+  libre.innerHTML = `<i class="bi bi-check-circle"></i> Disponible`;
+  return libre;
+}
+
+function botonAccionMesa(numero, accion, clase, icono, texto) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `mesa-card__accion ${clase}`;
+  btn.innerHTML = `<i class="bi ${icono}"></i> ${texto}`;
+  btn.addEventListener("click", () => ejecutarAccionMesa(numero, accion, btn));
+  return btn;
+}
+
+async function ejecutarAccionMesa(numero, accion, btn) {
+  btn.disabled = true;
+  try {
+    // PATCH sin body pero con Content-Type application/json (lo exige el backend).
+    const dto = await sendJson("PATCH", `/api/mesas/${numero}/${accion}`);
+    aplicarEstadoMesa(dto.numero, dto.estado, dto.capacidad);
+    renderPanelMesas();
+    reflejarEstadoPlano();
+    actualizarBadgeMesas();
+  } catch (err) {
+    // 400 del backend (p. ej. "La mesa N no esta ocupada"): mostramos su mensaje.
+    MammaTomatoAlert.error("No se pudo actualizar la mesa", err.message);
+    btn.disabled = false;
+  }
+}
+
+// Fusiona un cambio de estado (de PATCH o de SSE) en el estado local.
+function aplicarEstadoMesa(numero, estado, capacidad) {
+  const m = mesasData.find((x) => x.numero === numero);
+  if (m) m.estado = estado;
+  else mesasData.push({ numero, capacidad: capacidad || 4, estado });
+  mesasData.sort((a, b) => a.numero - b.numero);
+}
+
+// --- Plano dentro del modal de orden ---
+// Refleja el estado real en cada .mesa-btn: OCUPADA/POR_LIMPIAR quedan deshabilitadas.
+function reflejarEstadoPlano() {
+  if (!mesaPlano) return;
+  mesaPlano.querySelectorAll(".mesa-btn").forEach((btn) => {
+    const numero = Number((btn.dataset.mesa || "").replace("MESA-", ""));
+    const estado = estadoMesaNum(numero);
+    const meta = metaMesa(estado);
+    const bloqueada = estado === "OCUPADA" || estado === "POR_LIMPIAR";
+
+    btn.classList.toggle("mesa-btn--ocupada", estado === "OCUPADA");
+    btn.classList.toggle("mesa-btn--limpiar", estado === "POR_LIMPIAR");
+    btn.disabled = bloqueada;
+    btn.setAttribute("aria-disabled", String(bloqueada));
+
+    let badge = btn.querySelector(".mesa-btn-estado");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "mesa-btn-estado";
+      btn.append(badge);
+    }
+    badge.textContent = meta.etiqueta;
+    badge.className = `mesa-btn-estado mesa-estado--${meta.tono}`;
+
+    // Si la mesa seleccionada se ocupo/deshabilito, volvemos a "para llevar".
+    if (bloqueada && mesaSeleccionada === `MESA-${numero}`) {
+      seleccionarMesa("", "Para llevar");
+    }
+  });
+}
+
+// --- Apertura / cierre del panel ---
+function abrirPanelMesas() {
+  renderPanelMesas();
+  mesasModal.classList.remove("hidden");
+  cargarMesas(); // refresca por si cambio mientras estaba cerrado
+  setTimeout(() => mesasClose && mesasClose.focus(), 50);
+}
+function cerrarPanelMesas() {
+  if (mesasModal) mesasModal.classList.add("hidden");
+}
+
+if (btnMesas) btnMesas.addEventListener("click", abrirPanelMesas);
+if (mesasClose) mesasClose.addEventListener("click", cerrarPanelMesas);
+if (mesasModal) mesasModal.addEventListener("click", (e) => { if (e.target === mesasModal) cerrarPanelMesas(); });
+
 setupCategories();
 loadProducts();
 cargarPedidoRecuperado();
 renderOrder();
 actualizarBadgeGuardados();
+cargarMesas(); // estado inicial: pinta el badge y deja el estado listo para el plano
 
 // Tiempo real: la cocina avisa al cajero cuando mueve un pedido.
 if (window.MammaTomatoRealtime && window.MammaTomatoAlert) {
@@ -1153,5 +1348,17 @@ if (window.MammaTomatoRealtime && window.MammaTomatoAlert) {
     } else if (d.estado === "PREPARANDO") {
       window.MammaTomatoAlert.info("En preparacion", `Cocina empezo a preparar ${cod}`);
     }
+  });
+}
+
+// Tiempo real: cada cambio de mesa (ocupa al vender, o limpiar/liberar desde otra caja)
+// llega por SSE y refresca el badge, el panel y el plano sin recargar.
+if (window.MammaTomatoRealtime) {
+  window.MammaTomatoRealtime.on("mesa", (d) => {
+    if (d == null || d.numero == null) return;
+    aplicarEstadoMesa(Number(d.numero), d.estado, d.capacidad);
+    actualizarBadgeMesas();
+    if (mesasPanelAbierto()) renderPanelMesas();
+    if (ordenModal && !ordenModal.classList.contains("hidden")) reflejarEstadoPlano();
   });
 }

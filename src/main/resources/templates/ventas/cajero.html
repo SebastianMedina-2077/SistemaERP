@@ -75,6 +75,11 @@
         <p>Registro de ventas</p>
       </div>
       <div class="pos-topbar-actions">
+        <button type="button" class="pos-mesas-btn" id="btnMesas"
+                title="Estado de las mesas del salon" aria-haspopup="dialog">
+          <i class="bi bi-grid-3x3-gap-fill"></i> Mesas
+          <span class="pos-mesas-badge" id="mesasBadge" hidden aria-hidden="true">0</span>
+        </button>
         <button type="button" class="pos-cerrar-caja" id="btnCerrarCaja" title="Cerrar caja / cuadre">
           <i class="bi bi-cash-stack"></i> Cerrar caja
         </button>
@@ -124,10 +129,10 @@
           </div>
 
           <form id="customerForm" class="compact-form" novalidate>
-            <label>Cliente
+            <label>Cliente <span class="campo-opcional">(opcional)</span>
               <input id="customerName" type="text" class="form-control" maxlength="15"
-                     placeholder="Nombre del cliente" autocomplete="off" required>
-              <span class="invalid-feedback" id="customerNameError">Ingresa el nombre (solo letras y espacios).</span>
+                     placeholder="Nombre del cliente o vacío = genérico" autocomplete="off">
+              <span class="invalid-feedback" id="customerNameError">Solo letras y espacios (o déjalo vacío).</span>
             </label>
             <label>Teléfono <span class="opcional">(opcional)</span>
               <span class="phone-row">
@@ -265,6 +270,21 @@
       <button type="button" class="btn btn-primary btn-full btn-large" id="lockUnlock">
         <i class="bi bi-unlock"></i> Desbloquear
       </button>
+    </div>
+  </div>
+
+  <!-- Panel de gestion de mesas del salon (ciclo LIBRE -> OCUPADA -> POR_LIMPIAR) -->
+  <div id="mesasModal" class="mesas-overlay hidden">
+    <div class="mesas-card" role="dialog" aria-modal="true" aria-labelledby="mesasTitle">
+      <button type="button" class="mesas-close" id="mesasClose" aria-label="Cerrar">&times;</button>
+      <h3 id="mesasTitle" class="mesas-title"><i class="bi bi-grid-3x3-gap-fill"></i> Estado de mesas</h3>
+      <p class="mesas-subtitle">Gestiona el ciclo de las 4 mesas del salon entre pedidos.</p>
+      <div id="mesasGrid" class="mesas-grid" role="list" aria-live="polite"></div>
+      <p class="mesas-leyenda">
+        <span class="mesas-leyenda-item"><i class="mesas-dot mesa-estado--libre"></i> Disponible</span>
+        <span class="mesas-leyenda-item"><i class="mesas-dot mesa-estado--ocupada"></i> Ocupada</span>
+        <span class="mesas-leyenda-item"><i class="mesas-dot mesa-estado--limpiar"></i> Por limpiar</span>
+      </p>
     </div>
   </div>
 

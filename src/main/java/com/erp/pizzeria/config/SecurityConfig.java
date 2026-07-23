@@ -85,6 +85,8 @@ public class SecurityConfig {
                         // Crear una venta es exclusivo del cajero; cocina solo lee el tablero y mueve estados.
                         .requestMatchers(HttpMethod.POST, "/api/pedidos").hasRole("CAJERO")
                         .requestMatchers("/api/pedidos/**").hasAnyRole("CAJERO", "COCINA")
+                        // Ciclo de vida de las mesas del salon: lo gestiona la caja.
+                        .requestMatchers("/api/mesas/**").hasRole("CAJERO")
                         .requestMatchers("/api/productos/**").hasAnyRole("CAJERO", "ADMINISTRADOR")
                         .requestMatchers("/api/stock/**").hasAnyRole("CAJERO", "ADMINISTRADOR")
                         // Stream SSE en tiempo real: lo consumen las tres pantallas.

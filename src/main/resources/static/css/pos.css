@@ -146,6 +146,14 @@ body {
   grid-template-columns: 1fr;
 }
 
+/* Marca de campo opcional junto a su etiqueta (p. ej. el nombre del cliente) */
+.campo-opcional {
+  font-weight: 400;
+  font-size: 0.8em;
+  color: var(--text-muted, #8a8078);
+  font-style: italic;
+}
+
 .order-items {
   display: grid;
   gap: 8px;
@@ -836,3 +844,149 @@ body {
 .cobro-linea-qr[hidden] { display: none; }
 
 .cobro-add-metodo { margin-top: 8px; }
+
+/* =====================================================================
+   Gestion de mesas del salon: boton de topbar + panel de estado
+   Ciclo LIBRE -> OCUPADA -> POR_LIMPIAR -> LIBRE, sincronizado por SSE.
+   ===================================================================== */
+
+/* ---- Boton "Mesas" en la topbar (mismo lenguaje que .pos-cerrar-caja) ---- */
+.pos-mesas-btn {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 15px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  background: var(--white); color: var(--text);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.pos-mesas-btn:hover { border-color: var(--brand); color: var(--brand-700); background: var(--brand-50); }
+.pos-mesas-btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--brand); }
+
+/* Badge con el numero de mesas en uso (ocupada + por limpiar). Ambar para llamar la atencion. */
+.pos-mesas-badge {
+  min-width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 6px; border-radius: 10px;
+  background: var(--yellow); color: #fff; font-size: 11px; font-weight: 800;
+}
+.pos-mesas-badge[hidden] { display: none; }
+
+/* ---- Overlay + tarjeta del panel (mismo patron que #cobroModal) ---- */
+.mesas-overlay {
+  position: fixed; inset: 0; z-index: 1150;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(15, 40, 25, 0.45);
+  backdrop-filter: blur(2px);
+  animation: confirmFade 0.2s ease;
+}
+.mesas-overlay.hidden { display: none; }
+
+.mesas-card {
+  position: relative;
+  width: min(560px, calc(100% - 32px));
+  max-height: 92vh; overflow-y: auto;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 12px rgba(15, 40, 25, 0.1), 0 24px 48px rgba(15, 40, 25, 0.22);
+  padding: 22px 22px 18px;
+  animation: confirmIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mesas-close {
+  position: absolute; right: 12px; top: 12px;
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--white); color: var(--muted);
+  font-size: 18px; line-height: 1; cursor: pointer;
+  transition: 0.2s ease;
+}
+.mesas-close:hover { border-color: var(--red); color: var(--red); }
+
+.mesas-title {
+  margin: 0 0 4px; display: flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 800; color: var(--brand-700);
+}
+.mesas-subtitle { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+
+.mesas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 520px) { .mesas-grid { grid-template-columns: 1fr; } }
+
+/* ---- Tarjeta de una mesa ---- */
+.mesa-card {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 12px;
+  background: var(--white);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.mesa-card.is-ocupada { border-color: #f0c4bb; background: #fef6f4; }
+.mesa-card.is-limpiar { border-color: #fcd9a3; background: #fffaf0; }
+
+.mesa-card__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mesa-card__num { display: flex; align-items: center; gap: 10px; }
+.mesa-card__icono {
+  width: 40px; height: 40px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-size: 19px;
+  background: var(--brand-50); color: var(--brand-700);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.mesa-card.is-ocupada .mesa-card__icono { background: #fdecea; color: #c0392b; }
+.mesa-card.is-limpiar .mesa-card__icono { background: var(--yellow-50); color: #b45309; }
+.mesa-card__num strong { display: block; font-size: 15px; color: var(--text); }
+.mesa-card__num small { font-size: 12px; color: var(--muted); }
+
+/* Pastilla de estado (color/icono). El tono lo pone .mesa-estado--* (compartido con el plano). */
+.mesa-card__estado {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+}
+
+.mesa-card__accion {
+  height: 40px; border: none; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font-size: 13px; font-weight: 700; color: #fff; cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.mesa-card__accion:focus-visible { outline: none; box-shadow: var(--ring); }
+.mesa-card__accion--limpiar { background: var(--yellow); }
+.mesa-card__accion--limpiar:hover { background: #d97706; }
+.mesa-card__accion--liberar { background: var(--brand); }
+.mesa-card__accion--liberar:hover { background: var(--brand-600); }
+.mesa-card__accion:disabled { opacity: 0.55; cursor: progress; }
+
+/* Mesa libre: rotulo estatico, sin accion. */
+.mesa-card__disponible {
+  height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 9px; background: #f1f5f4;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+}
+
+/* ---- Tonos de estado compartidos (pastillas del panel, del plano y leyenda) ---- */
+.mesa-estado--libre   { background: var(--brand-50); color: var(--brand-700); }
+.mesa-estado--ocupada { background: #fdecea; color: #c0392b; }
+.mesa-estado--limpiar { background: var(--yellow-50); color: #b45309; }
+
+.mesas-leyenda {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  margin: 16px 0 0; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--muted);
+}
+.mesas-leyenda-item { display: inline-flex; align-items: center; gap: 6px; }
+.mesas-dot { width: 11px; height: 11px; border-radius: 50%; }
+/* En la leyenda el punto va en color solido (los tonos de pastilla son muy claros). */
+.mesas-dot.mesa-estado--libre   { background: var(--brand); }
+.mesas-dot.mesa-estado--ocupada { background: #c0392b; }
+.mesas-dot.mesa-estado--limpiar { background: var(--yellow); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mesas-overlay, .mesas-card, .mesa-card, .mesa-card__icono, .mesa-card__accion { animation: none; transition: none; }
+}

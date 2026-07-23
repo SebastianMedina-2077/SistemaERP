@@ -138,6 +138,32 @@ label:has(.form-control.is-valid) .valid-feedback { display: block; }
 .mesa-label { font-weight: 700; font-size: 13px; color: #334155; }
 .mesa-sub { font-size: 11px; color: #94a3b8; }
 
+/* ---- Estado real de la mesa en el plano (sincronizado con /api/mesas por SSE) ----
+   Las mesas OCUPADA o POR_LIMPIAR quedan deshabilitadas: solo se eligen las LIBRE. */
+.mesa-btn:disabled { cursor: not-allowed; }
+.mesa-btn.mesa-btn--ocupada {
+  border-color: #e6a695; background: #fdecea;
+}
+.mesa-btn.mesa-btn--ocupada:hover { border-color: #e6a695; box-shadow: none; }
+.mesa-btn.mesa-btn--ocupada .mesa-svg .tabla { fill: #c0392b; }
+.mesa-btn.mesa-btn--ocupada .mesa-svg .asiento { fill: #e6a695; }
+.mesa-btn.mesa-btn--limpiar {
+  border-color: #fcd9a3; background: var(--yellow-50, #fffbeb);
+}
+.mesa-btn.mesa-btn--limpiar:hover { border-color: #fcd9a3; box-shadow: none; }
+.mesa-btn.mesa-btn--limpiar .mesa-svg .tabla { fill: #f59e0b; }
+.mesa-btn.mesa-btn--limpiar .mesa-svg .asiento { fill: #fcd9a3; }
+
+/* Pastilla de estado dentro del boton de mesa (tono via .mesa-estado--*). */
+.mesa-btn-estado {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 2px 9px; border-radius: 999px; line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-btn, .mesa-svg .tabla, .mesa-svg .asiento { transition: none; }
+}
+
 .mesa-extra {
   display: flex;
   gap: 8px;

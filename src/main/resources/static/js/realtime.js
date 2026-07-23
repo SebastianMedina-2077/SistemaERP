@@ -18,6 +18,7 @@
     const es = new EventSource("/api/eventos");
     es.addEventListener("pedido-nuevo", (e) => emitir("pedido-nuevo", e));
     es.addEventListener("pedido-estado", (e) => emitir("pedido-estado", e));
+    es.addEventListener("mesa", (e) => emitir("mesa", e));
     // onerror: EventSource reintenta por su cuenta; no hace falta reconectar a mano.
   }
 
