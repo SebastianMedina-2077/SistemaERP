@@ -16,6 +16,8 @@ import java.util.List;
 public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     List<Pedido> findByEstado(EstadoPedido estado);
     List<Pedido> findByEstadoInOrderByFechaAsc(List<EstadoPedido> estados);
+    /** Pedidos en un estado desde una fecha (KDS: los ATENDIDO de hoy para la columna Entregados). */
+    List<Pedido> findByEstadoAndFechaGreaterThanEqualOrderByFechaAsc(EstadoPedido estado, LocalDateTime desde);
     boolean existsByUsuario_IdUsuario(Integer idUsuario);
 
     @Query(value = """

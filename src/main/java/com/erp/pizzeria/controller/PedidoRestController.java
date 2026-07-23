@@ -6,6 +6,8 @@ import com.erp.pizzeria.dto.CotizacionRequestDTO;
 import com.erp.pizzeria.dto.EstadoUpdateDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
 import com.erp.pizzeria.dto.PedidoDTO;
+import com.erp.pizzeria.dto.ResultadoServidoDTO;
+import com.erp.pizzeria.dto.ServidoUpdateDTO;
 import com.erp.pizzeria.exception.ResourceNotFoundException;
 import com.erp.pizzeria.model.Pedido;
 import com.erp.pizzeria.model.Usuario;
@@ -72,6 +74,28 @@ public class PedidoRestController {
         resp.put("idPedido", pedido.getIdPedido());
         resp.put("nuevoEstado", pedido.getEstado().name());
         return resp;
+    }
+
+    /**
+     * Marca/desmarca un item del pedido como servido (checklist del KDS). El pedido se
+     * queda EN PREPARACION aunque queden todos servidos (fase de entrega); solo sale del
+     * tablero al confirmarse la entrega (PREPARANDO -> ATENDIDO). Compartido por COCINA y
+     * CAJERO via el matcher /api/pedidos/** de SecurityConfig.
+     */
+    @PatchMapping("/api/pedidos/{idPedido}/items/{idDetalle}/servido")
+    public ResultadoServidoDTO marcarItemServido(@PathVariable Integer idPedido,
+                                                  @PathVariable Integer idDetalle,
+                                                  @Valid @RequestBody ServidoUpdateDTO body) {
+        return pedidoService.marcarItemServido(idPedido, idDetalle, body.getServido());
+    }
+
+    /**
+     * Deshace la fase de entrega (boton "Deshacer" del KDS): desmarca todos los items para
+     * devolver el pedido a "En Preparacion". El pedido sigue PREPARANDO.
+     */
+    @PatchMapping("/api/pedidos/{idPedido}/reabrir")
+    public ResultadoServidoDTO reabrirPreparacion(@PathVariable Integer idPedido) {
+        return pedidoService.reabrirPreparacion(idPedido);
     }
 
     private Usuario usuarioActual(Authentication authentication) {

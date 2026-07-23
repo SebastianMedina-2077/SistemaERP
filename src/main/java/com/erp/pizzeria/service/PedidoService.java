@@ -8,6 +8,7 @@ import com.erp.pizzeria.dto.DetallePedidoDTO;
 import com.erp.pizzeria.dto.PagoDTO;
 import com.erp.pizzeria.dto.PedidoCocinaDTO;
 import com.erp.pizzeria.dto.PedidoDTO;
+import com.erp.pizzeria.dto.ResultadoServidoDTO;
 import com.erp.pizzeria.exception.ResourceNotFoundException;
 import com.erp.pizzeria.model.Adicional;
 import com.erp.pizzeria.model.Boleta;
@@ -75,6 +76,12 @@ public class PedidoService {
     private final AdicionalRepository adicionalRepository;
     private final ProductoAdicionalRepository productoAdicionalRepository;
     private final DetallePedidoAdicionalRepository detallePedidoAdicionalRepository;
+    private final HornoService hornoService;
+    private final MesaService mesaService;
+
+    // Mesa numerada del salon en la boleta: "MESA-1".."MESA-4" (BARRA / para llevar no ocupan mesa).
+    private static final java.util.regex.Pattern PATRON_MESA =
+            java.util.regex.Pattern.compile("MESA-(\\d+)", java.util.regex.Pattern.CASE_INSENSITIVE);
 
     public PedidoService(PedidoRepository pedidoRepository,
                          DetallePedidoRepository detallePedidoRepository,
@@ -91,7 +98,9 @@ public class PedidoService {
                          ApplicationEventPublisher eventPublisher,
                          AdicionalRepository adicionalRepository,
                          ProductoAdicionalRepository productoAdicionalRepository,
-                         DetallePedidoAdicionalRepository detallePedidoAdicionalRepository) {
+                         DetallePedidoAdicionalRepository detallePedidoAdicionalRepository,
+                         HornoService hornoService,
+                         MesaService mesaService) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
         this.boletaRepository = boletaRepository;
@@ -108,6 +117,8 @@ public class PedidoService {
         this.adicionalRepository = adicionalRepository;
         this.productoAdicionalRepository = productoAdicionalRepository;
         this.detallePedidoAdicionalRepository = detallePedidoAdicionalRepository;
+        this.hornoService = hornoService;
+        this.mesaService = mesaService;
     }
 
     // ---- Lecturas --------------------------------------------------
@@ -163,8 +174,15 @@ public class PedidoService {
         return pagoRepository.findByPedido_IdPedidoOrderByIdPago(idPedido);
     }
 
+    /**
+     * Metodos de pago para el POS de caja fisica. Excluye "Billetera" (PayPal/Apple/
+     * Google Pay): es un metodo propio del checkout web y no aplica en caja. La tienda
+     * resuelve sus pagos por su cuenta (ver TiendaPedidoService), no por aqui.
+     */
     public List<MetodoPago> listMetodosPago() {
-        return metodoPagoRepository.findByActivoTrue();
+        return metodoPagoRepository.findByActivoTrue().stream()
+                .filter(m -> m.getDescripcion() == null || !m.getDescripcion().equalsIgnoreCase("Billetera"))
+                .toList();
     }
 
     public Map<Integer, Boleta> getBoletasPorPedido() {
@@ -181,10 +199,30 @@ public class PedidoService {
         return pedidoRepository.findByEstadoInOrderByFechaAsc(ESTADOS_COCINA);
     }
 
+    /**
+     * Tablero de cocina: SOLO pedidos activos (PENDIENTE/PREPARANDO) con su tiempo
+     * estimado del horno. El pedido permanece PREPARANDO hasta que se entrega: la
+     * columna "Entregados" del KDS muestra los PREPARANDO con todos sus items servidos
+     * (fase de entrega, con barra que se consume y opcion de deshacer). Cuando por fin
+     * pasa a ATENDIDO ya esta entregado y sale del tablero. El estimado se calcula sobre
+     * TODA la cola a la vez, porque la simulacion del horno necesita ver la competencia
+     * por slots.
+     */
     public List<PedidoCocinaDTO> getKitchenOrdersDTO() {
-        return getKitchenOrders().stream()
-                .map(p -> PedidoCocinaDTO.from(p, getDetalle(p.getIdPedido())))
-                .toList();
+        List<Pedido> activos = getKitchenOrders();
+        // Detalles de cada pedido activo, cargados una sola vez y reutilizados.
+        Map<Integer, List<DetallePedido>> detallesActivos = new LinkedHashMap<>();
+        for (Pedido p : activos) {
+            detallesActivos.put(p.getIdPedido(), getDetalle(p.getIdPedido()));
+        }
+        Map<Integer, Integer> tiempos = hornoService.estimarTiempos(activos, detallesActivos);
+
+        List<PedidoCocinaDTO> resultado = new java.util.ArrayList<>();
+        for (Pedido p : activos) {
+            resultado.add(PedidoCocinaDTO.from(p, detallesActivos.get(p.getIdPedido()),
+                    tiempos.get(p.getIdPedido())));
+        }
+        return resultado;
     }
 
     /**
@@ -303,7 +341,8 @@ public class PedidoService {
         inventarioService.verificarDisponibilidad(consumo);
 
         Cliente cliente = new Cliente();
-        cliente.setNombre(dto.getClienteNombre());
+        // Sin nombre => cliente generico (boleta a consumidor final).
+        cliente.setNombre(nombreClienteODefault(dto.getClienteNombre()));
         cliente.setTelefono(dto.getClienteTelefono());
         cliente = clienteRepository.save(cliente);
 
@@ -358,7 +397,11 @@ public class PedidoService {
         boleta.setTipoComprobante(tipo);
         boleta.setSerie(tipo.getSerie());
         boleta.setCorrelativo(correlativo);
-        boleta.setMesa(normalizarMesa(dto.getMesa()));
+        String mesaTexto = normalizarMesa(dto.getMesa());
+        boleta.setMesa(mesaTexto);
+        // Si la venta es en una mesa numerada del salon, se marca OCUPADA en la misma
+        // transaccion (BARRA / para llevar / sin mesa no ocupan nada).
+        ocuparMesaSiCorresponde(mesaTexto);
         aplicarAdquiriente(boleta, tipo, dto);
         boleta.setMetodoPago(metodos.get(pagos.get(0).getIdMetodoPago()));
         boleta.setPedido(pedido);
@@ -423,6 +466,21 @@ public class PedidoService {
         return (mesa == null || mesa.isBlank()) ? null : mesa.trim();
     }
 
+    /**
+     * Marca OCUPADA la mesa numerada del texto de la boleta ("MESA-N"). BARRA, null o
+     * "para llevar" no ocupan. La ocupacion es idempotente y defensiva: una mesa fuera
+     * de rango se ignora (el texto es libre y no debe romper la venta).
+     */
+    private void ocuparMesaSiCorresponde(String mesaTexto) {
+        if (mesaTexto == null) {
+            return;
+        }
+        java.util.regex.Matcher m = PATRON_MESA.matcher(mesaTexto);
+        if (m.matches()) {
+            mesaService.ocupar(Integer.parseInt(m.group(1)));
+        }
+    }
+
     /** Completa los datos del adquiriente segun el tipo de comprobante y valida lo obligatorio. */
     private void aplicarAdquiriente(Boleta boleta, TipoComprobante tipo, PedidoDTO dto) {
         switch (tipo) {
@@ -446,23 +504,37 @@ public class PedidoService {
                     throw new IllegalArgumentException("La boleta electronica requiere un email valido");
                 }
                 boleta.setClienteEmail(email);
-                boleta.setClienteDocumento(limpiarDni(dto.getClienteDni()));
+                boleta.setClienteDocumento(documentoBoleta(dto.getClienteDni()));
             }
-            default -> // BOLETA: DNI opcional
-                    boleta.setClienteDocumento(limpiarDni(dto.getClienteDni()));
+            default -> // BOLETA: sin DNI => cliente generico con documento "00000000"
+                    boleta.setClienteDocumento(documentoBoleta(dto.getClienteDni()));
         }
     }
 
-    /** DNI opcional: null si vacio; valida 8 digitos si viene. */
-    private String limpiarDni(String dni) {
+    /**
+     * Documento del adquiriente en una boleta: si el cliente NO da DNI, el comprobante
+     * va al cliente generico con documento "00000000" (consumidor final). Si da uno,
+     * se valida a 8 digitos.
+     */
+    private String documentoBoleta(String dni) {
         if (dni == null || dni.isBlank()) {
-            return null;
+            return "00000000";
         }
+        return limpiarDni(dni);
+    }
+
+    /** Valida un DNI real: 8 digitos. "00000000" (consumidor final) es valido. */
+    private String limpiarDni(String dni) {
         String limpio = dni.trim();
         if (!limpio.matches("\\d{8}")) {
             throw new IllegalArgumentException("El DNI debe tener 8 digitos");
         }
         return limpio;
+    }
+
+    /** Nombre del adquiriente: si no lo da, "Cliente Generico"; si lo da, se respeta. */
+    private String nombreClienteODefault(String nombre) {
+        return (nombre == null || nombre.isBlank()) ? "Cliente Generico" : nombre.trim();
     }
 
     /** Resuelve cada metodo de pago una sola vez. */
@@ -488,6 +560,8 @@ public class PedidoService {
         if (pedido.getEstado() == EstadoPedido.ANULADO) {
             throw new IllegalArgumentException("El pedido #" + idPedido + " esta anulado y no admite cambios de estado");
         }
+        // Transicion hacia atras ATENDIDO -> PREPARANDO permitida (boton "Deshacer" del KDS):
+        // los items quedan como esten para que el cocinero pueda desmarcarlos.
         pedido.setEstado(estado);
         pedido = pedidoRepository.save(pedido);
 
@@ -495,6 +569,81 @@ public class PedidoService {
                 Map.of("idPedido", pedido.getIdPedido(), "estado", pedido.getEstado().name())));
 
         return pedido;
+    }
+
+    /**
+     * Marca (o desmarca) un item del pedido como "servido" en el checklist de cocina.
+     * Cuando TODOS los items quedan servidos, el pedido NO pasa solo a ATENDIDO: se
+     * queda EN PREPARACION y el KDS lo muestra en "Entregados" como fase de entrega
+     * (barra que se consume + deshacer). Solo al confirmarse la entrega (PREPARANDO ->
+     * ATENDIDO, cuando la barra termina) sale del tablero. Asi el pedido "vive" en
+     * preparacion hasta que realmente se entrega.
+     *
+     * <p>Solo se admite mientras el pedido esta EN PREPARACION. En PENDIENTE hay que
+     * empezar a preparar primero; un ATENDIDO ya esta entregado; un ANULADO nunca.
+     * Valida que el detalle pertenezca al pedido; si no, 404.
+     */
+    @Transactional
+    public ResultadoServidoDTO marcarItemServido(Integer idPedido, Integer idDetalle, boolean servido) {
+        Pedido pedido = getPedido(idPedido);
+        if (pedido.getEstado() == EstadoPedido.ANULADO) {
+            throw new IllegalArgumentException("El pedido #" + idPedido + " esta anulado");
+        }
+        if (pedido.getEstado() == EstadoPedido.ATENDIDO) {
+            throw new IllegalArgumentException(
+                    "El pedido #" + idPedido + " ya esta atendido; deshazlo antes de editar sus items");
+        }
+        // Los items solo se marcan cuando el pedido esta EN PREPARACION: primero
+        // el cocinero pulsa "Empezar a preparar" (PENDIENTE -> PREPARANDO).
+        if (pedido.getEstado() == EstadoPedido.PENDIENTE) {
+            throw new IllegalArgumentException(
+                    "Empieza a preparar el pedido #" + idPedido + " antes de marcar sus items");
+        }
+
+        DetallePedido detalle = detallePedidoRepository.findById(idDetalle)
+                .orElseThrow(() -> ResourceNotFoundException.of("DetallePedido", idDetalle));
+        if (detalle.getPedido() == null || !detalle.getPedido().getIdPedido().equals(idPedido)) {
+            throw new ResourceNotFoundException(
+                    "El detalle " + idDetalle + " no pertenece al pedido #" + idPedido);
+        }
+
+        detalle.setServido(servido);
+        detallePedidoRepository.save(detalle);
+
+        // Aviso en vivo del cambio de la raya (todas las pantallas de cocina refrescan).
+        eventPublisher.publishEvent(new PedidoEvent("pedido-item",
+                Map.of("idPedido", idPedido, "idDetalle", idDetalle, "servido", servido)));
+
+        List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(idPedido);
+        boolean todosServidos = !detalles.isEmpty()
+                && detalles.stream().allMatch(d -> Boolean.TRUE.equals(d.getServido()));
+
+        // El pedido se queda EN PREPARACION aunque esten todos servidos: pasa a la fase
+        // de entrega en el KDS y solo se cierra (ATENDIDO) cuando se confirma la entrega.
+        return new ResultadoServidoDTO(idPedido, servido, todosServidos, pedido.getEstado().name());
+    }
+
+    /**
+     * Deshace la fase de entrega: desmarca todos los items del pedido para devolverlo a
+     * "En Preparacion" en el KDS. El pedido sigue PREPARANDO; solo se limpian las rayas.
+     */
+    @Transactional
+    public ResultadoServidoDTO reabrirPreparacion(Integer idPedido) {
+        Pedido pedido = getPedido(idPedido);
+        if (pedido.getEstado() != EstadoPedido.PREPARANDO) {
+            throw new IllegalArgumentException(
+                    "Solo se puede reabrir un pedido en preparacion (pedido #" + idPedido + ")");
+        }
+        List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(idPedido);
+        for (DetallePedido d : detalles) {
+            if (Boolean.TRUE.equals(d.getServido())) {
+                d.setServido(false);
+                detallePedidoRepository.save(d);
+            }
+        }
+        eventPublisher.publishEvent(new PedidoEvent("pedido-item",
+                Map.of("idPedido", idPedido, "idDetalle", 0, "servido", false)));
+        return new ResultadoServidoDTO(idPedido, false, false, pedido.getEstado().name());
     }
 
     @Audit(accion = "ANULAR", entidad = "Pedido")

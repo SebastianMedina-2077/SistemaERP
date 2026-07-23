@@ -36,6 +36,10 @@ public class DetallePedido {
     @Column(name = "observacion", length = 100)
     private String observacion;
 
+    /** Marca de "item servido" del checklist de cocina; al servirse todos, el pedido pasa a ATENDIDO. */
+    @Column(name = "servido", nullable = false)
+    private Boolean servido = false;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_pedido", nullable = false)
     private Pedido pedido;
