@@ -144,6 +144,13 @@ INSERT INTO `metodo_pago` (`id_metodopago`, `descripcion`, `activo`) VALUES
   (4, 'Plin', 1),
   (5, 'Billetera', 1);
 
+-- Mesas del salon (4 numeradas, capacidad 4, todas libres al arrancar)
+INSERT INTO `mesa` (`id_mesa`, `numero`, `capacidad`, `estado`) VALUES
+  (1, 1, 4, 'LIBRE'),
+  (2, 2, 4, 'LIBRE'),
+  (3, 3, 4, 'LIBRE'),
+  (4, 4, 4, 'LIBRE');
+
 -- Tipos de movimiento
 INSERT INTO `tipo_movimiento` (`id_tipomovimiento`, `descripcion`, `operacion`) VALUES
   (1, 'Compra', 'Entrada'),

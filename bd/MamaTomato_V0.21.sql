@@ -115,6 +115,7 @@ CREATE TABLE `cliente_cuenta` (
   `email` varchar(120) NOT NULL,
   `password_hash` varchar(60) NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `email_verificado` tinyint(1) NOT NULL DEFAULT 0,
   `fecha_registro` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_clientecuenta_cliente` (`id_cliente`),
@@ -152,6 +153,18 @@ CREATE TABLE `categoria` (
   `id_categoria` int NOT NULL AUTO_INCREMENT,
   `nombre` varchar(15) DEFAULT NULL,
   PRIMARY KEY (`id_categoria`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Mesas del salon: solo las numeradas tienen ciclo de vida en la caja
+-- (LIBRE -> OCUPADA al vender -> POR_LIMPIAR cuando el cliente se retira -> LIBRE).
+-- La barra y "para llevar" no se modelan aqui (no se bloquean).
+CREATE TABLE `mesa` (
+  `id_mesa` int NOT NULL AUTO_INCREMENT,
+  `numero` int NOT NULL,
+  `capacidad` int NOT NULL DEFAULT 4,
+  `estado` enum('LIBRE','OCUPADA','POR_LIMPIAR') NOT NULL DEFAULT 'LIBRE',
+  PRIMARY KEY (`id_mesa`),
+  UNIQUE KEY `uk_mesa_numero` (`numero`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `medida` (
@@ -272,6 +285,7 @@ CREATE TABLE `detalle_pedido` (
   `subtotal` decimal(8,2) NOT NULL DEFAULT '0.00',
   `descuento` decimal(8,2) DEFAULT NULL,
   `observacion` varchar(100) DEFAULT NULL,
+  `servido` tinyint(1) NOT NULL DEFAULT '0',
   `id_pedido` int NOT NULL,
   `id_producto` int NOT NULL,
   PRIMARY KEY (`id_detallepedido`)
